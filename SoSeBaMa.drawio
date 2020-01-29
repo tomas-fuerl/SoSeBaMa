@@ -1,6 +1,6 @@
-<mxfile host="www.draw.io" modified="2020-01-28T21:15:20.090Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36" etag="QakW1eA2JjchEj2sP7UM" version="12.6.1" type="github">
+<mxfile host="www.draw.io" modified="2020-01-29T14:32:12.350Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36" etag="FAoNKB4SW6bEP1PAirI2" version="12.6.1" type="github">
   <diagram id="6a731a19-8d31-9384-78a2-239565b7b9f0" name="Page-1">
-    <mxGraphModel dx="4318" dy="2487" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="3086" dy="1657" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -163,7 +163,7 @@
           <mxGeometry x="-620" y="-82.25" width="150" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="g6IqDXz1Ok6miaDa0M3m-1877" value="Künstler, Songlänge,&amp;nbsp;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeColor=#6c8ebf;strokeWidth=3;fillColor=#dae8fc;fontFamily=Helvetica;fontSize=14;align=center;spacing=5;arcSize=7;perimeterSpacing=2;" parent="1" vertex="1">
-          <mxGeometry x="-620" width="150" height="60" as="geometry"/>
+          <mxGeometry x="-630" y="-1.29" width="150" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="g6IqDXz1Ok6miaDa0M3m-1787" value="Soundfiles&lt;br&gt;bereitstellen und verwalten" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeColor=#82b366;strokeWidth=3;fillColor=#d5e8d4;fontFamily=Helvetica;fontSize=14;align=center;spacing=5;arcSize=7;perimeterSpacing=2;gradientColor=#97d077;" parent="1" vertex="1">
           <mxGeometry x="-951" y="-82.25" width="150" height="60" as="geometry"/>
