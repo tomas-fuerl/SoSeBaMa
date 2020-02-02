@@ -15,39 +15,38 @@
 \usepackage{tikz}
 
 % Library für Mindmaps nachladen
-\usetikzlibrary{mindmap}
+\usetikzlibrary{mindmap, shapes, snakes}
 
 % Grafik auf Leere Seite plazieren
 \pagestyle{empty}
 
 % Beginn des Dokuments
 \begin{document}
-
 % Lade Grafik als Mindmap, Neue Objekte werden im Kreis abgebildet, Grundfarbe jedes Objektes ist Rot 50%
 \begin{tikzpicture}[
-    mindmap, grow cyclic, every node/.style=concept, concept color=red!50, 
+    mindmap, grow cyclic, every node/.style=concept, concept color=red!50,
     % 1. Ebene hat den Abstand 8cm und wird mit einem Winkel von 180°
-    level 1/.append style={level distance=15cm,sibling angle=180},
+    level 1/.append style={sibling angle=180, every concept/.style={circle}},
     % 2. Ebene hat den Abstand 3cm und wird mit einem Winkel von 90°
-    level 2/.append style={level distance=8cm,sibling angle=40},
+    level 2/.append style={level distance=8cm,sibling angle=40, every concept/.style={circle}},
     % 3. Ebene hat den Abstand 3cm und wird mit einem Winkel von 45°
-    level 3/.append style={level distance=3.5cm,sibling angle=32},
+    level 3/.append style={level distance=3.5cm,sibling angle=32, every concept/.style={ellipse}},
     % 3. Ebene hat den Abstand 3cm und wird mit einem Winkel von 45°
-    level 4/.append style={level distance=2cm,sibling angle=45}
+    level 4/.append style={level distance=2cm,sibling angle=45, every concept/.style={ellipse}}
     ]
  
     % Hier werden die Objekte und Unterobjekte eingebunden.
     \node{Organisationstool für Band $SoSeBaMa$}
         % Ändere das Design des Einzelnen Objektes und seiner Unterobjekte
-        child [concept color=green!30] { node {Funktionen}
-            child { node {Kontaktverwaltung}
+        child [concept color=green!30, level distance=15cm] { node {Funktionen}
+            child { node {Kontakte}
                     child {node {Lieferanten verwalten}}
                     child {node {Partnerkontakte verwalten}}
                     child {node {Kundenkontakte verwalten}
                         child {node {Name, Adresse, Bankadresse, Mailadresse, ...}}
                     }
             }
-            child { node {Benutzerverwaltung}
+            child { node {Benutzer\-verwaltung}
                 child {node {Berechtigungskonzept}
                     child {node {Rechte vergeben}}
                     child {node {Benutzer verwalten}}
@@ -58,16 +57,16 @@
                 child {node {Accorde bereitstellen und transponieren}}
                 child {node {Noten bereitstellen und transponieren}}
                 child {node {Soundfiles bereitstellen und verwalten}}
-                child {node {Setliste verwalten, erstelle und anschauen}}
                 child {node {Metadaten bereitstellen und verwalten}
                     child {node {Künstler, Songlänge, \dots}}
                 }
+                child {node {Setliste verwalten, erstelle und anschauen}}
             }
             child { node {Inventar verwalten}
                 child {node {Equipment verwalten}}
                 child {node {Inventar verwalten}}
             }
-            child { node {Dokumentverwaltung}
+            child { node {Dokumente}
                 child {node {Chronik}}
                 child {node {Vorschlagsliste}}
                 child {node {Richtlinien}}
@@ -101,25 +100,25 @@
             }
         }
         child [concept color=blue!30] { node {Technisches}
-            child { node {Sicherheitskonzept}
+            child { node  {Sicherheits\-konzept}
                 child {node {Dockerfähig}}
                 child {node {Backup- und Wiederherstellungskonzept}}
                 child {node {DSGVO}}
                 child {node {2-Factor-Authentification}}
                 child {node {Zugriff auf Module und Funktionen einschränkbar}}
             }
-            child { node {Schnittstellen}
+            child { node {Schnitt\-stellen}
                 child {node {Kontaktexport über Standardformat}}
                 child {node {kalenderschnittstelle über standardformat}}
                 child {node {Push-Benachrichtigung}}
             }
             child { node {Oberfläche}
                 child {node {Dark- und Lightmode}}
-                child {node {Platformunabhängig}}
+                child {node {Platform\-unabhängig}}
                 child {node {Responsive}}
                 child {node {WYSIWYG-Editoren für Inhalte}}
             }
-            child { node {Datenhaltung}
+            child { node  {Daten\-haltung}
                 child {node {Offline verfügbare Texte und Setlists sowie weiteres}}
             }
         }
