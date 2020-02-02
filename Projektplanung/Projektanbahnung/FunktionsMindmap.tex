@@ -15,7 +15,7 @@
 \usepackage{tikz}
 
 % Library für Mindmaps nachladen
-\usetikzlibrary{mindmap, shapes, snakes}
+\usetikzlibrary{mindmap, shapes}
 
 % Grafik auf Leere Seite plazieren
 \pagestyle{empty}
@@ -26,15 +26,15 @@
 \begin{tikzpicture}[
     mindmap, grow cyclic, every node/.style=concept, concept color=red!50,
     % 1. Ebene hat den Abstand 8cm und wird mit einem Winkel von 180°
-    level 1/.append style={sibling angle=180, every concept/.style={circle}},
+    level 1/.append style={sibling angle=180},
     % 2. Ebene hat den Abstand 3cm und wird mit einem Winkel von 90°
-    level 2/.append style={level distance=8cm,sibling angle=40, every concept/.style={circle}},
+    level 2/.append style={level distance=8cm,sibling angle=40},
     % 3. Ebene hat den Abstand 3cm und wird mit einem Winkel von 45°
     level 3/.append style={level distance=3.5cm,sibling angle=32, every concept/.style={ellipse}},
     % 3. Ebene hat den Abstand 3cm und wird mit einem Winkel von 45°
     level 4/.append style={level distance=2cm,sibling angle=45, every concept/.style={ellipse}}
     ]
- 
+
     % Hier werden die Objekte und Unterobjekte eingebunden.
     \node{Organisationstool für Band $SoSeBaMa$}
         % Ändere das Design des Einzelnen Objektes und seiner Unterobjekte
