@@ -1,0 +1,66 @@
+% Dieses Dokument ist eine Vorlage zum Erstellen einer Mindmap.
+
+% Dokument hat Grundgröße für Schrift bei 12pt
+\documentclass[12pt]{article}
+
+% Deutsche Formate der Funktionen
+\usepackage[ngerman]{babel}
+
+% 
+\usepackage{fullpage}
+
+% Helvetica als Schriftart
+\usepackage[scaled]{helvet}
+\usepackage[T1]{fontenc}    
+\usepackage{tikz}
+
+% Library für Mindmaps nachladen
+\usetikzlibrary{mindmap}
+
+% Grafik auf Leere Seite plazieren
+\pagestyle{empty}
+
+% Beginn des Dokuments
+\begin{document}
+
+% Lade Grafik als Mindmap, Neue Objekte werden im Kreis abgebildet, Grundfarbe jedes Objektes ist Rot 50%
+\begin{tikzpicture}[mindmap, grow cyclic, every node/.style=concept, concept color=red!50, 
+    % 1. Ebene hat den Abstand 8cm und wird mit einem Winkel von 90°
+    level 1/.append style={level distance=8cm,sibling angle=90},
+    % 2. Ebene hat den Abstand 3cm und wird mit einem Winkel von 90°
+    level 2/.append style={level distance=3cm,sibling angle=90},
+    % 3. Ebene hat den Abstand 3cm und wird mit einem Winkel von 45°
+    level 3/.append style={level distance=3cm,sibling angle=45}]
+ 
+    % Hier werden die Objekte und Unterobjekte eingebunden.
+    \node{Mindmaptitel}
+        % Ändere das Design des Einzelnen Objektes und seiner Unterobjekte
+        child [concept color=blue!30] { node {1.Ebene}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}
+                child {node {3.Ebene}}
+                child {node {3.Ebene}}
+                child {node {3.Ebene}}
+                child {node {3.Ebene}
+                    child {node {3.Ebene}}
+                }
+            }
+        }
+        child [concept color=green!30] { node {1.Ebene}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+        }   
+        child [concept color=yellow!30] { node {1.Ebene}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+        }
+        child [concept color=red!30]{ node {1.Ebene}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+            child { node {2.Ebene}}
+        }
+    ;
+    \end{tikzpicture}
+\end{document}
