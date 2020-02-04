@@ -1,0 +1,77 @@
+% Dokument im Artkelformat auf A4 mit Grundgröße 12pt
+\documentclass[a4paper, 12pt]{article}
+
+% Deutsche Formate der Funktionen
+\usepackage[ngerman]{babel}
+
+% Helvetica als Schriftart
+\usepackage[scaled]{helvet}
+\usepackage[T1]{fontenc}
+
+% Module nachladen
+\usepackage{tabu}
+
+% Deklaration der Variablen
+\newcommand{\Projektname}{Vorlagenprojekt}
+\title{Lastenheft \Projektname}
+\date{Erstellt am: \today}
+\author{Tomas Fürl}
+
+\renewcommand\familydefault{\sfdefault}
+\begin{document}
+
+% Titelseite
+    \pagenumbering{gobble}
+    \maketitle
+    \newpage
+    \pagenumbering{arabic}
+
+% Projektbeschreibung
+    \section{Projektbeschreibung}
+    \subsection{Ziele des Projekts}
+    Kurz und prägnant Arbeitstitel und Ziel des Projekts in 1 - 2 beschreiben.
+    \subsection{Terminierung}
+    Gewünschte Ablauf- und Terminplanung
+    \subsection{Kosten}
+    Vorstellung über die Kosten
+
+% Ist-Zustand
+    \section{Ist-Zustand}
+    Hier ist die aktuelle Situation darzustellen:
+    \begin{itemize}
+        \item Was und wie viel verarbeitet das aktuelle Anwendungssystem?
+        \item Wer benutzt das Softwaresystem?
+        \item Wie wird das Softwaresystem organisiert?
+    \end{itemize}
+    Hier können noch Grafiken zur Unternehmensstruktur, Prozessen, ... beigefügt werden.
+
+% Soll-Zustand
+    \section{Soll-Zustand}
+    Hier soll beschrieben werden, wie der Auftraggeber sich das neue System vorstellt und 
+    welche anforderungen er an das System stellt.
+    Hierbei muss eine Liste der Anforderungen erstellt werden.
+    Diese müssen nach MUSS, SOLL und KANN kategorisert werden.
+    das bietet sich Tabellarisch an.
+
+% Schnittstellen
+    \section{Schnittstellen}
+    Hier Sollen die Schnittstellen genannt werden, die das Projekt später betreffen werden, 
+    z.B. Tabellen, die importiert werden müssen, andere Programme, in denen die Software 
+    integriert wird, und APIs, die später erfüllt werden müssen werden.
+    Welche Kommunikatiionsprotokolle sollen verwendet werden?
+    Wie wird die Software ausgerollt?
+
+% Inbetriebnahme und Einsatz
+    \section{Inbetriebnahme und Einsatz}
+    \subsection{Dokumentation}
+    In welchem Format, Umfang, für wen und in welchen Zeitabständen bei welchen Zeitpunkten von wem 
+    soll Dokumentation erstellt werden.
+    \subsection{Testing}
+    In welcher Art und Weise, von wem, wann sollen die verschiedenen Bestandteile getestet werden sollen.
+    Außerdem werden Gewährleistungskriterien festgelegt.
+    \subsection{Schulungen}
+    Wer führt wo, wann, wie Mitarbeiterschulungen durch.
+% Qualitätsanforderungen
+    \section{Qualitätsanforderungen}
+    Hier werden Maßnahmen zur Qualitätssicherung und Qualitätsmerkmale festgelegt, die erfüllt sein müssen.
+\end{document}
