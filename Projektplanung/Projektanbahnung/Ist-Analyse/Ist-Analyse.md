@@ -1,17 +1,5 @@
 Ist-Analyse "Fragebogen"
 ========================
-## Einfach mal ein paar punkte, die noch geordnet gehören uwu
-- Ausfallsicherheit
-  - Hardware
-  - RAM
-  - Internetanbindung
-  - Prozessorleistung
-  - Speichermöglichkeiten
-  - Software
-  - Betriebssysteme
-  - Stellvertreterregelung
-  - Softwaresicherheit
-
 1. Software/Systemumgebung
    1. Betriebssystem
    2. Vorhandene Programme
