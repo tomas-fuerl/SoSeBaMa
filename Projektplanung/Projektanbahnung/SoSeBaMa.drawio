@@ -1,6 +1,6 @@
-<mxfile host="www.draw.io" modified="2020-01-29T14:32:12.350Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36" etag="FAoNKB4SW6bEP1PAirI2" version="12.6.1" type="github">
+<mxfile host="www.draw.io" modified="2020-02-06T11:56:17.312Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0" etag="zm2_MA3r2xDRL5ahPH1q" version="12.6.5" type="github">
   <diagram id="6a731a19-8d31-9384-78a2-239565b7b9f0" name="Page-1">
-    <mxGraphModel dx="3086" dy="1657" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="2899" dy="1749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -56,7 +56,7 @@
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="1764" value="Funktionen" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeColor=#005700;strokeWidth=3;fillColor=#008a00;fontFamily=Helvetica;fontSize=14;align=center;spacing=5;fontStyle=1;arcSize=7;perimeterSpacing=2;fontColor=#ffffff;" parent="1" vertex="1">
-          <mxGeometry x="-455" y="-159.5" width="150" height="60" as="geometry"/>
+          <mxGeometry x="-455" y="-176.75" width="150" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="g6IqDXz1Ok6miaDa0M3m-1814" value="Dokumenten-verwaltung" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeColor=#2D7600;strokeWidth=3;fillColor=#60a917;fontFamily=Helvetica;fontSize=14;align=center;spacing=5;fontStyle=1;arcSize=7;perimeterSpacing=2;fontColor=#ffffff;" parent="1" vertex="1">
           <mxGeometry x="-455" y="-710" width="150" height="60" as="geometry"/>
