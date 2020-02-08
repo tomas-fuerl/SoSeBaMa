@@ -1,0 +1,85 @@
+
+% Dieses Dokument ist eine Vorlage zum Erstellen eines Anforderungskatalogs.
+
+% Deklaration der Variablen
+\author{Tomas Fürl}
+\newcommand{\Projektname}{SoSeBaMa}
+\title{Anforderungen für \Projektname}
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage[german]{isodate}
+\usepackage{tabularx}
+
+% Ändere Paragraph zu Überschrift 4
+\usepackage{titlesec}
+\setcounter{secnumdepth}{4}
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\usepackage[scaled]{helvet}
+\renewcommand\familydefault{\sfdefault}
+
+\begin{document}
+
+% Titel, Inhaltsverzeichnis, Bildverzeichnis, Tabellenverzeichnis
+    \pagenumbering{gobble}
+    \maketitle
+    \newpage
+    \pagenumbering{Roman}
+    \tableofcontents
+    % \newpage
+    % \listoffigures
+    % \newpage
+    % \listoftables
+    \newpage
+    \pagenumbering{arabic}
+
+    \section{Funktionale Anforderungen}
+    \subsection{Kategorie}
+    \subsubsection{\textbf{Funktionstitel}}
+    \paragraph{Kurzbeschreibung}
+    \paragraph{Aktor}
+    \paragraph{Vorbedingungen}
+    \paragraph{Beschreibung des Ablaufs}
+    \paragraph{Auswirkungen}
+    \paragraph{Anmerkungen}
+
+    \section{Nicht-Funktionale Anforderungen}
+    \section{Listenbeispiel}
+    \begin{itemize}
+        \item One entry in the list
+        \item Another entry in the list
+    \end{itemize}
+    \begin{enumerate}
+        \item One entry in the list
+        \item Another entry in the list
+    \end{enumerate}
+    \section{Vorlage Anforderung}
+    \subsection{Kategorie}
+    \subsubsection{\textbf{Funktionstitel}}
+    \paragraph{Kurzbeschreibung}
+    \paragraph{Aktor}
+    \paragraph{Vorbedingungen}
+    \paragraph{Beschreibung des Ablaufs}
+    \paragraph{Auswirkungen}
+    \paragraph{Anmerkungen}
+
+    \section{Tabellenbeispiel}
+    \begin{tabularx}{\textwidth}{|l|X|c|r|}
+        \hline
+        \textbf{Nr.} & \textbf{Beschreibung} & &\\
+        \hline
+        1. & Ich schreibe lange Texte, um meinen Standpunkt zu verdeutlicheStandpStandpunkt zu verdeutlichenunkt zu verdeutlichenn  & schrift  &  123 \\
+        \hline
+        2. & Ich schreibe lange Texte, um meinen Standpunkt zu verdeutlichen  & Schr  &   1234567 \\
+        \hline
+        3. & Ich schreibe lange Texte, um meinen Standpunkt   & Schriftift  &   12 \\
+        \hline
+        4. & Ich schreibe lange Texte, um meinen Standpunkt zu verdeutlichen  &   &   1234 \\
+        \hline
+    \end{tabularx}
+
+\end{document}
