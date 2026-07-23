@@ -7,17 +7,34 @@ Dokumentation und Prüfung einzusetzen. Es bedeutet nicht, Verantwortung oder
 Review an ein Modell abzugeben. Eine benannte Person bleibt für Scope,
 Entscheidungen und Freigabe verantwortlich.
 
-## Standardablauf
+## Verbindliche Rollen
 
-1. Issue und Repository-Zustand vollständig erfassen.
-2. Sicherheitsgrenzen und öffentlich teilbaren Kontext bestimmen.
-3. Vorhandene Dateien, Muster und Automatisierungen nach dem
-   [Reuse-first-Standard](REUSE-FIRST.md) suchen.
-4. Ziel, betroffene Dateien und Prüfschritte vor der Änderung benennen.
-5. Kleine, reviewbare Änderungen erzeugen und den Diff laufend prüfen.
-6. Behauptungen durch Repository-Inhalte oder Prüfergebnisse belegen.
-7. Ergebnisse, Annahmen, Risiken und menschlich zu treffende Entscheidungen
-   transparent übergeben.
+- Tomas verantwortet Anforderungen, Freigaben, manuelle Endprüfung und Merge.
+- ChatGPT Web strukturiert Anforderungen und prüft Arbeitsergebnisse read-only.
+- Codex setzt begrenzte Arbeitspakete um, prüft und dokumentiert sie, darf aber
+  keinen Pull Request mergen.
+
+## End-to-End-Standardablauf
+
+1. Tomas definiert die Anforderung gemeinsam mit ChatGPT Web.
+2. Die Anforderung wird als GitHub-Issue mit eindeutigem Scope und messbaren
+   Akzeptanzkriterien angelegt.
+3. ChatGPT erstellt daraus ein begrenztes Codex-Arbeitspaket ohne verdeckte
+   Erweiterung des Issue-Scopes.
+4. Codex arbeitet auf einem eigenen Feature-Branch, niemals direkt auf `main`.
+5. Codex führt die vorgeschriebenen Prüfungen tatsächlich aus.
+6. Codex erstellt oder aktualisiert ein lokales, durch `.gitignore`
+   ausgeschlossenes `TASK-RESULT.md`.
+7. Codex committet und pusht ausschließlich bei entsprechendem Auftrag.
+8. Codex erstellt bei entsprechendem Auftrag einen Draft Pull Request.
+9. ChatGPT prüft Issue, Diff, Prüfnachweise, Dokumentation und Security
+   ausschließlich read-only.
+10. Codex bearbeitet erforderliche Findings auf demselben Feature-Branch.
+11. Tomas führt die manuelle Endprüfung durch.
+12. Tomas führt ausschließlich einen Squash Merge aus.
+13. Codex und ChatGPT dürfen den Pull Request nicht mergen.
+14. Releases und Deployments benötigen separate, ausdrücklich freigegebene
+    Arbeitspakete.
 
 ## Sichere Kontextgrenzen
 

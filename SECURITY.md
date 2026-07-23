@@ -24,13 +24,30 @@ Die Meldung soll knapp enthalten:
 - DEV, TST und PRD verwenden getrennte Konfigurationen, Daten, Secrets und
   Zugriffswege.
 - Produktive Daten werden nicht nach DEV oder TST kopiert.
-- PRD besitzt keine Debugschnittstelle und keinen Debugzugang.
-- Die Datenbank akzeptiert Anwendungszugriffe ausschließlich vom App-Backend.
-- code-server erreicht ausschließlich DEV über explizit definierte,
-  freigegebene und nachvollziehbare SSH-/Debugwege.
+- Portainer und code-server dürfen öffentlich ausschließlich über jeweils einen
+  eigenen gehärteten Reverse Proxy erreichbar sein.
+- SoSeBaMa PRD wird über einen eigenen gehärteten App-Reverse-Proxy
+  veröffentlicht. Nutzer-Clients erreichen das App-Backend beziehungsweise BFF
+  nicht direkt.
+- Der App-Reverse-Proxy darf ausschließlich die vorgesehenen
+  Anwendungsendpunkte des App-Backends beziehungsweise BFF von PRD erreichen.
+- Öffentliche Erreichbarkeit erteilt keine impliziten Zugriffsrechte auf andere
+  Netze, Umgebungen oder Komponenten.
+- PRD besitzt keine Debugports, Debugtunnel oder Debugschnittstellen.
+- Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Die
+  Datenbank veröffentlicht keinen öffentlichen Endpunkt.
+- Der ausgehende Entwicklungszugriff von code-server ist vom öffentlichen
+  eingehenden code-server-Zugang getrennt. code-server erreicht ausschließlich
+  DEV über explizit definierte, freigegebene und nachvollziehbare
+  SSH-/Debugwege.
 - Logs und Diagnoseausgaben dürfen keine Secrets, personenbezogenen Inhalte
   oder lokalen Infrastrukturwerte offenlegen.
 - Berechtigungen folgen dem Minimalprinzip und werden je Umgebung vergeben.
+
+Konkrete Domains, IP-Adressen, Hostnamen, Ports und Härtungsparameter bleiben
+außerhalb des öffentlichen Repositorys. Die konkrete Härtung der drei
+öffentlich erreichbaren Reverse-Proxy-Zugänge ist eine spätere Architektur- und
+Betriebsentscheidung und benötigt ein separates freigegebenes Arbeitspaket.
 
 Weitere verbindliche Details stehen in
 [ENVIRONMENTS.md](docs/ENVIRONMENTS.md) und

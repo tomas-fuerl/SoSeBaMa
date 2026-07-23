@@ -9,12 +9,26 @@ für eine sofortige Veröffentlichung geeignet sein und die
 1. Das zugehörige Issue einschließlich aller Kommentare vollständig lesen.
 2. Den lokalen Stand und bestehende Änderungen mit
    `git status --short --branch` prüfen.
-3. Einen thematisch eindeutigen Branch vom aktuellen `main` anlegen.
+3. Einen thematisch eindeutigen Feature-Branch vom aktuellen `main` anlegen.
 4. In Repository und Dokumentation nach wiederverwendbaren Lösungen suchen.
 5. Scope, Akzeptanzkriterien und erforderliche Prüfungen festhalten.
 
 Keine Änderung darf Secrets, reale interne Domains, IP-Adressen, Hostnamen,
 Pfade oder andere lokale Infrastrukturwerte enthalten.
+
+### Branch-Namensschema
+
+Branch-Namen verwenden ein passendes Präfix und eine kurze Beschreibung in
+Kleinbuchstaben, zum Beispiel:
+
+- `feat/` für neue fachliche Funktionen,
+- `fix/` für Fehlerkorrekturen,
+- `docs/` für Dokumentation,
+- `chore/` für Wartungsarbeiten,
+- `refactor/` für strukturelle Änderungen ohne Funktionsänderung,
+- `security/` für Sicherheitskorrekturen.
+
+Direkte Änderungen und direkte Pushes auf `main` sind unzulässig.
 
 ## 2. Änderung umsetzen
 
@@ -29,6 +43,10 @@ Pfade oder andere lokale Infrastrukturwerte enthalten.
   [Reuse-first-Standard](docs/REUSE-FIRST.md) anlegen.
 - Anleitungen nach dem
   [Foolproof-Dokumentationsstandard](docs/DOCUMENTATION-STANDARD.md) schreiben.
+
+Commits folgen Conventional Commits, beispielsweise `docs: ...`, `fix: ...`
+oder `feat: ...`. Jeder Commit beschreibt genau eine zusammenhängende,
+reviewbare Änderung.
 
 ## 3. Änderung prüfen
 
@@ -54,16 +72,26 @@ Request.
 
 ## 4. Pull Request
 
-Der Pull Request verwendet die Repository-Vorlage und enthält:
+Pull Requests werden standardmäßig als Draft erstellt und verwenden die
+Repository-Vorlage. Sie enthalten:
 
 - Bezug zum Issue,
 - Ziel und vollständigen Scope,
 - geänderte Dateien,
 - Prüfungen mit Ergebnis,
+- nicht ausgeführte Prüfungen mit Begründung,
 - Security- und Umgebungsbewertung,
 - Reuse-first-Nachweis,
+- Daten- und Migrationsfolgen,
+- Rollback und Ergebnisprotokoll,
 - offene Annahmen und Risiken,
 - gegebenenfalls eine dokumentierte Eigentümerentscheidung.
 
-Pull Requests werden nicht von der erstellenden Person selbst gemergt, sofern
-der Projekteigentümer dies nicht ausdrücklich entscheidet.
+## 5. Merge und Aufräumen
+
+- Ausschließlich der Projekteigentümer darf einen Pull Request mergen.
+- Squash Merge ist die reguläre und einzig vorgesehene Merge-Methode.
+- Assistenzsysteme dürfen keinen Pull Request mergen.
+- Nach erfolgreichem Merge wird der zugehörige Feature-Branch gelöscht.
+- Releases und Deployments sind nicht Bestandteil eines normalen Merges und
+  benötigen jeweils ein separates freigegebenes Arbeitspaket.

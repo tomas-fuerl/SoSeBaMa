@@ -13,8 +13,9 @@ Reihenfolge: DEV, TST, PRD.
 | Daten | künstliche Entwicklungsdaten | definierte Testdaten | ausschließlich produktive Daten |
 | Secrets | eigenes DEV-Set auf der Synology | eigenes TST-Set auf der Synology | eigenes PRD-Set auf der Synology |
 | Debug | über definierte Wege zulässig | nur kontrolliert und zeitlich begrenzt | verboten |
-| code-server | Zugriff über definierte SSH-/Debugwege | kein Standardzugriff | kein Zugriff |
+| ausgehender code-server-Zugriff | über definierte SSH-/Debugwege | kein Zugriff | kein Zugriff |
 | Datenbankzugriff | nur App-Backend der Umgebung | nur App-Backend der Umgebung | nur App-Backend der Umgebung |
+| öffentliche App-Veröffentlichung | nicht festgelegt | nicht festgelegt | eigener gehärteter App-Reverse-Proxy |
 
 ## Verbindliche Trennung
 
@@ -29,17 +30,35 @@ Reihenfolge: DEV, TST, PRD.
   Artefakte und ausdrücklich vorgesehene Konfiguration, niemals Daten oder
   Secrets.
 
-## Zugriff und Diagnose
+## Öffentliche Eingänge
 
-code-server darf DEV ausschließlich über vorab definierte und freigegebene
-SSH-/Debugwege erreichen. Vor Einrichtung werden Quelle, Ziel, Identität,
-Zweck, erlaubte Richtung, Protokoll und Verantwortliche dokumentiert. Ein
-impliziter Zugriff aufgrund gemeinsamer Netze ist unzulässig.
+Portainer und code-server dürfen jeweils über einen eigenen gehärteten Reverse
+Proxy öffentlich erreichbar sein. SoSeBaMa PRD wird ausschließlich über einen
+eigenen gehärteten App-Reverse-Proxy veröffentlicht. Diese drei eingehenden
+Zugänge sind voneinander und von den Umgebungsnetzen getrennt.
+
+Öffentliche Erreichbarkeit gewährt keine implizite Berechtigung für andere
+Netze, Umgebungen oder Komponenten. Nutzer-Clients erreichen weder das
+App-Backend beziehungsweise BFF noch die Datenbank direkt. Die konkrete Härtung
+der drei Reverse-Proxy-Zugänge bleibt einer späteren Architektur- und
+Betriebsentscheidung in einem separaten freigegebenen Arbeitspaket vorbehalten.
+
+## Entwicklungszugriff und Diagnose
+
+Der öffentliche eingehende Zugang zu code-server ist vom ausgehenden
+Entwicklungszugriff auf DEV zu unterscheiden. code-server darf DEV
+ausschließlich über vorab definierte und freigegebene SSH-/Debugwege erreichen.
+Vor Einrichtung werden Quelle, Ziel, Identität, Zweck, erlaubte Richtung,
+Protokoll und Verantwortliche dokumentiert. Ein impliziter Zugriff aufgrund der
+öffentlichen Erreichbarkeit oder gemeinsamer Netze ist unzulässig.
 
 TST-Diagnose ist nur kontrolliert, minimal berechtigt und zeitlich begrenzt
 zulässig. PRD erhält keine Debugschnittstelle, keinen Debugport und keinen
 Debug-Tunnel. Produktive Diagnose erfolgt ausschließlich über dafür
 vorgesehene, geheimnisfreie Betriebsinformationen.
+
+Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Keine
+Datenbank veröffentlicht einen öffentlichen Endpunkt.
 
 Die erlaubten Kommunikationsbeziehungen stehen in
 [NETWORK-BOUNDARIES.md](NETWORK-BOUNDARIES.md).

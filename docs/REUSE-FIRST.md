@@ -36,5 +36,34 @@ Der Reuse-first-Abschnitt nennt:
 Nachweis. Sicherheits- oder Lizenzrisiken können Wiederverwendung ausschließen,
 müssen aber konkret benannt werden.
 
-Neue ausführbare Skripte benötigen zusätzlich eine foolproof Anleitung,
-Fehlerbehandlung, sichere Standardwerte und passende statische Prüfungen.
+## Mindeststandard für wiederverwendbare Automatisierung
+
+Ein normales Skript benötigt nicht automatisch ein ADR. Ein ADR ist nur nötig,
+wenn die Automatisierung selbst eine Entscheidung nach den Kriterien des
+[ADR-Verfahrens](ADR.md) einführt.
+
+Neue Skripte und andere wiederverwendbare Automatisierungen müssen mindestens:
+
+- einen klaren, langfristigen Zweck besitzen,
+- über Parameter statt eingebetteter Umgebungswerte anpassbar sein,
+- soweit technisch möglich idempotent sein,
+- eine verständliche `--help`-Ausgabe besitzen,
+- sichere Standardwerte verwenden,
+- definierte und dokumentierte Exit-Codes besitzen,
+- Fehler eindeutig und handlungsorientiert melden,
+- passende Tests oder statische Prüfungen besitzen,
+- in einer Anleitung nach dem
+  [Foolproof-Dokumentationsstandard](DOCUMENTATION-STANDARD.md) dokumentiert
+  sein.
+
+## Keine Ad-hoc-Duplikation
+
+Ad-hoc- und Einmalskripte werden nicht erzeugt, wenn dieselbe Aufgabe mit einem
+vorhandenen Werkzeug oder über einen stabilen Repository-Einstiegspunkt
+ausführbar ist. Eine einmalige Befehlsfolge ist kein Grund, bereits vorhandene
+Automatisierungslogik zu duplizieren.
+
+Arbeitspakete rufen langfristig bevorzugt vorhandene Repository-Kommandos auf,
+statt deren Logik oder lange Befehlsfolgen wiederholt neu zu formulieren. Das
+verbessert die Nachvollziehbarkeit, erhöht die Konsistenz zwischen Ausführungen
+und reduziert den Tokenverbrauch in AI-gestützten Arbeitsabläufen.
