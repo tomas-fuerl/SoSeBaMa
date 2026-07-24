@@ -1,0 +1,30 @@
+# Lokale Environment-Dateien; nur die wertfreie Vorlage wird versioniert.
+.env
+.env.*
+!.env.example
+
+# Lokale Aufgaben- und Übergabedateien
+TASK-RESULT.md
+
+# Zugangsdaten und Schlüsselmaterial
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.kdbx
+
+# Editor- und Betriebssystemdateien
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Protokolle und temporäre Dateien
+*.log
+tmp/
+temp/
