@@ -2,11 +2,12 @@
 
 ## Status und Entscheidungsregel
 
-Dieses Dokument konkretisiert die in GitHub-Issue #3 noch nicht entschiedenen
-Produktfragen. Alle Einträge haben den Status **Offen**. Optionen sind keine
-Empfehlung oder Eigentümerentscheidung. Eine Entscheidung trifft ausschließlich
-der Projekteigentümer; anschließend werden betroffene Anforderungen und der
-Eintrag nachvollziehbar aktualisiert.
+Dieses Dokument konkretisiert offene und inzwischen entschiedene Produktfragen
+aus GitHub-Issue #3. Einträge ohne ausdrücklich abweichenden Status sind
+**Offen**. Optionen offener Einträge sind keine Empfehlung oder
+Eigentümerentscheidung. Entschiedene Einträge bleiben unter ihrer stabilen
+`OQ-xxx`-Kennung erhalten und dokumentieren die tatsächliche Produktentscheidung
+sowie ihre Auswirkungen nachvollziehbar.
 
 ## Fragen
 
@@ -34,25 +35,40 @@ Diese Frage entscheidet ausschließlich über die Anzahl der Arbeitsbereiche je
 Installation; die fachliche Zuordnung von Band und Arbeitsbereich klärt
 `OQ-021`.
 
-### OQ-003: Standardsichtbarkeit von Annotationen
+### OQ-003: Standardauswahl für neue Overlays
 
-**Frage:** Sind neue Annotationen standardmäßig privat oder gemeinsam sichtbar?
+**Bereits entschieden:** Annotationen und andere Zusatzinformationen werden als
+persönliches oder Gruppen-Overlay getrennt vom Original geführt. Beide
+Overlay-Arten referenzieren dasselbe Original und erzeugen keine Inhaltskopie.
 
-**Optionen:** privat als sicherer Standard; gemeinsam für direkte
-Zusammenarbeit; bewusste Auswahl bei jeder Erstellung.
+**Offene Frage:** Wird bei einer neuen Zusatzinformation standardmäßig das
+persönliche Overlay, ein zulässiges Gruppen-Overlay oder stets eine bewusste
+Auswahl verwendet?
+
+**Optionen:** persönliches Overlay als sicherer Standard; zulässiges
+Gruppen-Overlay für direkte Zusammenarbeit; bewusste Auswahl bei jeder
+Erstellung.
 
 **Auswirkungen:** Datenschutz, Bedienaufwand, Erwartbarkeit und Risiko
-unbeabsichtigter Veröffentlichung.
+unbeabsichtigter Veröffentlichung. Die Entscheidung verändert weder das
+Referenzmodell noch Eigentum oder Berechtigungen.
 
-### OQ-004: Änderungsrechte regulärer Mitglieder
+### OQ-004: Detailumfang regulärer Gruppenrechte
 
-**Frage:** Welche gemeinsamen Inhalte dürfen reguläre Mitglieder bearbeiten?
+**Bereits entschieden:** Der Eigentümer entscheidet je Inhalt, ob Gruppen neue
+Revisionen erstellen dürfen. Zusätzlich muss die wirksame Gruppenrolle die
+konkrete Aktion erlauben. Keine der beiden Erlaubnisse ersetzt die andere.
 
-**Optionen:** nur persönliche Annotationen; zusätzlich ausgewählte Text- und
-Akkordblätter; alle explizit freigegebenen Inhalte.
+**Offene Frage:** Für welche Inhaltsarten und Gruppenrollen darf der Eigentümer
+die Erstellung neuer Revisionen freigeben?
+
+**Optionen:** nur Gruppen-Overlays; zusätzlich ausgewählte Text- und
+Akkordblätter; alle ausdrücklich für Gruppenrevisionen freigegebenen
+Inhaltsarten.
 
 **Auswirkungen:** Rollenmodell, Nachvollziehbarkeit, Konfliktrisiko und Aufwand
-für Freigaben.
+für Freigaben. Die Entscheidung über den Detailumfang darf die verbindliche
+Zweifachprüfung aus Eigentümererlaubnis und Gruppenrecht nicht abschwächen.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
 
@@ -60,15 +76,17 @@ für Freigaben.
 [Funktionaler Scope](FUNCTIONAL-SCOPE.md) verbindlich festgelegte Basis
 `FR-001` bis `FR-007` zum ersten produktiv nutzbaren MVP?
 
-Die verbindliche Basis gehört zu jeder Variante und kann durch diese
-Entscheidung weder abgewählt noch verschoben werden. `FR-047` bis `FR-053`
+Die verbindliche Basis sowie die Querschnittsanforderungen `FR-058` bis
+`FR-060` gehören zu jeder Variante und können durch diese Entscheidung weder
+abgewählt noch verschoben werden. `FR-047` bis `FR-053`
 bleiben ausdrücklich ausgeschlossen; `FR-054` bis `FR-057` bleiben offene
 Produktgrenzen. Keine Variante legt eine Technologie fest oder gilt ohne
 Eigentümerentscheidung als beschlossen.
 
 #### Variante A: Dokumentenorientierter Einstieg
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
+- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`,
+  Querschnittsanforderungen `FR-058` bis `FR-060` und grundlegende
   Zusammenarbeit `FR-008` bis `FR-009`, Songverwaltung `FR-011` bis `FR-014`,
   PDF-Anzeige und -Annotation `FR-015` bis `FR-020`, Setlists `FR-028` bis
   `FR-032` sowie lesender Offlinebetrieb mit Status und kontrollierter lokaler
@@ -77,16 +95,17 @@ Eigentümerentscheidung als beschlossen.
   Text- und Akkordfunktionen `FR-021` bis `FR-027`, Offline-
   Änderungswarteschlange und Konfliktbehandlung `FR-035` bis `FR-036` sowie
   spätere Erweiterungen `FR-038` bis `FR-046`.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`, `OQ-010` bis
-  `OQ-013`, `OQ-015` und `OQ-021`; insbesondere müssen Annotationssichtbarkeit,
-  Rollen, Offlinefrist und Band-Arbeitsbereich-Zuordnung geklärt werden.
+- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`,
+  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen
+  Overlay-Standardauswahl, Rollen, Offlinefrist und
+  Band-Arbeitsbereich-Zuordnung geklärt werden.
 - **Produktiver Nutzen:** Eine Band oder ein Ensemble kann Songs, PDF-Dokumente
   und Setlists gemeinsam verwalten und für Probe oder Auftritt vorbereiten.
   Berechtigte Mitglieder können PDFs online grundlegend annotieren und
   vorbereitete Unterlagen ohne Netzwerk lesen.
-- **Fachliche Hauptrisiken:** Unklare Sichtbarkeit von Annotationen, noch offene
-  Fassungshistorie und eingeschränkter Nutzen für Mitglieder, die primär mit
-  Text- oder Akkordblättern arbeiten.
+- **Fachliche Hauptrisiken:** Unklare Overlay-Standardauswahl, die Bedienbarkeit
+  von Fassungen und Revisionen sowie eingeschränkter Nutzen für Mitglieder, die
+  primär mit Text- oder Akkordblättern arbeiten.
 - **Technische Hauptrisiken:** sichere Dateiverarbeitung, Erhalt der
   Originaldokumente, Touch- und Stifteignung sowie konsistente lesende
   Offlinebereitstellung auf den später festgelegten Geräten.
@@ -97,7 +116,8 @@ Eigentümerentscheidung als beschlossen.
 
 #### Variante B: Text- und Setlist-Einstieg
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
+- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`,
+  Querschnittsanforderungen `FR-058` bis `FR-060` und grundlegende
   Zusammenarbeit `FR-008` bis `FR-009`, Songverwaltung `FR-011` bis `FR-014`,
   Text- und Akkordfunktionen `FR-021` bis `FR-027`, Setlists `FR-028` bis
   `FR-032` sowie lesender Offlinebetrieb mit Status und kontrollierter lokaler
@@ -107,7 +127,7 @@ Eigentümerentscheidung als beschlossen.
   Konfliktbehandlung `FR-035` bis `FR-036` sowie spätere Erweiterungen
   `FR-038` bis `FR-046`.
 - **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
-  `OQ-010` bis `OQ-013`, `OQ-015` und `OQ-021`; insbesondere müssen
+  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen
   Änderungsrechte, ein zunächst lesender Offlineumfang und die Zuordnung von
   Band und Arbeitsbereich geklärt werden.
 - **Produktiver Nutzen:** Songs, Text- und Akkordblätter sowie Setlists können
@@ -127,7 +147,8 @@ Eigentümerentscheidung als beschlossen.
 
 #### Variante C: Integrierter Grundumfang
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
+- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`,
+  Querschnittsanforderungen `FR-058` bis `FR-060` und grundlegende
   Zusammenarbeit `FR-008` bis `FR-009` sowie Song-, PDF-, Text-/Akkord-,
   Setlist- und Offline-/Synchronisationsfunktionen `FR-011` bis `FR-037`.
   Gemeinsame und Offlinebearbeitung bleiben auf die später ausdrücklich
@@ -136,9 +157,10 @@ Eigentümerentscheidung als beschlossen.
   und sämtliche späteren Erweiterungen `FR-038` bis `FR-046`. Weitergehende
   gemeinsame oder Offlinebearbeitung ist ohne Entscheidungen zu `OQ-004` und
   `OQ-006` nicht enthalten.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`, `OQ-010` bis
-  `OQ-013`, `OQ-015` und `OQ-021`; diese Variante benötigt vor allem klare
-  Grenzen für gemeinsame Änderungen, Offlineänderungen und Konfliktbehandlung.
+- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`,
+  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; diese Variante benötigt vor
+  allem klare Grenzen für gemeinsame Änderungen, Offlineänderungen und
+  Konfliktbehandlung.
 - **Produktiver Nutzen:** Eine Band oder ein Ensemble erhält einen durchgängigen
   Grundumfang für PDF-, Text-/Akkord- und Setlistnutzung einschließlich gezielt
   begrenzter Offlineänderungen und sichtbarer Synchronisationskonflikte.
@@ -225,24 +247,37 @@ Es ist noch kein Zahlenwert beschlossen.
 
 ### OQ-012: Songfassungen und Revisionen
 
-**Frage:** Werden unterscheidbare Songfassungen, eine Änderungshistorie oder
-beides benötigt?
+**Entscheidungsstatus:** Entschieden durch die Produktentscheidung aus
+GitHub-Issue #5.
 
-**Optionen:** nur benannte Fassungen; nur nachvollziehbare Revisionen; Fassungen
-mit eigener Revisionierung.
+**Produktentscheidung:** Ein Song besitzt unterscheidbare Songfassungen. Jede
+Songfassung führt ihre eigene Folge nachvollziehbarer Revisionen. Benutzer,
+Gruppen und Setlists wählen für ihre zulässigen Referenzen zwischen Rolling
+Reference auf die aktuelle Revision und Pinned Reference auf eine bestimmte
+Revision.
 
-**Auswirkungen:** Inhaltsmodell, Auswahl in Setlists, Konfliktbehandlung und
-Rückkehr zu früheren Ständen.
+**Auswirkungen:** Fassungen, Revisionen und Referenzstrategie müssen eindeutig
+erkennbar sein. Eine neue Revision verändert Rolling References, aber keine
+Pinned References. Setlists kopieren den referenzierten Songinhalt nicht. Das
+legt weder Speichertechnik noch Datenbankschema fest.
 
 ### OQ-013: Historisierung oder Versionierung von Setlists
 
-**Frage:** Müssen Setlists historisiert oder ausdrücklich versioniert werden?
+**Entscheidungsstatus:** Entschieden durch die Produktentscheidung aus
+GitHub-Issue #5.
 
-**Optionen:** nur aktueller Stand mit Änderungsnachweis; unveränderliche
-Freigabestände; vollständige Versionierung.
+**Produktentscheidung:** Eine Setlist besitzt genau einen aktuellen Stand und
+eine vollständige Änderungshistorie. Sie wird nicht in parallel auswählbaren
+Versionen geführt. Für einen unabhängigen neuen Planungsstand wird die Setlist
+kopiert; die Kopie besitzt eigenes Eigentum und eine eigene Änderungshistorie.
+Die referenzierten Songinhalte werden dabei nicht kopiert.
 
-**Auswirkungen:** Nachvollziehbarkeit bei Auftritten, Offlineabgleich,
-Speicherbedarf und Bedienaufwand.
+**Auswirkungen:** Frühere Änderungen bleiben nachvollziehbar, während die
+aktuelle Setlist eindeutig bleibt. Eigentümer ist ein Benutzer oder eine Gruppe;
+bei Gruppeneigentum richtet sich die Bearbeitung nach den wirksamen
+Gruppenrollen. Offlineabgleich, Speicherbedarf und Bedienung müssen die
+vollständige Historie berücksichtigen, ohne ein technisches Verfahren
+festzulegen.
 
 ### OQ-014: Export von Dokumenten und Annotationen
 
