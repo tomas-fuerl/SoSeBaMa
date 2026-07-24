@@ -31,7 +31,11 @@ in [AGENTS.md](AGENTS.md).
 - [Qualitätsanforderungen](docs/product/QUALITY-ATTRIBUTES.md)
 - [Produktbezogene Sicherheitsanforderungen](docs/product/SECURITY-REQUIREMENTS.md)
 - [Produktglossar](docs/product/GLOSSARY.md)
-- [Offene Produktfragen](docs/product/OPEN-QUESTIONS.md)
+- [Produktfragen und Entscheidungen](docs/product/OPEN-QUESTIONS.md)
+
+## Fachliche Architekturprinzipien
+
+- [Inhalts-, Versions- und Referenzmodell](docs/architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
 
 Die Produktdokumentation konkretisiert fachliche Anforderungen, ohne offene
 Eigentümerentscheidungen oder eine Technologieauswahl vorwegzunehmen.

@@ -5,8 +5,8 @@
 Dieses Dokument konkretisiert die Produktvision aus GitHub-Issue #3. Es
 beschreibt das fachliche Ziel von SoSeBaMa, ohne Architektur, Technologie oder
 Betriebsprodukt festzulegen. Verbindliche Begriffe stehen im
-[Glossar](GLOSSARY.md); noch nicht entschiedene Punkte in den
-[offenen Fragen](OPEN-QUESTIONS.md).
+[Glossar](GLOSSARY.md); offene und abgeschlossene Produktentscheidungen in den
+[Produktfragen](OPEN-QUESTIONS.md).
 
 ## Produktname
 
@@ -39,9 +39,10 @@ Die fachlichen Rollen und ihre Grenzen sind in
 SoSeBaMa stellt einen verständlichen, zentral verwalteten Arbeitsbereich für
 Songs, zugehörige Dokumente und Setlists bereit. Berechtigte Benutzer können
 relevante Inhalte gezielt offline vorbereiten und deren Speicher-, Änderungs-
-und Synchronisationszustand erkennen. Originaldokumente bleiben erhalten;
-Annotationen und bearbeitbare Inhalte werden kontrolliert und nachvollziehbar
-behandelt.
+und Synchronisationszustand erkennen. Inhalte besitzen genau ein Original und
+werden über Freigaben, Setlists sowie persönliche oder Gruppen-Overlays
+referenziert statt kopiert. Annotationen und bearbeitbare Inhalte werden
+kontrolliert und nachvollziehbar behandelt.
 
 ## Produktprinzipien
 
@@ -50,12 +51,14 @@ behandelt.
 2. **Offline mit sichtbarem Zustand:** Ausgewählte Inhalte sind offline nutzbar;
    lokaler Stand, ausstehende Änderungen, Fehler und Konflikte bleiben
    verständlich sichtbar.
-3. **Originale schützen:** Annotation oder Bearbeitung zerstört kein
-   Originaldokument unbemerkt.
+3. **Ein Original, viele Referenzen:** Ein Inhalt besitzt genau ein Original.
+   Freigaben, Setlists und Overlays referenzieren dieses Original oder eine
+   festgelegte Revision, ohne gruppenspezifische Inhaltskopien zu erzeugen.
 4. **Musikalische Nutzung zuerst:** PDF-Anzeige, Touch- und Stiftannotation,
    Akkorddarstellung, Transposition, Autoscroll und Setlists unterstützen Probe
    und Auftritt.
-5. **Kontrollierte Zusammenarbeit:** Mehrere Benutzer arbeiten mit fachlich
+5. **Kontrollierte Zusammenarbeit:** Eigentum, Sichtbarkeit und Berechtigungen
+   bleiben getrennt. Mehrere Benutzer und Gruppen arbeiten mit fachlich
    begrenzten Rechten und nachvollziehbarem Rechteentzug.
 6. **Anbieterunabhängige Inhalte:** Text- und Akkordinhalte bleiben unabhängig
    von einem bestimmten Drittanbieter verwaltbar.
@@ -69,6 +72,10 @@ behandelt.
    Benutzer ohne tiefes technisches Vorwissen.
 10. **Technologie folgt Anforderungen:** Technische Entscheidungen werden erst
     nach dokumentierter, ergebnisoffener Bewertung getroffen.
+
+Das verbindliche fachliche Modell für Eigentum, Freigaben, Overlays,
+Songfassungen, Revisionen und Setlisten steht im
+[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md).
 
 ## Abgrenzung
 
@@ -93,8 +100,8 @@ Der Produkterfolg wird daran bewertet, ob:
   fortgesetzt werden können,
 - Benutzer Offline-, Synchronisations- und Konfliktzustände korrekt erkennen
   und behandeln können,
-- Originaldokumente und fachliche Berechtigungsgrenzen nachweislich erhalten
-  bleiben,
+- Originale, Referenzen, Overlays, Eigentum und fachliche
+  Berechtigungsgrenzen nachweislich konsistent bleiben,
 - die Qualitäts- und Sicherheitsanforderungen reproduzierbar verifiziert sind,
 - eine berechtigte Person Betrieb und Nutzung ohne implizites Spezialwissen
   nachvollziehen kann.
