@@ -52,11 +52,19 @@ Overlays und Berechtigungen. Eine Gruppe kann Inhalte und Setlists besitzen.
 Die genaue technische Abbildung sowie das Verhältnis zu Band und Arbeitsbereich
 werden dadurch nicht festgelegt.
 
+### Gruppenadministrator
+
+Eine fachliche Gruppenrolle, die gruppenpublizierte Inhalte im ausdrücklich
+erlaubten Umfang verwaltet und spätere Änderungen ihrer Sichtbarkeit oder
+Gruppenzuordnung nachvollziehbar genehmigt oder ablehnt. Die Rolle vermittelt
+keine technischen Betriebsrechte.
+
 ### Plattform
 
-SoSeBaMa als fachlicher Eigentümer eines freiwillig übertragenen Inhalts. Der
-Begriff bezeichnet keine technische Betriebsidentität und erteilt dem
-technischen Betrieb keine impliziten Inhaltsrechte.
+SoSeBaMa als fachlicher Eigentümer eines freiwillig übertragenen Inhalts. Ein
+zuvor privater Inhalt bleibt als privater Inhalt des Plattformeigentümers
+privat. Der Begriff bezeichnet keine technische Betriebsidentität und erteilt
+dem technischen Betrieb keine impliziten Inhaltsrechte.
 
 ### Inhalt
 
@@ -80,21 +88,52 @@ Berechtigungen getrennt.
 Der Benutzer, die Gruppe oder die Plattform, die das [Eigentum](#eigentum) an
 einem Inhalt trägt und ihn im Rahmen der wirksamen Berechtigungen verwaltet.
 
+### Ersteller
+
+Der Benutzer, der einen Inhalt oder ein Overlay ursprünglich angelegt hat. Der
+Ersteller muss nicht der aktuelle Eigentümer oder der persönlich zugeordnete
+Benutzer sein. Aus der Erstellung entstehen keine nicht ausdrücklich
+vergebenen Verwaltungsrechte.
+
+### Zugeordneter Benutzer
+
+Der Benutzer, für den ein persönliches Overlay geführt wird. Die Zuordnung ist
+keine Aussage über den Eigentümer des referenzierten Originals, den Ersteller
+des Overlays oder dessen Sichtbarkeit und Bearbeitungsberechtigungen.
+
 ### Sichtbarkeit
 
 Die fachliche Festlegung, wer einen Inhalt finden oder sehen darf. Sichtbarkeit
-allein erteilt kein Änderungsrecht und überträgt kein Eigentum.
+allein erteilt kein Änderungsrecht und überträgt kein Eigentum. Neue Inhalte
+sind ohne abweichende wirksame Benutzervoreinstellung privat. Sichtbarkeit und
+Overlay-Ziel sind getrennte Dimensionen.
 
 ### Berechtigung
 
 Die ausdrücklich erlaubte Aktion einer Partei an einem sichtbaren Inhalt. Eine
 Berechtigung kann durch Rolle, Gruppe und inhaltsbezogene Freigabe begrenzt sein.
 
+### Bearbeitungsberechtigung
+
+Eine Berechtigung für eine konkret benannte Verwaltungsaktion wie Bearbeiten,
+Revision erstellen, Sichtbarkeitsänderung auslösen oder beantragen, Freigabe
+verwalten, Archivieren, Löschen oder
+Mitverantwortliche zuweisen. Eine allgemeine Gruppenrolle ersetzt keine
+inhaltsbezogene Einschränkung durch den Eigentümer.
+
 ### Freigabe
 
 Die bewusste Zuordnung von Sichtbarkeit und Berechtigungen für eine Partei. Ein
 Inhalt kann gleichzeitig mehreren Gruppen freigegeben und öffentlich sichtbar
-sein, ohne dass sich sein Eigentümer ändert.
+sein, ohne dass sich sein Eigentümer ändert. Nach einer Gruppenpublikation
+benötigen spätere Änderungen der Sichtbarkeit oder Gruppenzuordnung die
+nachvollziehbare Zustimmung eines Gruppenadministrators.
+
+### Gruppenpublizierter Inhalt
+
+Ein Inhalt, der für mindestens eine Gruppe sichtbar publiziert wurde. Seine
+Verwaltung richtet sich nach getrennten Inhaltsrechten; Änderungen seiner
+Sichtbarkeit oder Gruppenzuordnung unterliegen der Gruppenadmin-Zustimmung.
 
 ### Referenz
 
@@ -133,6 +172,13 @@ Eine neue Revision verändert das von dieser Referenz gelieferte Ergebnis.
 Eine Referenz auf eine ausdrücklich gewählte Revision einer Songfassung. Eine
 neue Revision verändert das Ziel dieser Referenz nicht.
 
+### Setlist-Standardstrategie
+
+Die Vorgabe einer Setlist, ob ihre erbenden Songreferenzen immer die aktuelle
+Revision oder stabile beziehungsweise festgesetzte Revisionen verwenden. Jeder
+Song erbt die Vorgabe oder überschreibt sie durch eine Rolling beziehungsweise
+ausdrücklich Pinned Reference. Keine Variante kopiert den Songinhalt.
+
 ### Dokument
 
 Ein einem Song zugeordneter Inhalt, beispielsweise ein PDF, Textblatt oder
@@ -161,8 +207,10 @@ werden. Ein Overlay verändert oder kopiert das Original nicht.
 
 ### Persönliches Overlay
 
-Ein Overlay mit persönlichen Zusatzinformationen eines Benutzers. Seine
-Sichtbarkeit und Berechtigungen werden unabhängig vom Original behandelt.
+Ein Overlay mit Zusatzinformationen, das einem Benutzer persönlich zugeordnet
+ist. „Persönlich“ bezeichnet die Zuordnung, nicht automatisch Eigentum oder
+Erstellung. Sichtbarkeit und Bearbeitungsberechtigungen werden unabhängig vom
+referenzierten Original behandelt.
 
 ### Gruppen-Overlay
 
@@ -178,7 +226,9 @@ Gruppen-Overlay zu einem referenzierten Dokument.
 ### Setlist
 
 Eine geordnete Auswahl von Songreferenzen für einen fachlichen Zweck,
-insbesondere eine Probe oder einen Auftritt. Eine Setlist besitzt genau einen
+insbesondere eine Probe oder einen Auftritt. Sie besitzt eine
+[Setlist-Standardstrategie](#setlist-standardstrategie), deren Vorgabe jeder
+Song erbt oder ausdrücklich überschreibt. Eine Setlist besitzt genau einen
 aktuellen Stand und eine vollständige Änderungshistorie. Ein unabhängiger neuer
 Stand entsteht durch Kopieren statt durch Setlistversionierung.
 
