@@ -24,9 +24,35 @@ Synchronisationsprodukt fest.
 | SEC-010 | Rechteentzug muss zentral wirksam werden, weitere Synchronisation verhindern und lokale Offlineberechtigungen kontrolliert beenden. | Online- und später wieder verbundene Offline-Geräte können entzogene Rechte nicht weiter ausüben; offene Änderungen werden nicht still übernommen. |
 | SEC-011 | Für Geräteverlust muss ein kontrollierter Weg bestehen, die weitere Nutzung geschützter Sitzungen und Offlineinhalte zu begrenzen. | Der dokumentierte Verlustfall sperrt weitere zulässige Nutzung entsprechend der Entscheidungen aus `OQ-007` und `OQ-008`. |
 | SEC-012 | Sicherheitsrelevante Ereignisse müssen manipulationserschwerend, datensparsam und für berechtigte Prüfungen nachvollziehbar protokolliert werden. | Rechteänderung, abgelehnter geschützter Zugriff, relevante Importablehnung und Sitzungsereignis sind ohne Secrets oder unnötige Inhaltsdaten prüfbar; Umfang und Frist entscheidet `OQ-019`. |
-| SEC-013 | Secrets, Zugangsdaten und private Schlüssel dürfen weder an Clients ausgeliefert noch im Repository oder in Logs gespeichert werden. | Repository-, Build-, Client- und Logprüfung findet keine solchen Werte; neutrale Platzhalter bleiben eindeutig erkennbar. |
+| SEC-013 | Serverseitige Secrets, private Schlüssel, primäre Benutzerzugangsdaten, Sitzungs- oder Berechtigungsnachweise und nicht vertrauliche öffentliche Konfiguration müssen nach den folgenden verbindlichen Kategorien getrennt behandelt werden. | Prüfungen weisen nach, dass serverseitige Secrets und private Schlüssel nicht an Clients gelangen, primäre Benutzerzugangsdaten weder zurückgegeben noch protokolliert oder dauerhaft im Client gespeichert werden und ausgegebene Sitzungs- oder Berechtigungsnachweise minimal berechtigt, geschützt, begrenzt und widerrufbar sind. Repository, Logs, öffentliche Fehler und Beispiele bleiben frei von vertraulichen Werten; öffentliche Konfiguration wird als nicht vertraulich verifiziert. |
 | SEC-014 | PRD darf keine Debugports, Debugtunnel oder Debugschnittstellen besitzen. Produktive Diagnose muss über vorgesehene, minimal berechtigte Betriebsinformationen erfolgen. | Netzwerk- und Betriebsprüfung weist ausschließlich freigegebene PRD-Zugänge nach; ein Debugweg ist nicht vorhanden. |
 | SEC-015 | Fehlermeldungen müssen Benutzern eine sichere nächste Handlung nennen, ohne Secrets, interne Adressen, technische Stapel, Dateipfade oder unberechtigte Inhaltsdetails offenzulegen. | Repräsentative Fehlerfälle zeigen handlungsorientierte Meldungen; interne Detailmuster bleiben in Client und öffentlich sichtbaren Logs aus. |
+
+### Verbindliche Kategorien zu SEC-013
+
+- **Serverseitige Secrets:** Nicht öffentliche Werte, die ausschließlich für
+  serverseitige oder betriebliche Zwecke bestimmt sind, werden niemals an
+  Clients ausgeliefert.
+- **Private Schlüssel:** Privates Schlüsselmaterial wird niemals an Clients
+  ausgeliefert und bleibt in der dafür freigegebenen serverseitigen oder
+  betrieblichen Sicherheitsgrenze.
+- **Primäre Benutzerzugangsdaten:** Die zur unmittelbaren Bestätigung einer
+  Benutzeridentität eingegebenen Zugangsdaten werden nicht an den Benutzer
+  zurückgegeben, nicht protokolliert und nicht dauerhaft im Client gespeichert.
+- **Sitzungs- oder Berechtigungsnachweise:** Ein für die weitere zulässige
+  Nutzung erforderlicher Nachweis darf kontrolliert an einen Client ausgegeben
+  werden. Er muss minimal berechtigt, gegen unberechtigten Zugriff geschützt,
+  zeitlich oder ereignisbezogen begrenzt und widerrufbar sein.
+- **Nicht vertrauliche öffentliche Konfiguration:** Ausdrücklich als öffentlich
+  bewertete Konfiguration darf Clients sowie öffentlichen Dokumentations- oder
+  Repositoryinhalten bereitgestellt werden. Sie darf kein Secret, keinen
+  privaten Schlüssel, keine primären Benutzerzugangsdaten und keinen gültigen
+  Sitzungs- oder Berechtigungsnachweis enthalten oder versteckte Rechte
+  vermitteln.
+
+Repository, Logs, öffentliche Fehlermeldungen und Dokumentationsbeispiele
+enthalten keine vertraulichen Werte. Diese Anforderung legt weder ein konkretes
+Authentifizierungsprodukt noch ein Token-, Cookie- oder Speicherverfahren fest.
 
 ## Datenschutz- und Inhaltsgrundsätze
 

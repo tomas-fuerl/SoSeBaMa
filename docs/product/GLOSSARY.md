@@ -26,8 +26,8 @@ Mitgliedschaft allein legt noch keine konkreten Änderungsrechte fest.
 ### Band
 
 Die fachliche Gruppe von Musikern oder das Ensemble, dessen Repertoire und
-Auftritte durch SoSeBaMa unterstützt werden. Ob Band und Arbeitsbereich immer
-eins zu eins zugeordnet sind, ist in `OQ-002` offen.
+Auftritte durch SoSeBaMa unterstützt werden. Die fachliche Zuordnung von Band
+und Arbeitsbereich ist in `OQ-021` offen.
 
 ### Arbeitsbereich
 

@@ -6,25 +6,23 @@ Dieses Dokument konkretisiert GitHub-Issue #3. Jede funktionale Anforderung
 besitzt eine stabile `FR-xxx`-Kennung. Eine Kennung wird nicht wiederverwendet;
 ersetzte oder verworfene Anforderungen bleiben nachvollziehbar markiert.
 
-„MVP“ bezeichnet den verbindlichen Mindestrahmen für einen produktiv sinnvollen
-Stand. Die genaue Auswahl und Lieferreihenfolge der darunter beschriebenen
-MVP-Kandidaten ist mit `OQ-005` noch offen. Die Kennzeichnung als Kandidat
-entscheidet daher nicht eigenständig über Aufnahme in den ersten Lieferstand.
+Jeder produktiv nutzbare SoSeBaMa-MVP besteht aus zwei Ebenen:
 
-## MVP
+1. der verbindlichen produktweiten Basis `FR-001` bis `FR-007`, die immer
+   vollständig erfüllt sein muss,
+2. einem zusätzlichen fachlichen Funktionsschnitt aus den nachfolgend
+   beschriebenen Kandidaten.
 
-Der konkrete erste MVP-Zuschnitt ist nicht entschieden. `OQ-005` klärt, welche
-Kandidaten zusammen den kleinsten produktiv sinnvollen Stand bilden. Dieses
-Arbeitspaket weist daher keine einzelne Funktion eigenständig als endgültigen
-MVP-Bestandteil aus.
+`OQ-005` entscheidet ausschließlich über diesen zusätzlichen fachlichen
+Funktionsschnitt und dessen Lieferreihenfolge. Die Entscheidung kann keine
+Anforderung der verbindlichen Basis abwählen oder auf eine spätere Erweiterung
+verschieben.
 
-## Noch nicht entschieden – Kandidaten für den ersten MVP
+## Verbindliche Basis jedes produktiven MVP
 
-Die folgenden Funktionen gehören zum vorgesehenen Produktumfang. Welche davon
-im ersten MVP enthalten sein müssen, entscheidet `OQ-005`; abhängige
-Detailentscheidungen sind jeweils genannt.
-
-### Verbindliche produktweite Basis
+`FR-001` bis `FR-007` sind weder optional noch MVP-Kandidaten. Jeder
+produktive MVP muss sie nachweisbar erfüllen, unabhängig davon, welche
+fachlichen Funktionen durch `OQ-005` zusätzlich ausgewählt werden.
 
 | ID | Anforderung | Verifikation |
 | --- | --- | --- |
@@ -35,6 +33,12 @@ Detailentscheidungen sind jeweils genannt.
 | FR-005 | Offline-, Speicher-, Synchronisations-, Fehler- und Konfliktzustände müssen verständlich sichtbar sein. | Ein Benutzer kann in den zugehörigen Kernabläufen Zustand und erforderliche nächste Handlung bestimmen. |
 | FR-006 | Annotation oder Bearbeitung darf ein Originaldokument nicht unbemerkt zerstören. | Original und zusätzliche oder bearbeitete Inhalte bleiben unterscheidbar; ein unbeabsichtigtes Überschreiben wird verhindert. |
 | FR-007 | Import muss benutzergesteuert erfolgen und darf keine automatisierte unkontrollierte Inhaltsübernahme auslösen. | Jeder Import beginnt mit einer bewussten Benutzeraktion und zeigt Ergebnis oder Fehler eindeutig an. |
+
+## Fachliche Kandidaten für den ersten MVP-Funktionsschnitt
+
+`FR-008` bis `FR-037` gehören zum vorgesehenen Produktumfang. `OQ-005`
+entscheidet, welche dieser zusätzlichen Anforderungen den ersten
+Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
 
 ### Benutzer und Zusammenarbeit
 
