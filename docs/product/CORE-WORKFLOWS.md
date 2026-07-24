@@ -50,14 +50,20 @@ Umsetzung oder Oberflächengestaltung.
   im richtigen Arbeitsbereich.
 - **Beteiligte Rollen:** Inhaltsverantwortliche; lesende Rollen nach späterer
   Freigabe.
-- **Normaler Ablauf:** Der Benutzer erfasst Titel und erforderliche Metadaten,
-  prüft den Inhalt und speichert den Song bewusst.
-- **Erwartetes Ergebnis:** Der Song besitzt genau ein Original und einen
-  eindeutigen Eigentümer. Fassungen, Revisionen, Freigaben, Overlays und
-  Setlists können ihn referenzieren, ohne ein weiteres Original anzulegen.
-- **Fehler und Ausnahmen:** Fehlende Pflichtangaben, unzulässige Werte oder ein
-  zwischenzeitlich entzogener Zugriff führen zu einer verständlichen Ablehnung
-  ohne stillen Teilstand.
+- **Normaler Ablauf:** Der Benutzer erfasst Titel und erforderliche Metadaten.
+  SoSeBaMa wendet die persönliche Standardsichtbarkeit an; der Benutzer darf
+  sie für diese Erstellung überschreiben. Eine Gruppe ist nur mit wirksamer
+  Veröffentlichungsberechtigung auswählbar. Danach prüft und speichert der
+  Benutzer den Song bewusst.
+- **Erwartetes Ergebnis:** Ohne abweichende wirksame Benutzervoreinstellung ist
+  der Song privat. Sichtbarkeit und Eigentum sind getrennt. Der Song besitzt
+  genau ein Original und einen eindeutigen Eigentümer. Fassungen,
+  Revisionen, Freigaben, Overlays und Setlists können ihn referenzieren, ohne
+  ein weiteres Original anzulegen.
+- **Fehler und Ausnahmen:** Fehlende Pflichtangaben, unzulässige Werte, eine
+  nicht mehr erlaubte Gruppe als Ziel der Standardsichtbarkeit oder ein
+  zwischenzeitlich entzogener Zugriff führen zu einer verständlichen Ablehnung ohne stille
+  Gruppenpublikation oder stillen Teilstand.
 - **Security und Offline:** Nur berechtigte Rollen dürfen gemeinsam sichtbare
   Songs anlegen. Offlineanlage ist von `OQ-006` abhängig.
 
@@ -93,9 +99,9 @@ Umsetzung oder Oberflächengestaltung.
 - **Fehler und Ausnahmen:** Nicht unterstützte Eingabe, fehlende Rechte,
   Speicherfehler oder konkurrierende Änderung werden sichtbar; das Original
   bleibt erhalten.
-- **Security und Offline:** Sichtbarkeit und Overlay-Berechtigung werden bei
-  jedem Zugriff geprüft. Die Standardauswahl des Overlays ist in `OQ-003`,
-  Offlinebearbeitung in `OQ-006` offen.
+- **Security und Offline:** Overlay-Ziel, Inhaltssichtbarkeit, Eigentümer,
+  Ersteller, zugeordneter Benutzer und Bearbeitungsberechtigung bleiben
+  getrennt. Offlinebearbeitung ist in `OQ-006` offen.
 
 ## WF-006: Text- oder Akkordblatt anlegen oder importieren
 
@@ -154,13 +160,17 @@ Umsetzung oder Oberflächengestaltung.
 - **Beteiligte Rollen:** Setlist-Verantwortliche, Inhaltsverantwortliche und
   berechtigte lesende Mitglieder.
 - **Normaler Ablauf:** Der Verantwortliche legt die Setlist im Eigentum eines
-  Benutzers oder einer Gruppe an, ergänzt oder entfernt Songreferenzen, wählt je
-  Referenz Rolling oder Pinned, ordnet sie und gibt den aktuellen Stand frei.
-  Für einen unabhängigen Planungsstand kopiert er die Setlist bewusst.
+  Benutzers oder einer Gruppe an und wählt immer aktuell oder stabil
+  beziehungsweise festgesetzt als Standardstrategie. Er ergänzt oder entfernt
+  Songreferenzen und ordnet sie. Hinzugefügte Songs erben diese Strategie.
+  Für einzelne Songs darf er Rolling oder eine ausdrücklich Pinned Reference
+  als Überschreibung wählen. Danach ordnet und veröffentlicht er den aktuellen
+  Stand. Für einen unabhängigen Planungsstand kopiert er die Setlist bewusst.
 - **Erwartetes Ergebnis:** Genau ein aktueller Stand, die vollständige
-  Änderungshistorie, Eigentum, Referenzstrategie, Reihenfolge, Freigabe- und
-  Synchronisationszustand sind eindeutig. Eine Kopie besitzt eine eigene
-  Historie und kopiert keine Songinhalte.
+  Änderungshistorie, Eigentum, Setliststandard, Vererbung, jede
+  Eintragsüberschreibung, Reihenfolge, Freigabe- und Synchronisationszustand
+  sind eindeutig. Eine Kopie besitzt eine eigene Historie und kopiert keine
+  Songinhalte.
 - **Fehler und Ausnahmen:** Fehlende Songrechte, ungültige Referenzen, entfernte
   Inhalte, konkurrierende Änderung oder unvollständige Freigabe werden sichtbar
   und nicht als vollständiger Stand ausgegeben.
@@ -267,38 +277,48 @@ Umsetzung oder Oberflächengestaltung.
   `OQ-008` offen. Bis zur Entscheidung darf keine Umsetzung still einen
   dauerhaften Offlinezugriff annehmen.
 
-## WF-016: Inhalt freigeben und Zusammenarbeit steuern
+## WF-016: Gruppenpublizierten Inhalt verwalten und Freigaben ändern
 
-- **Ausgangszustand:** Ein Inhalt besitzt genau ein Original und einen
-  eindeutigen Eigentümer.
-- **Beteiligte Rollen:** Eigentümer des Inhalts, berechtigte
-  Inhaltsverantwortliche und betroffene Gruppenmitglieder.
-- **Normaler Ablauf:** Der Eigentümer verwaltet Sichtbarkeit und Berechtigungen
-  getrennt, erteilt oder entzieht Freigaben für eine oder mehrere Gruppen und
-  entscheidet je Inhalt, ob Gruppen neue Revisionen erstellen dürfen.
-- **Erwartetes Ergebnis:** Alle Freigaben referenzieren dasselbe Original. Der
-  Inhalt kann mehreren Gruppen freigegeben und öffentlich sichtbar sein, ohne
-  dass sich Eigentum oder nicht ausdrücklich erteilte Rechte ändern.
-- **Fehler und Ausnahmen:** Eine Gruppenaktion ohne Eigentümerfreigabe oder ohne
-  wirksames Gruppenrecht wird abgelehnt. Der Entzug einer Freigabe verändert
-  andere Freigaben, Referenzen und das Original nicht.
-- **Security und Offline:** Jede Sicht- und Änderungsaktion wird gegen die
-  aktuell wirksamen Berechtigungen geprüft. Offlinefolgen eines Entzugs folgen
-  `WF-014` und `WF-015`.
+- **Ausgangszustand:** Ein Inhalt besitzt genau ein Original, einen eindeutigen
+  Eigentümer und ist in mindestens einer Gruppe publiziert.
+- **Beteiligte Rollen:** Eigentümer, ursprünglicher Ersteller,
+  Gruppenadministration sowie weitere Gruppenrollen mit ausdrücklicher
+  Inhaltsberechtigung.
+- **Normaler Ablauf:** Die handelnde Person wählt genau eine erlaubte Aktion:
+  bearbeiten, Revision erstellen, Sichtbarkeitsänderung auslösen oder
+  beantragen, Freigaben verwalten, archivieren, löschen oder Mitverantwortliche
+  zuweisen. Bei einer späteren Änderung von Sichtbarkeit oder Gruppenzuordnung
+  prüft und bestätigt ein Gruppenadministrator den Antrag nachvollziehbar.
+- **Erwartetes Ergebnis:** Alle Freigaben referenzieren dasselbe Original.
+  Eigentum, Sichtbarkeit und Rechte bleiben getrennt. Nur die genehmigte Aktion
+  wird wirksam; andere Gruppenfreigaben bleiben unverändert.
+- **Fehler und Ausnahmen:** Eine Aktion ohne konkretes Gruppenrecht oder im
+  Widerspruch zu einer inhaltsbezogenen Eigentümerbeschränkung wird abgelehnt. Eine
+  Rücknahme, externe
+  Veröffentlichung, weitere Gruppenfreigabe oder ein Gruppenwechsel ohne
+  Gruppenadmin-Zustimmung bleibt unwirksam. Für Revisionen müssen
+  Eigentümererlaubnis und Gruppenrecht gleichzeitig vorliegen.
+- **Security und Offline:** Berechtigung und erforderliche Zustimmung werden
+  aktuell geprüft und nachvollziehbar festgehalten. Offlinefolgen eines Entzugs
+  folgen `WF-014` und `WF-015`.
 
-## WF-017: Benutzer oder Gruppe löschen und Eigentum behandeln
+## WF-017: Benutzer oder Gruppe löschen und Eigentum übertragen
 
-- **Ausgangszustand:** Ein Benutzer oder eine Gruppe soll gelöscht werden;
-  private, gruppeneigene oder freigegebene Inhalte können betroffen sein.
+- **Ausgangszustand:** Ein Benutzer oder eine Gruppe soll gelöscht werden oder
+  ein Eigentümer will einen Inhalt freiwillig an die Plattform übertragen.
+  Private, gruppeneigene oder freigegebene Inhalte können betroffen sein.
 - **Beteiligte Rollen:** Zuständige Administration, betroffener Benutzer und
   gegebenenfalls der bestimmte Nachfolger.
-- **Normaler Ablauf:** SoSeBaMa zeigt die Eigentumsfolgen vor Bestätigung. Bei
-  Benutzerlöschung werden private Inhalte entfernt und Gruppeninhalte an die
-  Gruppe übertragen. Bei Gruppenlöschung wird der verantwortliche
-  Administrator oder ein ausdrücklich bestimmter Nachfolger Eigentümer.
+- **Normaler Ablauf:** SoSeBaMa zeigt Eigentums- und Sichtbarkeitsfolgen vor
+  Bestätigung. Bei Benutzerlöschung werden private Inhalte entfernt und
+  Gruppeninhalte an die Gruppe übertragen. Bei Gruppenlöschung wird der
+  verantwortliche Administrator oder ein ausdrücklich bestimmter Nachfolger
+  Eigentümer. Bei freiwilliger Plattformübertragung wechselt nur das Eigentum;
+  ein privater Inhalt bleibt privat.
 - **Erwartetes Ergebnis:** Jeder verbleibende Inhalt besitzt genau einen
   eindeutigen Eigentümer; zu entfernende private Inhalte sind entfernt und jede
-  Übertragung ist nachvollziehbar.
+  Übertragung ist nachvollziehbar. Ein an die Plattform übertragener privater
+  Inhalt ist ein privater Inhalt des Plattformeigentümers.
 - **Fehler und Ausnahmen:** Eine Gruppenlöschung ohne bestimmten Nachfolger wird
   abgelehnt. Mehrdeutige Eigentumszuordnung oder unvollständige Übertragung darf
   nicht als erfolgreiche Löschung erscheinen.

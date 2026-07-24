@@ -57,9 +57,10 @@ kontrolliert und nachvollziehbar behandelt.
 4. **Musikalische Nutzung zuerst:** PDF-Anzeige, Touch- und Stiftannotation,
    Akkorddarstellung, Transposition, Autoscroll und Setlists unterstützen Probe
    und Auftritt.
-5. **Kontrollierte Zusammenarbeit:** Eigentum, Sichtbarkeit und Berechtigungen
-   bleiben getrennt. Mehrere Benutzer und Gruppen arbeiten mit fachlich
-   begrenzten Rechten und nachvollziehbarem Rechteentzug.
+5. **Kontrollierte Zusammenarbeit:** Eigentum, Sichtbarkeit und differenzierte
+   Berechtigungen bleiben getrennt. Gruppenpublizierte Inhalte werden nur im
+   ausdrücklich erlaubten Umfang verwaltet; Publikationsänderungen benötigen
+   nachvollziehbare Gruppenadmin-Zustimmung.
 6. **Anbieterunabhängige Inhalte:** Text- und Akkordinhalte bleiben unabhängig
    von einem bestimmten Drittanbieter verwaltbar.
 7. **Benutzergesteuerter Import:** Übernahme erfolgt bewusst, etwa durch

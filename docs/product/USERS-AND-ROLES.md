@@ -19,18 +19,30 @@ verbindlich beschrieben.
 Eigentümer ist keine Rolle, sondern die fachliche Verantwortung für genau einen
 Inhalt. Eigentümer kann ein Benutzer, eine Gruppe oder die Plattform sein. Die
 Eigentümerschaft erteilt anderen Parteien weder Sichtbarkeit noch Rechte und
-wird durch eine Freigabe nicht übertragen.
+wird durch eine Freigabe nicht übertragen. Der Ersteller ist der Benutzer, der
+den Inhalt ursprünglich angelegt hat; er bleibt vom aktuellen Eigentümer
+unterscheidbar.
 
 Eine Gruppe bündelt Benutzer für gemeinsame Sichtbarkeit, Overlays und
 Berechtigungen. Ein Inhalt kann mehreren Gruppen gleichzeitig freigegeben sein.
-Der Eigentümer entscheidet je Inhalt, ob Gruppen neue Revisionen erstellen
-dürfen. Zusätzlich muss die jeweilige Gruppenrolle diese Aktion erlauben. Eine
-Erlaubnis ohne passendes Gruppenrecht und ein Gruppenrecht ohne
-Eigentümererlaubnis genügen jeweils nicht.
+Ein gruppenpublizierter Inhalt darf durch seinen ursprünglichen Ersteller,
+Gruppenadministratoren und weitere Gruppenrollen mit ausdrücklicher
+Inhaltsberechtigung verwaltet werden. Bearbeiten, Revisionserstellung,
+Sichtbarkeitsantrag, Freigabeverwaltung, Archivieren, Löschen sowie die Zuweisung
+von Mitverantwortlichen oder berechtigten Rollen sind getrennte Rechte.
+
+Gruppenrollen ersetzen keine inhaltsbezogene Einschränkung durch den
+Eigentümer. Für neue Revisionen müssen sowohl die Erlaubnis des Eigentümers für
+diesen Inhalt als auch das konkrete Gruppenrecht vorliegen. Spätere Änderungen
+der Sichtbarkeit oder Gruppenzuordnung eines gruppenpublizierten Inhalts
+benötigen zusätzlich die nachvollziehbare Zustimmung eines
+Gruppenadministrators. Der genaue Zuschnitt weiterer Gruppenrollen bleibt in
+`OQ-004` offen; eine Rollenmatrix wird nicht vorweggenommen.
 
 Bei Benutzer- und Gruppenlöschung gelten die verbindlichen Eigentumsübergänge
 aus `FR-059` und `WF-017`. Eine freiwillige Eigentumsübertragung an die
-Plattform bleibt möglich.
+Plattform bleibt möglich; ein zuvor privater Inhalt bleibt dabei privat und
+wird als privater Inhalt des Plattformeigentümers geführt.
 
 ## Band- beziehungsweise Arbeitsbereichsadministration
 
@@ -38,11 +50,13 @@ Plattform bleibt möglich.
 Arbeitsbereich verwalten.
 
 **Typische Aufgaben:** Benutzer einladen, Mitgliedschaften deaktivieren,
-fachliche Rollen zuweisen oder entziehen und gemeinsam sichtbare Inhalte
-überblicken.
+fachliche Rollen sowie differenzierte Inhaltsrechte zuweisen oder entziehen,
+gruppenpublizierte Inhalte überblicken und zustimmungspflichtige Änderungen an
+Sichtbarkeit oder Gruppenzuordnung prüfen.
 
-**Benötigte Rechte:** Mitglieder- und Rollenzuordnung des eigenen
-Arbeitsbereichs verwalten sowie erforderliche Verwaltungsinformationen lesen.
+**Benötigte Rechte:** Mitglieder-, Rollen- und ausdrücklich vorgesehene
+Inhaltsberechtigungen der eigenen Gruppe verwalten sowie Änderungen der
+Sichtbarkeit oder Gruppenzuordnung nachvollziehbar genehmigen oder ablehnen.
 
 **Nicht erlaubt:** Rechte anderer Arbeitsbereiche vergeben, technische
 Betriebsrechte ableiten, Schutzgrenzen umgehen oder Inhalte ohne fachliche
@@ -57,12 +71,16 @@ genaue Frist und Löschstrategie sind in `OQ-007` und `OQ-008` offen.
 **Ziele:** Für Probe oder Auftritt geeignete, nachvollziehbare Setlists
 bereitstellen.
 
-**Typische Aufgaben:** Setlists erstellen, Songs ergänzen oder entfernen,
-Reihenfolge pflegen, Freigabezustand setzen und Offlinevorbereitung prüfen.
+**Typische Aufgaben:** Setlists erstellen, die Standardstrategie immer aktuell
+oder stabil beziehungsweise festgesetzt wählen, Songs ergänzen oder entfernen,
+Eintragsstrategien bei Bedarf überschreiben, Reihenfolge pflegen,
+Freigabezustand setzen und Offlinevorbereitung prüfen.
 
 **Benötigte Rechte:** Setlists im eigenen oder im Gruppeneigentum entsprechend
 der wirksamen Gruppenrolle bearbeiten; referenzierte, dafür freigegebene
-Songinformationen und erforderliche Dokumentzustände lesen.
+Songinformationen und erforderliche Dokumentzustände lesen. Eine Änderung des
+Setliststandards oder einer Eintragsüberschreibung benötigt Setlist-
+Bearbeitungsrecht.
 
 **Nicht erlaubt:** Mitgliedschaften verwalten, nicht freigegebene private
 Inhalte verändern oder Berechtigungsprüfungen umgehen.
@@ -75,17 +93,21 @@ freigegebene Setlists bleiben gemäß ihrer eigenen Berechtigung nutzbar.
 **Ziele:** Songs, Fassungen, Dokumente, Text- und Akkordblätter fachlich korrekt
 und nachvollziehbar pflegen.
 
-**Typische Aufgaben:** Metadaten anlegen, Dokumente hinzufügen, Text- oder
-Akkordinhalte bearbeiten, Import auslösen und Sichtbarkeit verwalten.
+**Typische Aufgaben:** Metadaten anlegen, Dokumente hinzufügen, Inhalte
+bearbeiten, Revisionen erstellen, Sichtbarkeitsänderungen auslösen oder
+beantragen, Freigaben
+verwalten, archivieren oder löschen und Mitverantwortliche zuweisen, soweit die
+getrennt erteilten Rechte dies erlauben.
 
-**Benötigte Rechte:** Zugeordnete Inhalte und neue Revisionen im erlaubten
-Umfang erstellen oder ändern, Sichtbarkeit verwalten und zulässige
-Gruppenfreigaben erteilen. Für Gruppenrevisionen sind Eigentümererlaubnis und
-wirksames Gruppenrecht erforderlich.
+**Benötigte Rechte:** Jede Verwaltungsaktion benötigt ihre eigene wirksame
+Inhaltsberechtigung. Für Gruppenrevisionen sind Eigentümererlaubnis und
+Gruppenrecht erforderlich; Änderungen an Sichtbarkeit oder Gruppenzuordnung
+gruppenpublizierter Inhalte benötigen zusätzlich Gruppenadmin-Zustimmung.
 
-**Nicht erlaubt:** Rechte administrieren, Originaldokumente unbemerkt ersetzen,
-fremde private Annotationen verändern oder urheberrechtliche Schutzmaßnahmen
-umgehen.
+**Nicht erlaubt:** Mitgliedschaften oder allgemeine Arbeitsbereichsrollen
+verwalten, nicht ausdrücklich zugewiesene Inhaltsrechte ausüben,
+Originaldokumente unbemerkt ersetzen, fremde private Annotationen verändern
+oder urheberrechtliche Schutzmaßnahmen umgehen.
 
 **Bei Rechteentzug:** Schreibrechte enden. Nachvollziehbar veröffentlichte
 Inhalte bleiben erhalten; private lokale Inhalte folgen der noch zu
@@ -143,8 +165,10 @@ minimal und je Umgebung nach
 
 - Jede geschützte Aktion wird gegen die aktuell wirksame fachliche
   Berechtigung geprüft.
-- Eigentum, Sichtbarkeit und Berechtigungen bleiben getrennt und nachvollziehbar.
-- Persönliche und Gruppen-Overlays bleiben vom referenzierten Original getrennt.
+- Eigentümer, Ersteller, persönlich zugeordneter Benutzer, Sichtbarkeit und
+  Bearbeitungsberechtigung bleiben getrennt und nachvollziehbar.
+- Persönliche und Gruppen-Overlays bleiben vom referenzierten Original getrennt;
+  persönliche Zuordnung ist keine Aussage über dessen Eigentum.
 - Eine höhere Rolle in einem Arbeitsbereich erteilt keine Rechte in einem
   anderen Arbeitsbereich oder im technischen Betrieb.
 - Rechteänderung und -entzug müssen nachvollziehbar sein.
