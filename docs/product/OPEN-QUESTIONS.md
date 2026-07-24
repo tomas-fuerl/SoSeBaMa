@@ -35,40 +35,57 @@ Diese Frage entscheidet ausschließlich über die Anzahl der Arbeitsbereiche je
 Installation; die fachliche Zuordnung von Band und Arbeitsbereich klärt
 `OQ-021`.
 
-### OQ-003: Standardauswahl für neue Overlays
+### OQ-003: Standardsichtbarkeit neuer Inhalte
 
-**Bereits entschieden:** Annotationen und andere Zusatzinformationen werden als
-persönliches oder Gruppen-Overlay getrennt vom Original geführt. Beide
-Overlay-Arten referenzieren dasselbe Original und erzeugen keine Inhaltskopie.
+**Entscheidungsstatus:** Entschieden durch die Produktentscheidung aus
+GitHub-Issue #5 und die Review-Präzisierung in Pull Request #6.
 
-**Offene Frage:** Wird bei einer neuen Zusatzinformation standardmäßig das
-persönliche Overlay, ein zulässiges Gruppen-Overlay oder stets eine bewusste
-Auswahl verwendet?
+**Produktentscheidung:** Neue Inhalte sind standardmäßig privat. Jeder Benutzer
+darf in seinen persönlichen Einstellungen privat, eine bestimmte Gruppe oder
+öffentlich als persönliche Standardsichtbarkeit hinterlegen. Bei jeder
+Erstellung darf diese Voreinstellung überschrieben werden. Eine Gruppe darf nur
+gewählt werden, wenn der Benutzer dort die erforderliche
+Veröffentlichungsberechtigung besitzt. Verliert der Benutzer diese
+Berechtigung, darf die Gruppe nicht weiter als Ziel der Standardsichtbarkeit verwendet werden.
 
-**Optionen:** persönliches Overlay als sicherer Standard; zulässiges
-Gruppen-Overlay für direkte Zusammenarbeit; bewusste Auswahl bei jeder
-Erstellung.
+**Abgrenzung:** Inhaltssichtbarkeit und Ziel eines Overlays sind getrennte
+fachliche Dimensionen. `OQ-003` trifft keine Entscheidung über ein
+Standard-Overlay-Ziel. Eine solche offene Frage wird derzeit nicht benötigt und
+daher nicht unter einer neuen Kennung angelegt.
 
-**Auswirkungen:** Datenschutz, Bedienaufwand, Erwartbarkeit und Risiko
-unbeabsichtigter Veröffentlichung. Die Entscheidung verändert weder das
-Referenzmodell noch Eigentum oder Berechtigungen.
+**Auswirkungen:** Erstellung, persönliche Einstellungen und Rechteentzug müssen
+die wirksame Standardsichtbarkeit eindeutig zeigen. Eine ungültig gewordene
+Gruppe darf keine stille Gruppenpublikation auslösen. Eigentum, Overlay-Ziel und
+Bearbeitungsberechtigungen bleiben unverändert getrennt.
 
-### OQ-004: Detailumfang regulärer Gruppenrechte
+### OQ-004: Detailumfang der Inhaltsverwaltung durch Gruppenrollen
 
-**Bereits entschieden:** Der Eigentümer entscheidet je Inhalt, ob Gruppen neue
-Revisionen erstellen dürfen. Zusätzlich muss die wirksame Gruppenrolle die
-konkrete Aktion erlauben. Keine der beiden Erlaubnisse ersetzt die andere.
+**Bereits entschieden:** In einer Gruppe publizierte Inhalte dürfen durch den
+ursprünglichen Ersteller, Gruppenadministratoren und weitere Gruppenrollen mit
+ausdrücklicher Inhaltsberechtigung verwaltet werden. Bearbeiten, neue Revision,
+Sichtbarkeitsänderung auslösen oder beantragen, Freigabeverwaltung,
+Archivieren, Löschen sowie die Zuweisung von Mitverantwortlichen oder
+berechtigten Rollen sind getrennte Aktionen.
 
-**Offene Frage:** Für welche Inhaltsarten und Gruppenrollen darf der Eigentümer
-die Erstellung neuer Revisionen freigeben?
+Gruppenrollen ersetzen keine inhaltsbezogene Einschränkung durch den
+Eigentümer. Für neue Revisionen müssen Eigentümererlaubnis und konkretes
+Gruppenrecht gleichzeitig vorliegen. Spätere Änderungen der Sichtbarkeit oder
+Gruppenzuordnung eines gruppenpublizierten Inhalts benötigen die
+nachvollziehbare Zustimmung eines Gruppenadministrators.
 
-**Optionen:** nur Gruppen-Overlays; zusätzlich ausgewählte Text- und
-Akkordblätter; alle ausdrücklich für Gruppenrevisionen freigegebenen
-Inhaltsarten.
+**Offene Frage:** Welche weiteren Gruppenrollen dürfen für welche Inhaltsarten
+welche der getrennten Verwaltungsaktionen ausführen, und welche zusätzlichen
+inhaltsbezogenen Grenzen gelten für Archivieren, Löschen und die Zuweisung von
+Mitverantwortlichen?
+
+**Zu entscheiden:** Die spätere Rollenmatrix ordnet ausdrücklich benannte
+Gruppenrollen den einzelnen Verwaltungsaktionen zu. Bis dahin entsteht aus
+einer allgemeinen Gruppenrolle kein nicht ausdrücklich dokumentiertes Recht.
 
 **Auswirkungen:** Rollenmodell, Nachvollziehbarkeit, Konfliktrisiko und Aufwand
-für Freigaben. Die Entscheidung über den Detailumfang darf die verbindliche
-Zweifachprüfung aus Eigentümererlaubnis und Gruppenrecht nicht abschwächen.
+für Freigaben. Die offene Detailentscheidung darf weder die Gruppenadmin-
+Zustimmung für Publikationsänderungen noch die doppelte Prüfung für Revisionen
+abschwächen.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
 
@@ -95,17 +112,16 @@ Eigentümerentscheidung als beschlossen.
   Text- und Akkordfunktionen `FR-021` bis `FR-027`, Offline-
   Änderungswarteschlange und Konfliktbehandlung `FR-035` bis `FR-036` sowie
   spätere Erweiterungen `FR-038` bis `FR-046`.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`,
-  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen
-  Overlay-Standardauswahl, Rollen, Offlinefrist und
-  Band-Arbeitsbereich-Zuordnung geklärt werden.
+- **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
+  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen Rollen,
+  Offlinefrist und Band-Arbeitsbereich-Zuordnung geklärt werden.
 - **Produktiver Nutzen:** Eine Band oder ein Ensemble kann Songs, PDF-Dokumente
   und Setlists gemeinsam verwalten und für Probe oder Auftritt vorbereiten.
   Berechtigte Mitglieder können PDFs online grundlegend annotieren und
   vorbereitete Unterlagen ohne Netzwerk lesen.
-- **Fachliche Hauptrisiken:** Unklare Overlay-Standardauswahl, die Bedienbarkeit
-  von Fassungen und Revisionen sowie eingeschränkter Nutzen für Mitglieder, die
-  primär mit Text- oder Akkordblättern arbeiten.
+- **Fachliche Hauptrisiken:** Die Bedienbarkeit von Fassungen und Revisionen,
+  noch offene Detailrechte für Gruppenrollen sowie eingeschränkter Nutzen für
+  Mitglieder, die primär mit Text- oder Akkordblättern arbeiten.
 - **Technische Hauptrisiken:** sichere Dateiverarbeitung, Erhalt der
   Originaldokumente, Touch- und Stifteignung sowie konsistente lesende
   Offlinebereitstellung auf den später festgelegten Geräten.
@@ -157,7 +173,7 @@ Eigentümerentscheidung als beschlossen.
   und sämtliche späteren Erweiterungen `FR-038` bis `FR-046`. Weitergehende
   gemeinsame oder Offlinebearbeitung ist ohne Entscheidungen zu `OQ-004` und
   `OQ-006` nicht enthalten.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`,
+- **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
   `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; diese Variante benötigt vor
   allem klare Grenzen für gemeinsame Änderungen, Offlineänderungen und
   Konfliktbehandlung.
@@ -254,11 +270,14 @@ GitHub-Issue #5.
 Songfassung führt ihre eigene Folge nachvollziehbarer Revisionen. Benutzer,
 Gruppen und Setlists wählen für ihre zulässigen Referenzen zwischen Rolling
 Reference auf die aktuelle Revision und Pinned Reference auf eine bestimmte
-Revision.
+Revision. Eine Setlist legt immer aktuell oder stabil beziehungsweise
+festgesetzt als Standardstrategie fest. Jeder Song erbt diese Strategie oder
+überschreibt sie durch Rolling beziehungsweise ausdrücklich Pinned.
 
 **Auswirkungen:** Fassungen, Revisionen und Referenzstrategie müssen eindeutig
 erkennbar sein. Eine neue Revision verändert Rolling References, aber keine
-Pinned References. Setlists kopieren den referenzierten Songinhalt nicht. Das
+Pinned References. Setliststandard, Vererbung und Eintragsüberschreibung
+bleiben eindeutig; Setlists kopieren den referenzierten Songinhalt nicht. Das
 legt weder Speichertechnik noch Datenbankschema fest.
 
 ### OQ-013: Historisierung oder Versionierung von Setlists
