@@ -16,8 +16,8 @@ Synchronisationsprodukt fest.
 | SEC-002 | SoSeBaMa muss einen optionalen zusätzlichen Authentifizierungsfaktor ermöglichen, sobald Einsatzbereich und Wiederherstellung durch `OQ-020` entschieden sind. | Aktivierung, Verwendung, Verlustfall und Deaktivierung werden ohne Festlegung eines Produkts geprüft. |
 | SEC-003 | Jede geschützte Aktion und jeder geschützte Datenzugriff muss serverseitig anhand der aktuell wirksamen Berechtigung autorisiert werden. Eine ausgeblendete Bedienaktion allein genügt nicht. | Für jede geschützte Funktion bestehen erlaubte und abgelehnte Prüffälle einschließlich direkter manipulierter Anfrage. |
 | SEC-004 | Benutzer und technische Identitäten erhalten nur die für ihren dokumentierten Zweck minimal erforderlichen Rechte. | Rollenmatrix und Negativprüfungen weisen fehlende Quer- oder Verwaltungsrechte nach. |
-| SEC-005 | Daten, Rollen, Offlineinhalte und Aktionen verschiedener Arbeitsbereiche müssen fachlich strikt getrennt bleiben. | Querzugriffe mit gültiger Identität, aber falschem Arbeitsbereich werden abgelehnt und sicher protokolliert. |
-| SEC-006 | Dokumente, Text- und Akkordblätter sowie private und gemeinsame Annotationen dürfen nur gemäß ihrer Sichtbarkeit und Berechtigung gelesen oder verändert werden. | Lese-, Änderungs-, Freigabe- und Entzugsfälle werden je Inhaltsart geprüft; Originale bleiben nachweisbar erhalten. |
+| SEC-005 | Daten, Rollen, Gruppen, Eigentum, Overlays, Offlineinhalte und Aktionen verschiedener Arbeitsbereiche müssen fachlich strikt getrennt bleiben. | Querzugriffe mit gültiger Identität, aber falschem Arbeitsbereich oder unzulässiger Gruppe werden abgelehnt und sicher protokolliert. |
+| SEC-006 | Eigentum, Sichtbarkeit und Berechtigungen eines Inhalts oder Overlays müssen getrennt autorisiert werden. Eine Gruppenfreigabe, öffentliche Sichtbarkeit oder Eigentümerschaft darf keine darüber hinausgehenden Rechte vermitteln. | Lese-, Änderungs-, Mehrfachfreigabe-, Öffentlichkeits- und Entzugsfälle werden je Inhaltsart geprüft; Original, Eigentum, andere Freigaben und fremde Overlays bleiben nachweisbar unverändert. |
 | SEC-007 | Dateiimporte müssen Typ, Zulässigkeit und sichere Verarbeitbarkeit prüfen, Grenzen kontrolliert durchsetzen und aktive oder unerwartete Inhalte ohne interne Detailpreisgabe ablehnen. | Zulässige, fehlerhafte, übergroße und manipulierte Dateien erzeugen eindeutige sichere Ergebnisse; konkrete Grenzwerte werden später freigegeben. |
 | SEC-008 | Lokale Offline-Daten und ausstehende Änderungen müssen gegen unberechtigten Zugriff, unbeabsichtigte Weitergabe und Nutzung nach Ablauf der Berechtigung geschützt werden. | Offline-, Abmelde-, Geräteverlust- und Rechteentzugsfälle sind gemäß `OQ-007` und `OQ-008` nachweisbar. |
 | SEC-009 | Eine Abmeldung oder Sitzungsbeendigung muss weitere geschützte Onlineaktionen verhindern und die kontrollierte Behandlung lokaler Inhalte auslösen. | Wiederverwendung einer beendeten Sitzung wird abgelehnt; lokaler Zustand bleibt verständlich und folgt der beschlossenen Richtlinie. |
@@ -56,8 +56,12 @@ Authentifizierungsprodukt noch ein Token-, Cookie- oder Speicherverfahren fest.
 
 ## Datenschutz- und Inhaltsgrundsätze
 
-- Private Inhalte bleiben ohne bewusste Freigabe privat; die
-  Standardsichtbarkeit von Annotationen entscheidet `OQ-003`.
+- Private Inhalte bleiben ohne bewusste Freigabe privat; die Standardauswahl
+  zwischen persönlichem und Gruppen-Overlay entscheidet `OQ-003`.
+- Öffentliche Sichtbarkeit und Gruppenfreigaben übertragen weder Eigentum noch
+  implizite Änderungsrechte.
+- Bei Benutzer- oder Gruppenlöschung werden private Inhalte entfernt oder
+  Eigentumsübergänge nach `FR-059` kontrolliert und nachvollziehbar ausgeführt.
 - Nur erforderliche personenbezogene und sicherheitsrelevante Daten werden für
   den dokumentierten Zweck verarbeitet und angezeigt.
 - Export, Weitergabe und Import begründen keine zusätzlichen Nutzungsrechte an

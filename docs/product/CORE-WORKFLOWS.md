@@ -5,8 +5,11 @@
 Dieses Dokument konkretisiert GitHub-Issue #3. Jeder Ablauf besitzt eine
 stabile `WF-xxx`-Kennung. Rollenbezeichnungen folgen
 [Benutzer und Rollen](USERS-AND-ROLES.md), Begriffe dem
-[Glossar](GLOSSARY.md). Die Abläufe beschreiben beobachtbares Produktverhalten,
-keine technische Umsetzung oder Oberflächengestaltung.
+[Glossar](GLOSSARY.md). Das verbindliche Referenz-, Eigentums- und
+Versionsmodell steht im
+[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md).
+Die Abläufe beschreiben beobachtbares Produktverhalten, keine technische
+Umsetzung oder Oberflächengestaltung.
 
 ## WF-001: Benutzer einladen oder Zugriff erteilen
 
@@ -49,8 +52,9 @@ keine technische Umsetzung oder Oberflächengestaltung.
   Freigabe.
 - **Normaler Ablauf:** Der Benutzer erfasst Titel und erforderliche Metadaten,
   prüft den Inhalt und speichert den Song bewusst.
-- **Erwartetes Ergebnis:** Der Song ist zentral eindeutig auffindbar und kann
-  später Fassungen, Dokumente und Setlists zugeordnet werden.
+- **Erwartetes Ergebnis:** Der Song besitzt genau ein Original und einen
+  eindeutigen Eigentümer. Fassungen, Revisionen, Freigaben, Overlays und
+  Setlists können ihn referenzieren, ohne ein weiteres Original anzulegen.
 - **Fehler und Ausnahmen:** Fehlende Pflichtangaben, unzulässige Werte oder ein
   zwischenzeitlich entzogener Zugriff führen zu einer verständlichen Ablehnung
   ohne stillen Teilstand.
@@ -81,16 +85,17 @@ keine technische Umsetzung oder Oberflächengestaltung.
   erlaubt die vorgesehene Annotationsart.
 - **Beteiligte Rollen:** Musiker, reguläre Mitglieder und
   Inhaltsverantwortliche im jeweils erlaubten Umfang.
-- **Normaler Ablauf:** Der Benutzer wählt private oder erlaubte gemeinsame
-  Sichtbarkeit, erstellt die Annotation per Touch oder Stift, prüft und
+- **Normaler Ablauf:** Der Benutzer wählt ein persönliches oder erlaubtes
+  Gruppen-Overlay, erstellt die Annotation per Touch oder Stift, prüft und
   speichert sie.
-- **Erwartetes Ergebnis:** Die Annotation ist dem Dokument eindeutig zugeordnet
-  und sichtbar, ohne das Original unbemerkt zu verändern.
+- **Erwartetes Ergebnis:** Die Annotation liegt im gewählten Overlay,
+  referenziert das Dokument eindeutig und verändert das Original nicht.
 - **Fehler und Ausnahmen:** Nicht unterstützte Eingabe, fehlende Rechte,
   Speicherfehler oder konkurrierende Änderung werden sichtbar; das Original
   bleibt erhalten.
-- **Security und Offline:** Sichtbarkeit wird bei jedem Zugriff geprüft. Der
-  Standard ist in `OQ-003`, Offlinebearbeitung in `OQ-006` offen.
+- **Security und Offline:** Sichtbarkeit und Overlay-Berechtigung werden bei
+  jedem Zugriff geprüft. Die Standardauswahl des Overlays ist in `OQ-003`,
+  Offlinebearbeitung in `OQ-006` offen.
 
 ## WF-006: Text- oder Akkordblatt anlegen oder importieren
 
@@ -99,9 +104,11 @@ keine technische Umsetzung oder Oberflächengestaltung.
 - **Beteiligte Rollen:** Inhaltsverantwortliche; reguläre Mitglieder nur nach
   Entscheidung aus `OQ-004`.
 - **Normaler Ablauf:** Der Benutzer erstellt Inhalt manuell oder fügt ihn
-  bewusst per Copy-and-paste ein, prüft Struktur und Zuordnung und speichert.
+  bewusst per Copy-and-paste ein, prüft Songfassung, Struktur und Zuordnung und
+  speichert eine neue Revision.
 - **Erwartetes Ergebnis:** Ein anbieterunabhängig verwaltbares Text- oder
-  Akkordblatt ist dem Song zugeordnet und gemäß Sichtbarkeit verfügbar.
+  Akkordblatt ist als Revision genau einer Songfassung zugeordnet und gemäß
+  Sichtbarkeit verfügbar.
 - **Fehler und Ausnahmen:** Nicht erkennbare Akkordstruktur, ungültige Eingabe,
   fehlende Rechte oder Speicherkonflikt werden ohne Verlust des Ausgangsinhalts
   angezeigt.
@@ -140,22 +147,26 @@ keine technische Umsetzung oder Oberflächengestaltung.
   funktioniert für vorbereitete Offlineinhalte; konkrete Reaktionsziele folgen
   aus `OQ-011`.
 
-## WF-009: Setlist anlegen, sortieren und freigeben
+## WF-009: Setlist anlegen, referenzieren, kopieren und freigeben
 
 - **Ausgangszustand:** Berechtigte Songs bestehen; der Benutzer besitzt
   Setlist-Rechte.
 - **Beteiligte Rollen:** Setlist-Verantwortliche, Inhaltsverantwortliche und
   berechtigte lesende Mitglieder.
-- **Normaler Ablauf:** Der Verantwortliche legt die Setlist an, ergänzt oder
-  entfernt Songs, ordnet sie und gibt einen geprüften Stand für Probe oder
-  Auftritt frei.
-- **Erwartetes Ergebnis:** Reihenfolge, Freigabe- und Synchronisationszustand
-  sind eindeutig; berechtigte Mitglieder sehen den vorgesehenen Stand.
-- **Fehler und Ausnahmen:** Fehlende Songrechte, entfernte Inhalte,
-  konkurrierende Änderung oder unvollständige Freigabe werden sichtbar und
-  nicht als vollständiger Stand ausgegeben.
-- **Security und Offline:** Freigabe erweitert keine Dokumentrechte. Historie
-  und Versionierung entscheidet `OQ-013`; Offlinevorbereitung folgt `WF-010`.
+- **Normaler Ablauf:** Der Verantwortliche legt die Setlist im Eigentum eines
+  Benutzers oder einer Gruppe an, ergänzt oder entfernt Songreferenzen, wählt je
+  Referenz Rolling oder Pinned, ordnet sie und gibt den aktuellen Stand frei.
+  Für einen unabhängigen Planungsstand kopiert er die Setlist bewusst.
+- **Erwartetes Ergebnis:** Genau ein aktueller Stand, die vollständige
+  Änderungshistorie, Eigentum, Referenzstrategie, Reihenfolge, Freigabe- und
+  Synchronisationszustand sind eindeutig. Eine Kopie besitzt eine eigene
+  Historie und kopiert keine Songinhalte.
+- **Fehler und Ausnahmen:** Fehlende Songrechte, ungültige Referenzen, entfernte
+  Inhalte, konkurrierende Änderung oder unvollständige Freigabe werden sichtbar
+  und nicht als vollständiger Stand ausgegeben.
+- **Security und Offline:** Freigabe erweitert keine Inhaltsrechte. Eine
+  gruppeneigene Setlist darf nur entsprechend der wirksamen Gruppenrolle
+  bearbeitet werden; Offlinevorbereitung folgt `WF-010`.
 
 ## WF-010: Inhalte für Offlineverwendung vorbereiten
 
@@ -255,6 +266,45 @@ keine technische Umsetzung oder Oberflächengestaltung.
 - **Security und Offline:** Fristen und genaue Behandlung sind in `OQ-007` und
   `OQ-008` offen. Bis zur Entscheidung darf keine Umsetzung still einen
   dauerhaften Offlinezugriff annehmen.
+
+## WF-016: Inhalt freigeben und Zusammenarbeit steuern
+
+- **Ausgangszustand:** Ein Inhalt besitzt genau ein Original und einen
+  eindeutigen Eigentümer.
+- **Beteiligte Rollen:** Eigentümer des Inhalts, berechtigte
+  Inhaltsverantwortliche und betroffene Gruppenmitglieder.
+- **Normaler Ablauf:** Der Eigentümer verwaltet Sichtbarkeit und Berechtigungen
+  getrennt, erteilt oder entzieht Freigaben für eine oder mehrere Gruppen und
+  entscheidet je Inhalt, ob Gruppen neue Revisionen erstellen dürfen.
+- **Erwartetes Ergebnis:** Alle Freigaben referenzieren dasselbe Original. Der
+  Inhalt kann mehreren Gruppen freigegeben und öffentlich sichtbar sein, ohne
+  dass sich Eigentum oder nicht ausdrücklich erteilte Rechte ändern.
+- **Fehler und Ausnahmen:** Eine Gruppenaktion ohne Eigentümerfreigabe oder ohne
+  wirksames Gruppenrecht wird abgelehnt. Der Entzug einer Freigabe verändert
+  andere Freigaben, Referenzen und das Original nicht.
+- **Security und Offline:** Jede Sicht- und Änderungsaktion wird gegen die
+  aktuell wirksamen Berechtigungen geprüft. Offlinefolgen eines Entzugs folgen
+  `WF-014` und `WF-015`.
+
+## WF-017: Benutzer oder Gruppe löschen und Eigentum behandeln
+
+- **Ausgangszustand:** Ein Benutzer oder eine Gruppe soll gelöscht werden;
+  private, gruppeneigene oder freigegebene Inhalte können betroffen sein.
+- **Beteiligte Rollen:** Zuständige Administration, betroffener Benutzer und
+  gegebenenfalls der bestimmte Nachfolger.
+- **Normaler Ablauf:** SoSeBaMa zeigt die Eigentumsfolgen vor Bestätigung. Bei
+  Benutzerlöschung werden private Inhalte entfernt und Gruppeninhalte an die
+  Gruppe übertragen. Bei Gruppenlöschung wird der verantwortliche
+  Administrator oder ein ausdrücklich bestimmter Nachfolger Eigentümer.
+- **Erwartetes Ergebnis:** Jeder verbleibende Inhalt besitzt genau einen
+  eindeutigen Eigentümer; zu entfernende private Inhalte sind entfernt und jede
+  Übertragung ist nachvollziehbar.
+- **Fehler und Ausnahmen:** Eine Gruppenlöschung ohne bestimmten Nachfolger wird
+  abgelehnt. Mehrdeutige Eigentumszuordnung oder unvollständige Übertragung darf
+  nicht als erfolgreiche Löschung erscheinen.
+- **Security und Offline:** Sichtbarkeit und Berechtigungen werden durch die
+  Eigentumsübertragung nicht still erweitert. Lokale Daten folgen zusätzlich
+  `OQ-007`, `OQ-008` und `WF-015`.
 
 ## Abdeckungsregel
 

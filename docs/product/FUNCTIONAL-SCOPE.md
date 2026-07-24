@@ -14,9 +14,14 @@ Jeder produktiv nutzbare SoSeBaMa-MVP besteht aus zwei Ebenen:
    beschriebenen Kandidaten.
 
 `OQ-005` entscheidet ausschließlich über diesen zusätzlichen fachlichen
-Funktionsschnitt und dessen Lieferreihenfolge. Die Entscheidung kann keine
-Anforderung der verbindlichen Basis abwählen oder auf eine spätere Erweiterung
-verschieben.
+Funktionsschnitt und dessen Lieferreihenfolge. Zusätzlich gelten die
+verbindlichen fachlichen Querschnittsanforderungen `FR-058` bis `FR-060`.
+Die Entscheidung kann weder eine Anforderung der verbindlichen Basis noch eine
+Querschnittsanforderung abwählen oder auf eine spätere Erweiterung verschieben.
+
+Das zugrunde liegende fachliche Modell ist im
+[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
+zusammenhängend beschrieben.
 
 ## Verbindliche Basis jedes produktiven MVP
 
@@ -34,6 +39,18 @@ fachlichen Funktionen durch `OQ-005` zusätzlich ausgewählt werden.
 | FR-006 | Annotation oder Bearbeitung darf ein Originaldokument nicht unbemerkt zerstören. | Original und zusätzliche oder bearbeitete Inhalte bleiben unterscheidbar; ein unbeabsichtigtes Überschreiben wird verhindert. |
 | FR-007 | Import muss benutzergesteuert erfolgen und darf keine automatisierte unkontrollierte Inhaltsübernahme auslösen. | Jeder Import beginnt mit einer bewussten Benutzeraktion und zeigt Ergebnis oder Fehler eindeutig an. |
 
+## Verbindliche fachliche Querschnittsanforderungen
+
+`FR-058` bis `FR-060` präzisieren das verbindliche Inhaltsmodell. Sie gelten
+für jeden produktiv nutzbaren SoSeBaMa-MVP zusätzlich zu `FR-001` bis `FR-007`
+und sind keine durch `OQ-005` auswählbaren Funktionskandidaten.
+
+| ID | Anforderung | Verifikation |
+| --- | --- | --- |
+| FR-058 | Jeder Inhalt muss genau ein Original besitzen. Freigaben, Setlists, Songfassungen und persönliche oder Gruppen-Overlays müssen dieses Original beziehungsweise eine festgelegte Revision referenzieren, statt gruppenspezifische Kopien zu erzeugen. | Mehrfachfreigaben, Setlisteinträge und Overlays verweisen nachweislich auf dasselbe Original; Änderungen eines Overlays verändern das Original nicht. |
+| FR-059 | Eigentümer eines Inhalts muss ein Benutzer, eine Gruppe oder die Plattform sein. Bei Benutzerlöschung werden private Inhalte entfernt und Gruppeninhalte an die Gruppe übertragen; bei Gruppenlöschung gehen Gruppeninhalte an den verantwortlichen Administrator oder einen beim Löschen bestimmten Nachfolger. Eine freiwillige Übertragung an die Plattform muss möglich sein. | Für jede Eigentümerart sowie Benutzerlöschung, Gruppenlöschung und freiwillige Plattformübertragung ist der resultierende Eigentümer beziehungsweise die Entfernung eindeutig und nachvollziehbar. |
+| FR-060 | Eigentum, Sichtbarkeit und Berechtigungen müssen unabhängig behandelt werden. Ein Inhalt darf mehreren Gruppen freigegeben und zugleich öffentlich sichtbar sein, während der Eigentümer ihn verwaltet. Ob eine Gruppe neue Revisionen erstellen darf, entscheidet der Eigentümer je Inhalt; zusätzlich müssen die wirksamen Gruppenrechte dies erlauben. | Kombinierte Mehrgruppen- und öffentliche Freigaben verändern das Eigentum nicht; erlaubte Revisionserstellung setzt Eigentümerfreigabe und passendes Gruppenrecht voraus, während jeder fehlende Teil die Aktion verhindert. |
+
 ## Fachliche Kandidaten für den ersten MVP-Funktionsschnitt
 
 `FR-008` bis `FR-037` gehören zum vorgesehenen Produktumfang. `OQ-005`
@@ -45,7 +62,7 @@ Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
 | ID | Anforderung | Offene Abgrenzung |
 | --- | --- | --- |
 | FR-008 | Eine berechtigte Administration muss Benutzer einladen und Mitgliedschaften deaktivieren können. | Umfang und Ablauf der Einladung bleiben technologieoffen. |
-| FR-009 | SoSeBaMa muss private und gemeinsam sichtbare Inhalte eindeutig unterscheiden und berechtigen können. | Standardsichtbarkeit und Änderungsrechte: `OQ-003`, `OQ-004`. |
+| FR-009 | SoSeBaMa muss private, gruppenbezogene und öffentliche Sichtbarkeit eindeutig unterscheiden und unabhängig von Eigentum und Änderungsberechtigungen behandeln können. | Standardsichtbarkeit persönlicher und gruppenbezogener Overlays: `OQ-003`; Detailumfang regulärer Gruppenrechte: `OQ-004`. |
 | FR-010 | SoSeBaMa soll einen optionalen zusätzlichen Authentifizierungsfaktor ermöglichen, ohne ein Produkt oder Verfahren festzulegen. | Rollen, Auslöser und Verbindlichkeit: `OQ-020`. |
 
 ### Songs
@@ -54,8 +71,8 @@ Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
 | --- | --- | --- |
 | FR-011 | Ein berechtigter Benutzer muss einen Song mit Titel und fachlich erforderlichen Metadaten anlegen können. | Der genaue Metadatenkatalog wird in einem späteren Facharbeitspaket bestimmt. |
 | FR-012 | Songs müssen gesucht, gefiltert und sortiert werden können. | Konkrete Suchfelder und Sortierregeln folgen aus dem Metadatenkatalog. |
-| FR-013 | Ein Song muss mehrere zugehörige Dokumente und unterscheidbare alternative Fassungen aufnehmen können. | Verhältnis von Fassung und Revision: `OQ-012`. |
-| FR-014 | Aktualisierungen an gemeinsam genutzten Songinhalten müssen für berechtigte Benutzer nachvollziehbar sein. | Tiefe und Dauer der Historie: `OQ-012`. |
+| FR-013 | Ein Song muss mehrere unterscheidbare Songfassungen besitzen können; jede Songfassung muss eine eigene nachvollziehbare Folge von Revisionen führen. | Fassungen bleiben voneinander unterscheidbar; jede Änderung ist genau einer Fassung und Revision zugeordnet. |
+| FR-014 | Benutzer, Gruppen und Setlists müssen für ihre zulässigen Referenzen zwischen einer Rolling Reference auf die aktuelle Revision und einer Pinned Reference auf eine bestimmte Revision wählen können. | Eine neue Revision aktualisiert Rolling References, während Pinned References unverändert auf der gewählten Revision bleiben. |
 
 ### PDF-Dokumente
 
@@ -65,7 +82,7 @@ Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
 | FR-016 | Die PDF-Anzeige muss eine eindeutige Seitennavigation unterstützen. | Konkrete Bediengesten sind keine Entscheidung dieses Arbeitspakets. |
 | FR-017 | Die PDF-Anzeige muss eine für das Lesen geeignete Vergrößerung und Verkleinerung unterstützen. | Messbare Geräte- und Reaktionsziele: `OQ-010`, `OQ-011`. |
 | FR-018 | Berechtigte Benutzer müssen PDFs per Touch oder Stift annotieren können. | Unterstützte Werkzeuge und Geräteklassen: `OQ-010`. |
-| FR-019 | Annotationen müssen privat oder ausdrücklich gemeinsam sichtbar geführt werden können. | Standardwert: `OQ-003`; Bearbeitungsrechte: `OQ-004`. |
+| FR-019 | Annotationen und andere Zusatzinformationen müssen als persönliches oder Gruppen-Overlay getrennt vom referenzierten Original geführt werden können. | Standardauswahl: `OQ-003`; Detailumfang der Gruppenbearbeitung: `OQ-004`. |
 | FR-020 | Ausgewählte PDFs und berechtigte Annotationen müssen offline bereitgestellt und angezeigt werden können. | Offline-Schreibumfang und Sitzungsdauer: `OQ-006`, `OQ-007`. |
 
 ### Texte und Akkorde
@@ -84,11 +101,11 @@ Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
 
 | ID | Anforderung | Offene Abgrenzung |
 | --- | --- | --- |
-| FR-028 | Berechtigte Benutzer müssen Setlists anlegen können. | Historisierung oder Versionierung: `OQ-013`. |
-| FR-029 | Songs müssen einer Setlist hinzugefügt, daraus entfernt und in eine eindeutige Reihenfolge gebracht werden können. | Gemeinsame Änderungsrechte: `OQ-004`. |
+| FR-028 | Berechtigte Benutzer müssen Setlists im Eigentum eines Benutzers oder einer Gruppe anlegen und als eigenständige Setlist kopieren können. | Die neue Setlist besitzt den bestimmten Eigentümer; eine Kopie ist keine Version und besitzt eine eigene Historie. |
+| FR-029 | Songs beziehungsweise Songfassungen müssen einer Setlist als Rolling oder Pinned Reference hinzugefügt, daraus entfernt und in eine eindeutige Reihenfolge gebracht werden können. | Setlisteinträge kopieren keinen Songinhalt; Referenzziel, Strategie und Reihenfolge sind eindeutig. |
 | FR-030 | Eine Setlist muss eine für Probe oder Auftritt geeignete, ablenkungsarme Nutzung der freigegebenen Inhalte ermöglichen. | Konkrete Oberflächengestaltung ist nicht Bestandteil dieses Arbeitspakets. |
 | FR-031 | Eine Setlist und ihre erforderlichen Dokumente müssen gemeinsam für die Offlineverwendung vorbereitet werden können. | Genauer MVP-Inhalt: `OQ-005`; Offline-Schreibumfang: `OQ-006`. |
-| FR-032 | Versions-, Freigabe- und Synchronisationszustände einer Setlist müssen für Benutzer unterscheidbar sein. | Umfang der Versionierung: `OQ-013`. |
+| FR-032 | Eine Setlist muss genau einen aktuellen Stand und eine vollständige Änderungshistorie besitzen; parallel auswählbare Setlistversionen sind nicht vorgesehen. | Zu jedem Zeitpunkt ist genau ein aktueller Stand bestimmbar und jede Änderung nachvollziehbar; ein unabhängiger Stand entsteht ausschließlich durch Kopieren. |
 
 ### Offline und Synchronisation
 

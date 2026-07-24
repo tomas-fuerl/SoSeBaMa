@@ -9,7 +9,28 @@ Identitäts- oder Authentifizierungsprodukt fest.
 Ein [Benutzer](GLOSSARY.md#benutzer) kann abhängig von der späteren
 Eigentümerentscheidung in einem oder mehreren Arbeitsbereichen unterschiedliche
 Rollen besitzen. Berechtigungen gelten stets für den jeweiligen
-Arbeitsbereich und folgen dem Minimalprinzip.
+Arbeitsbereich und folgen dem Minimalprinzip. Das fachliche Verhältnis von
+Eigentum, Gruppen und Berechtigungen ist im
+[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
+verbindlich beschrieben.
+
+## Eigentümer und Gruppen
+
+Eigentümer ist keine Rolle, sondern die fachliche Verantwortung für genau einen
+Inhalt. Eigentümer kann ein Benutzer, eine Gruppe oder die Plattform sein. Die
+Eigentümerschaft erteilt anderen Parteien weder Sichtbarkeit noch Rechte und
+wird durch eine Freigabe nicht übertragen.
+
+Eine Gruppe bündelt Benutzer für gemeinsame Sichtbarkeit, Overlays und
+Berechtigungen. Ein Inhalt kann mehreren Gruppen gleichzeitig freigegeben sein.
+Der Eigentümer entscheidet je Inhalt, ob Gruppen neue Revisionen erstellen
+dürfen. Zusätzlich muss die jeweilige Gruppenrolle diese Aktion erlauben. Eine
+Erlaubnis ohne passendes Gruppenrecht und ein Gruppenrecht ohne
+Eigentümererlaubnis genügen jeweils nicht.
+
+Bei Benutzer- und Gruppenlöschung gelten die verbindlichen Eigentumsübergänge
+aus `FR-059` und `WF-017`. Eine freiwillige Eigentumsübertragung an die
+Plattform bleibt möglich.
 
 ## Band- beziehungsweise Arbeitsbereichsadministration
 
@@ -39,8 +60,9 @@ bereitstellen.
 **Typische Aufgaben:** Setlists erstellen, Songs ergänzen oder entfernen,
 Reihenfolge pflegen, Freigabezustand setzen und Offlinevorbereitung prüfen.
 
-**Benötigte Rechte:** Zugeordnete Setlists und die dafür freigegebenen
-Songinformationen bearbeiten; erforderliche Dokumentzustände lesen.
+**Benötigte Rechte:** Setlists im eigenen oder im Gruppeneigentum entsprechend
+der wirksamen Gruppenrolle bearbeiten; referenzierte, dafür freigegebene
+Songinformationen und erforderliche Dokumentzustände lesen.
 
 **Nicht erlaubt:** Mitgliedschaften verwalten, nicht freigegebene private
 Inhalte verändern oder Berechtigungsprüfungen umgehen.
@@ -56,8 +78,10 @@ und nachvollziehbar pflegen.
 **Typische Aufgaben:** Metadaten anlegen, Dokumente hinzufügen, Text- oder
 Akkordinhalte bearbeiten, Import auslösen und Sichtbarkeit verwalten.
 
-**Benötigte Rechte:** Zugeordnete Inhalte erstellen und ändern sowie zulässige
-gemeinsame Fassungen freigeben.
+**Benötigte Rechte:** Zugeordnete Inhalte und neue Revisionen im erlaubten
+Umfang erstellen oder ändern, Sichtbarkeit verwalten und zulässige
+Gruppenfreigaben erteilen. Für Gruppenrevisionen sind Eigentümererlaubnis und
+wirksames Gruppenrecht erforderlich.
 
 **Nicht erlaubt:** Rechte administrieren, Originaldokumente unbemerkt ersetzen,
 fremde private Annotationen verändern oder urheberrechtliche Schutzmaßnahmen
@@ -75,8 +99,9 @@ nutzen und im erlaubten Umfang persönlich bearbeiten.
 **Typische Aufgaben:** Inhalte suchen, PDFs anzeigen, Annotationen anlegen,
 Akkorde transponieren, Autoscroll verwenden und Offlineinhalte vorbereiten.
 
-**Benötigte Rechte:** Freigegebene Inhalte lesen und eindeutig erlaubte
-persönliche oder gemeinsame Änderungen ausführen.
+**Benötigte Rechte:** Freigegebene Inhalte lesen, persönliche Overlays ändern
+und Gruppenrevisionen nur bei Eigentümererlaubnis und passendem Gruppenrecht
+ausführen.
 
 **Nicht erlaubt:** Arbeitsbereich administrieren, fremde private Inhalte lesen,
 ungeklärte gemeinsame Inhalte verändern oder nicht freigegebene Dokumente
@@ -84,8 +109,8 @@ exportieren.
 
 **Bei Rechteentzug:** Zentraler Zugriff und weitere Synchronisation enden.
 Lokale Daten und offene Änderungen werden sichtbar und kontrolliert nach
-`SEC-010` behandelt. Welche gemeinsamen Änderungen reguläre Mitglieder
-ausführen dürfen, entscheidet `OQ-004`.
+`SEC-010` behandelt. Den noch offenen Detailumfang regulärer
+Gruppenrechte bestimmt `OQ-004`.
 
 ## Lesender oder eingeschränkter Zugriff
 
@@ -118,7 +143,8 @@ minimal und je Umgebung nach
 
 - Jede geschützte Aktion wird gegen die aktuell wirksame fachliche
   Berechtigung geprüft.
-- Private und gemeinsam sichtbare Inhalte bleiben unterscheidbar.
+- Eigentum, Sichtbarkeit und Berechtigungen bleiben getrennt und nachvollziehbar.
+- Persönliche und Gruppen-Overlays bleiben vom referenzierten Original getrennt.
 - Eine höhere Rolle in einem Arbeitsbereich erteilt keine Rechte in einem
   anderen Arbeitsbereich oder im technischen Betrieb.
 - Rechteänderung und -entzug müssen nachvollziehbar sein.
