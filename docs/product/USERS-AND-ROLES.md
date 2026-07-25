@@ -11,7 +11,7 @@ Eigentümerentscheidung in einem oder mehreren Arbeitsbereichen unterschiedliche
 Rollen besitzen. Berechtigungen gelten stets für den jeweiligen
 Arbeitsbereich und folgen dem Minimalprinzip. Das fachliche Verhältnis von
 Eigentum, Gruppen und Berechtigungen ist im
-[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md)
 verbindlich beschrieben.
 
 ## Eigentümer und Gruppen

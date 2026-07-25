@@ -35,7 +35,7 @@ in [AGENTS.md](AGENTS.md).
 
 ## Fachliche Architekturprinzipien
 
-- [Inhalts-, Versions- und Referenzmodell](docs/architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
+- [Inhalts- und Overlaymodell](docs/architecture/CONTENT-AND-OVERLAY-MODEL.md)
 
 Die Produktdokumentation konkretisiert fachliche Anforderungen, ohne offene
 Eigentümerentscheidungen oder eine Technologieauswahl vorwegzunehmen.

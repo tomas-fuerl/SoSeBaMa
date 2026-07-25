@@ -76,7 +76,7 @@ kontrolliert und nachvollziehbar behandelt.
 
 Das verbindliche fachliche Modell für Eigentum, Freigaben, Overlays,
 Songfassungen, Revisionen und Setlisten steht im
-[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md).
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
 ## Abgrenzung
 

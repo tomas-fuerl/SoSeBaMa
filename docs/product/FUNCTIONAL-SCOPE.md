@@ -20,7 +20,7 @@ Die Entscheidung kann weder eine Anforderung der verbindlichen Basis noch eine
 Querschnittsanforderung abwählen oder auf eine spätere Erweiterung verschieben.
 
 Das zugrunde liegende fachliche Modell ist im
-[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md)
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md)
 zusammenhängend beschrieben.
 
 ## Verbindliche Basis jedes produktiven MVP

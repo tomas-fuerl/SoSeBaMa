@@ -5,9 +5,9 @@
 Dieses Dokument konkretisiert GitHub-Issue #3. Jeder Ablauf besitzt eine
 stabile `WF-xxx`-Kennung. Rollenbezeichnungen folgen
 [Benutzer und Rollen](USERS-AND-ROLES.md), Begriffe dem
-[Glossar](GLOSSARY.md). Das verbindliche Referenz-, Eigentums- und
-Versionsmodell steht im
-[Inhalts-, Versions- und Referenzmodell](../architecture/CONTENT-VERSION-REFERENCE-MODEL.md).
+[Glossar](GLOSSARY.md). Das verbindliche Song-, Inhalts-, Eigentums- und
+Overlaymodell steht im
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 Die Abläufe beschreiben beobachtbares Produktverhalten, keine technische
 Umsetzung oder Oberflächengestaltung.
 
