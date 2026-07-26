@@ -11,29 +11,39 @@ sowie ihre Auswirkungen nachvollziehbar.
 
 ## Fragen
 
-### OQ-001: Mitgliedschaft in mehreren Arbeitsbereichen
+### OQ-001: Mitgliedschaft in mehreren Bandbereichen
 
-**Frage:** Kann ein Benutzer gleichzeitig Mitglied mehrerer Arbeitsbereiche
-sein?
+**Entscheidungsstatus:** Entschieden durch die Eigentümerentscheidung zur
+Bandbereichsstruktur.
 
-**Optionen:** genau ein Arbeitsbereich je Benutzer; mehrere Arbeitsbereiche mit
-getrennten Rollen.
+**Produktentscheidung:** Ein Benutzer kann gleichzeitig Mitglied mehrerer Bands
+und damit mehrerer Bandbereiche sein.
+
+Bandbezogene Rollen und Rechte werden für jeden Bandbereich getrennt
+ausgewertet. Eine Mitgliedschaft oder höhere Rolle in einer Band vermittelt
+keine Rechte in einer anderen Band. Ausdrücklich globale Rollen und Rechte
+bleiben davon getrennt.
 
 **Auswirkungen:** Navigation, Berechtigungsprüfung, Offlineauswahl,
-Konfliktanzeige und Datentrennung werden bei Mehrfachmitgliedschaft komplexer.
+Konfliktanzeige und Datentrennung müssen den aktiven Bandbereich eindeutig
+anzeigen. Mehrfachmitgliedschaft darf keine stillen Querzugriffe oder
+Rechteübertragung zwischen Bands erzeugen.
 
-### OQ-002: Anzahl Arbeitsbereiche je Installation
+### OQ-002: Anzahl Bandbereiche je Installation
 
-**Frage:** Unterstützt eine Installation genau einen oder mehrere
-Arbeitsbereiche?
+**Entscheidungsstatus:** Entschieden durch die Eigentümerentscheidung zur
+Bandbereichsstruktur.
 
-**Optionen:** Einzelarbeitsbereich; mehrere strikt getrennte Arbeitsbereiche.
+**Produktentscheidung:** Eine Installation kann mehrere fachlich und
+berechtigungsseitig getrennte Bandbereiche enthalten.
 
-**Auswirkungen:** Fachliche Trennung, Administration, Ressourcenplanung und
-spätere Betriebsanforderungen. Die Option legt noch keine Architektur fest.
-Diese Frage entscheidet ausschließlich über die Anzahl der Arbeitsbereiche je
-Installation; die fachliche Zuordnung von Band und Arbeitsbereich klärt
-`OQ-021`.
+Jede Band besitzt genau einen Bandbereich und jeder Bandbereich gehört genau
+einer Band. Die Entscheidung legt keine technische Mandanten-, Datenbank- oder
+Deploymentarchitektur fest.
+
+**Auswirkungen:** Administration, Navigation, Ressourcenplanung,
+Berechtigungsprüfung, Offlineauswahl und Datenzugriff müssen mehrere strikt
+getrennte Bandbereiche berücksichtigen.
 
 ### OQ-003: Standardsichtbarkeit neuer Inhalte
 
@@ -41,51 +51,66 @@ Installation; die fachliche Zuordnung von Band und Arbeitsbereich klärt
 GitHub-Issue #5 und die Review-Präzisierung in Pull Request #6.
 
 **Produktentscheidung:** Neue Inhalte sind standardmäßig privat. Jeder Benutzer
-darf in seinen persönlichen Einstellungen privat, eine bestimmte Gruppe oder
+darf in seinen persönlichen Einstellungen privat, eine bestimmte Band oder
 öffentlich als persönliche Standardsichtbarkeit hinterlegen. Bei jeder
-Erstellung darf diese Voreinstellung überschrieben werden. Eine Gruppe darf nur
-gewählt werden, wenn der Benutzer dort die erforderliche
-Veröffentlichungsberechtigung besitzt. Verliert der Benutzer diese
-Berechtigung, darf die Gruppe nicht weiter als Ziel der Standardsichtbarkeit verwendet werden.
+Erstellung darf diese Voreinstellung überschrieben werden.
 
-**Abgrenzung:** Inhaltssichtbarkeit und Ziel eines Overlays sind getrennte
+Eine Band darf nur gewählt werden, wenn der Benutzer in ihrem Bandbereich die
+erforderliche Veröffentlichungsberechtigung besitzt. Verliert der Benutzer
+diese Berechtigung, darf die Band nicht weiter als Ziel der
+Standardsichtbarkeit verwendet werden.
+
+**Abgrenzung:** Inhaltssichtbarkeit und Overlay-Auswahl sind getrennte
 fachliche Dimensionen. `OQ-003` trifft keine Entscheidung über ein
-Standard-Overlay-Ziel. Eine solche offene Frage wird derzeit nicht benötigt und
-daher nicht unter einer neuen Kennung angelegt.
+Standard-Overlay.
 
 **Auswirkungen:** Erstellung, persönliche Einstellungen und Rechteentzug müssen
 die wirksame Standardsichtbarkeit eindeutig zeigen. Eine ungültig gewordene
-Gruppe darf keine stille Gruppenpublikation auslösen. Eigentum, Overlay-Ziel und
-Bearbeitungsberechtigungen bleiben unverändert getrennt.
+Band darf keine stille Bandpublikation auslösen. Eigentum, Overlay-Auswahl und
+Bearbeitungsberechtigungen bleiben getrennt.
 
-### OQ-004: Detailumfang der Inhaltsverwaltung durch Gruppenrollen
+### OQ-004: Detailmatrix für Rollen und Direktrechte
 
-**Bereits entschieden:** In einer Gruppe publizierte Inhalte dürfen durch den
-ursprünglichen Ersteller, Gruppenadministratoren und weitere Gruppenrollen mit
-ausdrücklicher Inhaltsberechtigung verwaltet werden. Bearbeiten, neue Revision,
-Sichtbarkeitsänderung auslösen oder beantragen, Freigabeverwaltung,
-Archivieren, Löschen sowie die Zuweisung von Mitverantwortlichen oder
-berechtigten Rollen sind getrennte Aktionen.
+**Bereits entschieden:**
 
-Gruppenrollen ersetzen keine inhaltsbezogene Einschränkung durch den
-Eigentümer. Für neue Revisionen müssen Eigentümererlaubnis und konkretes
-Gruppenrecht gleichzeitig vorliegen. Spätere Änderungen der Sichtbarkeit oder
-Gruppenzuordnung eines gruppenpublizierten Inhalts benötigen die
-nachvollziehbare Zustimmung eines Gruppenadministrators.
+- Rechte erlauben konkret benannte fachliche Aktionen.
+- Rollen bündeln mehrere Rechte und können mehreren Personen zugewiesen werden.
+- Rollen gelten entweder global oder innerhalb genau eines Bandbereichs.
+- Rechte können zusätzlich unmittelbar einzelnen Personen als Direktrechte
+  zugewiesen werden.
+- SoSeBaMa stellt Standardrollen mit Standardrechten bereit.
+- Bandbezogene Standardrechte dürfen pro Band angepasst werden.
+- Eine Band darf globale Rollen und globale Rechte nicht verändern.
+- Mitgliedschaft, Sichtbarkeit und Eigentum vermitteln keine nicht ausdrücklich
+  vorhandenen Änderungsrechte.
+- Gemeinsam bearbeitbare Inhalte und Overlays benötigen bei bestehender
+  Verbindung einen wirksamen Check-out.
+- Ein berechtigter Bandadministrator darf Check-outs ausschließlich im eigenen
+  Bandbereich nachvollziehbar zurücknehmen.
 
-**Offene Frage:** Welche weiteren Gruppenrollen dürfen für welche Inhaltsarten
-welche der getrennten Verwaltungsaktionen ausführen, und welche zusätzlichen
-inhaltsbezogenen Grenzen gelten für Archivieren, Löschen und die Zuweisung von
-Mitverantwortlichen?
+**Offene Fragen:**
 
-**Zu entscheiden:** Die spätere Rollenmatrix ordnet ausdrücklich benannte
-Gruppenrollen den einzelnen Verwaltungsaktionen zu. Bis dahin entsteht aus
-einer allgemeinen Gruppenrolle kein nicht ausdrücklich dokumentiertes Recht.
+1. Welche abschließenden Standardrollen werden bereitgestellt?
+2. Welche Standardrechte besitzt jede dieser Rollen?
+3. Dürfen Direktrechte Rollenrechte nur ergänzen oder auch ausdrücklich
+   einschränken?
+4. Wie wird ein Konflikt zwischen Rollenrecht, Direktrecht,
+   Eigentumsbeschränkung und objektbezogener Freigabe fachlich aufgelöst?
+5. Welche administrativen Rechte dürfen Bandadministratoren delegieren?
+6. Welche zusätzlichen Zustimmungen oder Schutzgrenzen gelten für Löschen,
+   Eigentumsübertragung, Veröffentlichung und globale Overlays?
+7. Welche Rollen dürfen Check-outs außer dem eigenen beenden oder
+   administrativ zurücknehmen?
 
-**Auswirkungen:** Rollenmodell, Nachvollziehbarkeit, Konfliktrisiko und Aufwand
-für Freigaben. Die offene Detailentscheidung darf weder die Gruppenadmin-
-Zustimmung für Publikationsänderungen noch die doppelte Prüfung für Revisionen
-abschwächen.
+**Zu entscheiden:** Eine spätere Rollen- und Aktionsmatrix ordnet die
+unterschiedenen Rechte den Standardrollen zu und definiert die Konflikt- und
+Delegationsregeln. Bis dahin entsteht aus einer Rollenbezeichnung kein nicht
+ausdrücklich dokumentiertes Recht.
+
+**Auswirkungen:** Autorisierung, Bedienbarkeit, Nachvollziehbarkeit,
+Administration, Offlineverhalten und Testumfang. Die offene Detailentscheidung
+darf Bandbereichsgrenzen, private Overlays, Eigentumsgrenzen, Check-out-Schutz
+oder bereits beschlossene Zustimmungspflichten nicht abschwächen.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
 
@@ -311,20 +336,25 @@ Dateierzeugung.
 
 ### OQ-015: Erster Zielbetrieb
 
-**Frage:** Ist eine Installation für genau eine Band der erste Zielbetrieb?
+**Frage:** Soll der erste produktive Einsatz trotz Unterstützung mehrerer
+Bandbereiche zunächst auf genau einen aktiv genutzten Bandbereich begrenzt
+werden?
 
-**Optionen:** zunächst eine Band mit späterer Erweiterbarkeit; von Beginn an
-mehrere Arbeitsbereiche.
+**Optionen:** zunächst ein produktiv genutzter Bandbereich mit nachgewiesener
+späterer Mehrfachnutzung; mehrere Bandbereiche bereits im ersten produktiven
+Einsatz.
 
-**Auswirkungen:** MVP-Zuschnitt, Administration und Testfälle. Die Entscheidung
-ist von `OQ-001`, `OQ-002` und `OQ-021` abhängig.
+**Auswirkungen:** MVP-Zuschnitt, Administration, Testfälle, Ressourcenbedarf
+und erforderlicher Nachweis der Bandbereichstrennung. Die fachliche Fähigkeit
+zu mehreren Bandbereichen ist durch `OQ-001`, `OQ-002` und `OQ-021` bereits
+entschieden.
 
 ### OQ-016: Ressourcenbudget auf der Synology
 
 **Frage:** Welche messbaren Obergrenzen gelten für Ressourcenverbrauch und
 Speicherwachstum im vorgesehenen Betrieb?
 
-**Optionen:** Budget je aktivem Benutzer; Budget je Arbeitsbereich; gemeinsam
+**Optionen:** Budget je aktivem Benutzer; Budget je Bandbereich; gemeinsam
 definierter Betriebskorridor.
 
 **Auswirkungen:** Kapazitätsprüfung, Beobachtbarkeit und spätere
@@ -373,36 +403,36 @@ risikobasiert nach geschützter Aktion.
 **Auswirkungen:** Schutzwirkung, Zugänglichkeit, Wiederherstellung und
 Bedienaufwand. Weder Produkt noch Verfahren sind festgelegt.
 
-### OQ-021: Fachliche Zuordnung von Band und Arbeitsbereich
+### OQ-021: Fachliche Zuordnung von Band und Bandbereich
 
-**Frage:** Entspricht ein Arbeitsbereich genau einer Band oder einem Ensemble,
-kann eine Band mehrere Arbeitsbereiche für getrennte Zwecke besitzen oder kann
-ein Arbeitsbereich mehrere Bands beziehungsweise Ensembles enthalten?
+**Entscheidungsstatus:** Entschieden durch die Eigentümerentscheidung zur
+Bandbereichsstruktur.
 
-**Optionen:**
+**Produktentscheidung:**
 
-1. **Genau eine Band je Arbeitsbereich:** Band und Arbeitsbereich sind fachlich
-   eins zu eins zugeordnet.
-2. **Mehrere Arbeitsbereiche je Band:** Eine Band trennt Zwecke, Repertoire oder
-   Verantwortungsbereiche in eigenständige Arbeitsbereiche.
-3. **Mehrere Bands je Arbeitsbereich:** Ein Arbeitsbereich bündelt mehrere Bands
-   oder Ensembles unter einer gemeinsamen fachlichen Grenze.
+- Jede Band besitzt genau einen Bandbereich.
+- Jeder Bandbereich gehört genau einer Band.
+- Eine Installation kann mehrere Bandbereiche enthalten.
+- Ein Benutzer kann Mitglied mehrerer Bands und Bandbereiche sein.
+- Bandbezogene Rollen und Rechte werden je Bandbereich getrennt ausgewertet.
+- Ausdrücklich globale Rollen und Rechte bleiben davon getrennt.
+
+Der Bandbereich ist die fachliche Verwaltungs-, Mitgliedschafts- und
+Berechtigungsgrenze der zugehörigen Band. Er ist kein zusätzlicher
+Organisationstyp neben der Band.
 
 **Auswirkungen:**
 
-- **Rollen und Berechtigungen:** bestimmt, ob Rollen immer für genau eine Band
-  gelten oder innerhalb eines Arbeitsbereichs weiter fachlich begrenzt werden
-  müssen.
-- **Navigation:** beeinflusst Auswahl, Wechsel und sichtbare Zuordnung von Band
-  und Arbeitsbereich.
-- **Song- und Setlistzuordnung:** legt fest, ob Inhalte genau einer Band, einem
-  Arbeitsbereich oder mehreren enthaltenen Bands zugeordnet werden müssen.
-- **Offlineauswahl:** bestimmt, nach welcher fachlichen Grenze Inhalte
-  vorbereitet, angezeigt und nach Rechteentzug behandelt werden.
-- **Daten- und Inhaltsgrenzen:** beeinflusst Trennung, Freigabe und Verhinderung
-  unberechtigter Querzugriffe zwischen Bands und Arbeitsbereichen.
-- **Spätere Architekturentscheidungen:** liefert fachliche Kriterien für eine
-  spätere, technologieoffene Bewertung von Trennungs- und Zuordnungsmodellen,
-  ohne ein technisches Modell vorzugeben.
-
-**Entscheidungsstatus:** Offen. Keine Option ist ausgewählt oder empfohlen.
+- **Rollen und Berechtigungen:** Bandrollen gelten immer innerhalb genau eines
+  Bandbereichs.
+- **Navigation:** Der aktive Bandbereich muss bei Mehrfachmitgliedschaft
+  eindeutig erkennbar sein.
+- **Song-, Inhalts- und Setlistzuordnung:** private Objekte benötigen keine
+  Bandzuordnung; bandbezogene Sichtbarkeit und Verwaltung werden dem jeweiligen
+  Bandbereich zugeordnet.
+- **Offlineauswahl:** Auswahl, Rechteentzug und lokale Behandlung müssen den
+  Bandbereich berücksichtigen.
+- **Daten- und Inhaltsgrenzen:** Querzugriffe zwischen Bandbereichen sind
+  unzulässig.
+- **Technologieoffenheit:** Die Entscheidung legt keine konkrete Mandanten-,
+  Datenbank-, Speicher- oder Deploymentarchitektur fest.
