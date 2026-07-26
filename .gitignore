@@ -5,6 +5,8 @@
 
 # Lokale Aufgaben- und Übergabedateien
 TASK-RESULT.md
+TASK.md
+/patch.sh
 
 # Zugangsdaten und Schlüsselmaterial
 *.key
