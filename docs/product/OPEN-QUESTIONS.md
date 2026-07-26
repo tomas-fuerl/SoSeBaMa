@@ -138,14 +138,15 @@ Eigentümerentscheidung als beschlossen.
   Änderungswarteschlange und Konfliktbehandlung `FR-035` bis `FR-036` sowie
   spätere Erweiterungen `FR-038` bis `FR-046`.
 - **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
-  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen Rollen,
-  Offlinefrist und Band-Arbeitsbereich-Zuordnung geklärt werden.
+  `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen die
+  Rollen- und Aktionsmatrix sowie die Offlinefrist geklärt werden.
 - **Produktiver Nutzen:** Eine Band oder ein Ensemble kann Songs, PDF-Dokumente
   und Setlists gemeinsam verwalten und für Probe oder Auftritt vorbereiten.
   Berechtigte Mitglieder können PDFs online grundlegend annotieren und
   vorbereitete Unterlagen ohne Netzwerk lesen.
-- **Fachliche Hauptrisiken:** Die Bedienbarkeit von Fassungen und Revisionen,
-  noch offene Detailrechte für Gruppenrollen sowie eingeschränkter Nutzen für
+- **Fachliche Hauptrisiken:** Die verständliche Trennung von Song, konkretem
+  Inhalt und Änderungshistorie, noch offene Detailrechte für Bandrollen und
+  Direktrechte sowie eingeschränkter Nutzen für
   Mitglieder, die primär mit Text- oder Akkordblättern arbeiten.
 - **Technische Hauptrisiken:** sichere Dateiverarbeitung, Erhalt der
   Originaldokumente, Touch- und Stifteignung sowie konsistente lesende
@@ -169,8 +170,7 @@ Eigentümerentscheidung als beschlossen.
   `FR-038` bis `FR-046`.
 - **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
   `OQ-010`, `OQ-011`, `OQ-015` und `OQ-021`; insbesondere müssen
-  Änderungsrechte, ein zunächst lesender Offlineumfang und die Zuordnung von
-  Band und Arbeitsbereich geklärt werden.
+  Änderungsrechte und ein zunächst lesender Offlineumfang geklärt werden.
 - **Produktiver Nutzen:** Songs, Text- und Akkordblätter sowie Setlists können
   gemeinsam gepflegt und bei Probe oder Auftritt mit Transposition und
   Autoscroll genutzt werden; vorbereitete Inhalte bleiben lesend offline
@@ -286,42 +286,49 @@ gemeinsamer Basiskorridor.
 **Auswirkungen:** Abnahmekriterien, Ressourcenbedarf und Gerätekompatibilität.
 Es ist noch kein Zahlenwert beschlossen.
 
-### OQ-012: Songfassungen und Revisionen
+### OQ-012: Verhältnis von Song, Inhalt und Änderungshistorie
 
-**Entscheidungsstatus:** Entschieden durch die Produktentscheidung aus
-GitHub-Issue #5.
+**Entscheidungsstatus:** Entschieden durch die aktuelle Eigentümerentscheidung
+zum Song- und Inhaltsmodell.
 
-**Produktentscheidung:** Ein Song besitzt unterscheidbare Songfassungen. Jede
-Songfassung führt ihre eigene Folge nachvollziehbarer Revisionen. Benutzer,
-Gruppen und Setlists wählen für ihre zulässigen Referenzen zwischen Rolling
-Reference auf die aktuelle Revision und Pinned Reference auf eine bestimmte
-Revision. Eine Setlist legt immer aktuell oder stabil beziehungsweise
-festgesetzt als Standardstrategie fest. Jeder Song erbt diese Strategie oder
-überschreibt sie durch Rolling beziehungsweise ausdrücklich Pinned.
+**Produktentscheidung:** Ein Song ist der normalisierte fachliche
+Metadateneintrag für ein Musikstück. Ein konkreter Inhalt ist genau einem Song
+zugeordnet und kann insbesondere ein PDF oder ein Text-/Chord-Inhalt sein.
 
-**Auswirkungen:** Fassungen, Revisionen und Referenzstrategie müssen eindeutig
-erkennbar sein. Eine neue Revision verändert Rolling References, aber keine
-Pinned References. Setliststandard, Vererbung und Eintragsüberschreibung
-bleiben eindeutig; Setlists kopieren den referenzierten Songinhalt nicht. Das
+Ein Song kann mehreren konkreten Inhalten zugrunde liegen. Ein Inhalt darf
+eigene Metadaten besitzen, die von den normalisierten Songmetadaten abweichen.
+
+Songs und Inhalte werden nicht in auswählbaren Fassungen, Versionen oder
+Revisionen geführt. Jeder Inhalt besitzt genau einen aktuellen Stand. Fachlich
+relevante Änderungen werden ausschließlich über eine nachvollziehbare
+Änderungshistorie festgehalten.
+
+**Auswirkungen:** Erstellung, Suche, Metadatenanzeige, Bearbeitung und
+Historisierung müssen Song und konkreten Inhalt eindeutig unterscheiden. Eine
+Änderungshistorie darf keine frühere Fassung als auswählbaren Inhalt,
+Setlisteintrag oder alternatives Original verfügbar machen. Die Entscheidung
 legt weder Speichertechnik noch Datenbankschema fest.
 
-### OQ-013: Historisierung oder Versionierung von Setlists
+### OQ-013: Historisierung von Setlists
 
-**Entscheidungsstatus:** Entschieden durch die Produktentscheidung aus
-GitHub-Issue #5.
+**Entscheidungsstatus:** Entschieden durch die aktuelle Eigentümerentscheidung
+zum Setlistmodell.
 
-**Produktentscheidung:** Eine Setlist besitzt genau einen aktuellen Stand und
-eine vollständige Änderungshistorie. Sie wird nicht in parallel auswählbaren
-Versionen geführt. Für einen unabhängigen neuen Planungsstand wird die Setlist
-kopiert; die Kopie besitzt eigenes Eigentum und eine eigene Änderungshistorie.
-Die referenzierten Songinhalte werden dabei nicht kopiert.
+**Produktentscheidung:** Eine Setlist enthält eine geordnete Auswahl konkreter
+Inhalte. Sie besitzt genau einen aktuellen Stand und eine vollständige
+Änderungshistorie. Sie wird nicht in parallel auswählbaren Versionen geführt und
+verwendet keine Rolling-, Pinned- oder sonstigen Referenzstrategien.
 
-**Auswirkungen:** Frühere Änderungen bleiben nachvollziehbar, während die
-aktuelle Setlist eindeutig bleibt. Eigentümer ist ein Benutzer oder eine Gruppe;
-bei Gruppeneigentum richtet sich die Bearbeitung nach den wirksamen
-Gruppenrollen. Offlineabgleich, Speicherbedarf und Bedienung müssen die
-vollständige Historie berücksichtigen, ohne ein technisches Verfahren
-festzulegen.
+Für einen unabhängigen neuen Planungsstand wird die Setlist bewusst kopiert. Die
+Kopie besitzt eigenes Eigentum und eine eigene Änderungshistorie. Zugeordnete
+Inhalte und Overlays werden dabei nicht kopiert.
+
+**Auswirkungen:** Frühere Änderungen bleiben nachvollziehbar, während der
+aktuelle Setliststand eindeutig bleibt. Eigentümer ist ein Benutzer oder eine
+Band; bei Bandeigentum richtet sich die Bearbeitung nach den wirksamen Rollen
+und Direktrechten des Bandbereichs. Offlineabgleich, Speicherbedarf und
+Bedienung berücksichtigen die vollständige Historie, ohne ein technisches
+Verfahren festzulegen.
 
 ### OQ-014: Export von Dokumenten und Annotationen
 
