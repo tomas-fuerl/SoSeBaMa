@@ -1,146 +1,123 @@
 # Produktvision
 
-## Bezug und Geltungsbereich
+## Zweck
 
-Dieses Dokument konkretisiert die Produktvision aus GitHub-Issue #3. Es
-beschreibt das fachliche Ziel von SoSeBaMa, ohne Architektur, Technologie oder
-Betriebsprodukt festzulegen.
+SoSeBaMa, der **Song-Setlist-Band-Manager**, ist als langfristig wartbare
+Progressive Web App für Musiker, Bands und Ensembles vorgesehen. Diese Vision
+legt keine Programmiersprache, kein Framework, keine Datenbank und kein
+technisches Synchronisationsverfahren fest.
 
-Verbindliche Begriffe stehen im [Glossar](GLOSSARY.md). Offene und entschiedene
-Produktfragen stehen in
-[Produktfragen und Entscheidungen](OPEN-QUESTIONS.md).
+Verbindliche Begriffe stehen im [Glossar](GLOSSARY.md), Anforderungen im
+[funktionalen Scope](FUNCTIONAL-SCOPE.md) und Entscheidungen in den
+[Produktfragen](OPEN-QUESTIONS.md).
 
-## Produktname
+## Problem und Nutzen
 
-**SoSeBaMa** ist der Kurzname für den **Song-Setlist-Band-Manager**.
+Musiker verwalten Songdaten, PDFs, Text-/Chord-Inhalte, Annotationen und
+Setlists häufig in getrennten Ablagen. Für Probe und Auftritt müssen berechtigte
+Inhalte schnell auffindbar, auf Tablets gut bedienbar und kontrolliert offline
+verfügbar sein. Bands benötigen klare Eigentums-, Berechtigungs- und
+Verwaltungsgrenzen, ohne gemeinsame Inhalte unnötig zu duplizieren.
 
-SoSeBaMa ist als moderne, langfristig wartbare Progressive Web App für Musiker,
-Bands und Ensembles vorgesehen. Diese Produktform trifft keine Auswahl von
-Programmiersprache, Framework, Datenbank oder konkreter Webtechnologie.
-
-## Problemstellung
-
-Musiker, Bands und Ensembles verwalten Songinformationen, PDFs, Text- und
-Chord-Inhalte, persönliche Notizen, gemeinsame Hinweise und Setlists häufig in
-getrennten Ablagen.
-
-Für Probe und Auftritt müssen die benötigten Inhalte schnell auffindbar, auf
-Tablets gut bedienbar und gezielt offline verfügbar sein. Verteilte Ablagen
-erschweren die gemeinsame Pflege, eindeutige Zuständigkeiten, nachvollziehbare
-Änderungen, Rechteentzug und den sicheren Umgang mit lokalen Kopien.
+SoSeBaMa stellt dafür plattformweite normalisierte Songs, konkrete Inhalte,
+normale berechtigte Overlays und Setlists bereit. Globale Aktionsrechte,
+Objektberechtigungen, Gruppen, Eigentum und Bandbereiche bleiben nachvollziehbar
+getrennt.
 
 ## Zielgruppen
 
-- Bands und Ensembles mit gemeinsam gepflegtem Repertoire,
-- Personen, die Songs, Inhalte, Overlays und Setlists verwalten,
-- Musiker, die Inhalte bei Probe und Auftritt lesen, annotieren oder anpassen,
-- Setlist-Verantwortliche,
-- Mitglieder mit bewusst eingeschränktem oder rein lesendem Zugriff.
-
-Die fachlichen Rollen und ihre Grenzen sind in
-[Benutzer und fachliche Rollen](USERS-AND-ROLES.md) beschrieben.
-
-## Nutzenversprechen
-
-SoSeBaMa stellt eine verständliche, zentral verwaltete Produktbasis für Songs,
-konkrete Inhalte, Overlays und Setlists bereit.
-
-Ein Song bündelt normalisierte Metadaten eines Musikstücks. Konkrete PDF- oder
-Text-/Chord-Inhalte werden genau einem Song zugeordnet. Benutzer dürfen eigene
-private Inhalte führen; Bands dürfen Inhalte in ihrem Bandbereich gemeinsam
-verwalten.
-
-Zusätzliche Annotationen, Transpositionen, geänderte Chords und Hinweise werden
-als Overlays geführt, ohne das Original des Inhalts zu verändern. Mehrere
-berechtigte Overlays können gleichzeitig und überlappend dargestellt werden.
-
-Berechtigte Benutzer können konkrete Inhalte und Overlays für eine erlaubte
-Offlineverwendung vorbereiten und ihren Speicher-, Synchronisations- und
-Berechtigungszustand erkennen.
+- Musiker in einer oder mehreren Bands,
+- Eigentümer und Bearbeiter von Inhalten, Overlays und Setlists,
+- berechtigte Bandmitglieder für Mitgliedschafts- und Gruppenverwaltung,
+- Plattformadministratoren für geschützte globale Aufgaben,
+- technische Betriebsverantwortliche mit getrennten technischen Rechten.
 
 ## Produktprinzipien
 
-1. **Song und Inhalt bleiben getrennt:** Ein Song ist der normalisierte
-   Metadateneintrag. Ein konkreter Inhalt ist eine PDF- oder
-   Text-/Chord-Darstellung genau eines Songs.
-2. **Ein aktueller Stand statt auswählbarer Versionen:** Inhalte und Setlists
-   besitzen genau einen aktuellen Stand. Änderungen bleiben über eine
-   nachvollziehbare Historie sichtbar, erzeugen aber keine auswählbaren
-   Fassungen, Revisionen oder Referenzstrategien.
-3. **Original und Overlays bleiben getrennt:** Ein Inhalt besitzt genau ein
-   Original ohne angewendete Overlays. Private, Band- und globale Overlays
-   verändern dieses Original nicht.
-4. **Mehrere Overlays sind gleichzeitig nutzbar:** Berechtigte Overlays dürfen
-   gleichzeitig und überlappend dargestellt werden. Aktive Overlays und ihre
-   Reihenfolge müssen erkennbar sein.
-5. **Setlists enthalten konkrete Inhalte:** Eine Setlist ordnet konkrete Inhalte
-   für Probe oder Auftritt und unterscheidet bandweite von persönlichen
-   Overlay-Auswahlen.
-6. **Bandbereiche bilden klare Grenzen:** Jede Band besitzt genau einen
-   Bandbereich. Eine Installation darf mehrere Bandbereiche enthalten und ein
-   Benutzer Mitglied mehrerer Bands sein. Rechte werden nicht zwischen
-   Bandbereichen übertragen.
-7. **Rollen und Direktrechte sind explizit:** Geschützte Aktionen werden über
-   globale oder bandbezogene Rollen, Direktrechte und objektbezogene Grenzen
-   autorisiert. Mitgliedschaft, Sichtbarkeit oder Eigentum allein vermittelt
-   kein Änderungsrecht.
-8. **Gemeinsame Bearbeitung ist kontrolliert:** Gemeinsam bearbeitbare Inhalte
-   sowie Band- und globale Overlays benötigen online einen wirksamen Check-out.
-   Es gilt first come, first save. Parallele Bearbeitung, stilles Überschreiben
-   und automatisches Zusammenführen sind ausgeschlossen.
-9. **Offlinezustände bleiben sichtbar:** Ausgewählte Inhalte sind im erlaubten
-   Umfang offline nutzbar. Lokaler Stand, Einschränkungen, ausstehende private
-   Änderungen, Fehler und Konflikte bleiben verständlich sichtbar.
-10. **Import bleibt benutzergesteuert:** Inhalte werden bewusst durch Dateiimport
-    oder Einfügen übernommen. Herkunft und Nutzungsrechte bleiben in der
-    Verantwortung des einbringenden Benutzers.
-11. **Security und Datenschutz sind Produkteigenschaften:** Private Inhalte und
-    private Overlays bleiben geschützt. Rechteentzug, Geräteverlust,
-    Bandbereichstrennung und sichere Fehlerbilder werden in allen Abläufen
-    berücksichtigt.
-12. **Technologie folgt Anforderungen:** Technische Entscheidungen werden erst
-    nach dokumentierter, ergebnisoffener Bewertung getroffen.
+1. **Song und Inhalt sind getrennt.** Ein Song ist das plattformweite
+   normalisierte Metadatenobjekt. Jeder Inhalt gehört genau einem Song.
+2. **Es gilt ein aktueller Basisinhalt.** Inhalte besitzen keine auswählbaren
+   Versionen oder Revisionen. Die zuerst importierte Datei wird nicht als
+   zusätzlicher unveränderlicher Stand geführt.
+3. **Songmetadaten gelten global.** Nur Plattformadministratoren ändern oder
+   prüfen bestehende Songs; andere Benutzer stellen Änderungsanträge.
+4. **Overlays sind normale Objekte.** Es gibt keine festen Reichweitentypen.
+   Eigene Overlays können übernommen oder mit dem Inhalt dynamisch gekoppelt
+   werden, ohne den Basisinhalt zu verändern.
+5. **Autorisierung hat zwei Ebenen.** Normale Benutzer benötigen globales
+   Aktionsrecht und Objektberechtigung. Gruppenrechte wirken additiv;
+   Plattformadministratoren sind fachliche Superuser.
+6. **Bands sind Prinzipale.** Jede Band besitzt genau einen Bandbereich und
+   darf Eigentümer sein. Ausdrückliche Freigaben über Bandgrenzen sind erlaubt,
+   implizite Querzugriffe nicht.
+7. **Breite Lesbarkeit bleibt authentifiziert.** Die geschützte Systemband
+   `Öffentlich` vermittelt nach administrativ geprüftem Antrag Lesen für alle
+   aktiven Benutzer, aber keinen anonymen Zugriff.
+8. **Eigentum bleibt eindeutig.** Regulärer Eigentümer ist ein aktiver Benutzer
+   oder eine bestehende Band. Die Plattform ist kein Eigentümer. Eigentümerlose
+   Objekte und Löschvormerkungen sind getrennte Zustände.
+9. **Gemeinsame Bearbeitung ist sitzungsgebunden.** Jedes gemeinsam
+   bearbeitbare Objekt außer Songs benötigt einen Check-out. Administration
+   darf ihn zurücknehmen, aber nicht umgehen.
+10. **Offlinekonflikte werden nicht versteckt.** Private Offlinebearbeitung ist
+    im MVP enthalten. Gemeinsame Offlinebearbeitung folgt nach dem MVP über
+    Offline-Check-outs. Automatisches Merge und stilles Überschreiben sind
+    ausgeschlossen.
+11. **Setlists zeigen den aktuellen berechtigten Stand.** Es gibt keine
+    Snapshots. Fehlende Inhalte werden datensparsam markiert und können
+    angefragt werden.
+12. **Security, Barrierearmut und Performance sind Produkteigenschaften.** MFA
+    schützt Plattformadministration; Kernabläufe orientieren sich an WCAG 2.2
+    AA und der initiale Performancekorridor ist messbar.
 
-Das verbindliche fachliche Modell steht im
-[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
+## MVP und Weiterentwicklung
 
-## Abgrenzung
+Der früh nutzbare MVP ist PDF-zentriert. Er umfasst Benutzer, Bands, Gruppen,
+Plattformadministration, `Öffentlich`, Berechtigungen, Eigentum und Löschung,
+Songverwaltung, PDF-Inhalte mit Metadaten, PDF-Navigation und -Overlays,
+Setlists, Berechtigungsanfragen, Audit, Suche, Offlineanzeige und private
+Offlinebearbeitung.
 
-SoSeBaMa ist mehr als eine reine Dateiablage, weil Songs, konkrete Inhalte,
-Overlays, Rollen, Direktrechte, Setlists, Check-outs und Offlinezustände
-fachlich zusammengeführt werden.
+Vollständig nach dem MVP folgen:
 
-SoSeBaMa ist jedoch weder professionelle Notensatzsoftware noch eine Digital
-Audio Workstation. Es ist kein öffentliches Musikportal, kein soziales
-Musiknetzwerk und kein Handelsplatz für Musikdokumente.
+- Texteditor und Copy-and-paste,
+- Chorderkennung und -korrektur,
+- Transposition und Vereinfachung,
+- Autoscroll und Offlineverwendung der Text-/Chord-Funktionen,
+- gemeinsame Offlinebearbeitung über Offline-Check-outs.
 
-Automatisiertes Scraping, das Umgehen von Zugriffsbeschränkungen oder
-Schutzmaßnahmen und die unkontrollierte Weitergabe urheberrechtlich geschützter
-Inhalte sind ausdrücklich nicht vorgesehen. Die vollständige Scope-Abgrenzung
-steht im [Funktionalen Scope](FUNCTIONAL-SCOPE.md).
+Später vorgemerkt sind die optimistische Konkurrenzprüfung für Songs, eine
+Check-out-Freigabebenachrichtigung, Export und ein optionales Bewertungssystem.
+MFA-, Verschlüsselungs- und Synchronisationsverfahren sowie konkrete
+Referenzmessbedingungen und Ressourcenbudgets bleiben technischen
+beziehungsweise betrieblichen Entscheidungen vorbehalten.
 
-## Kriterien für späteren Produkterfolg
-
-Der Produkterfolg wird daran bewertet, ob:
-
-- die in [Kernabläufe](CORE-WORKFLOWS.md) definierten Aufgaben für die
-  vorgesehenen Rollen vollständig und verständlich durchführbar sind,
-- Songs und konkrete Inhalte eindeutig unterscheidbar und auffindbar bleiben,
-- Originale durch Overlay-Aktionen nicht unbemerkt verändert werden,
-- mehrere private, Band- und globale Overlays kontrolliert nutzbar sind,
-- Setlists konkrete Inhalte und eindeutige Overlay-Auswahlen bereitstellen,
-- Bandbereichs-, Eigentums-, Sichtbarkeits- und Berechtigungsgrenzen
-  nachweislich konsistent bleiben,
-- konkurrierende gemeinsame Bearbeitung sicher blockiert und nachvollziehbar
-  behandelt wird,
-- Probe und Auftritt mit gezielt vorbereiteten Inhalten ohne Netzwerk
-  fortgesetzt werden können,
-- Benutzer Offline-, Synchronisations-, Check-out- und Konfliktzustände korrekt
-  erkennen und behandeln können,
-- die Qualitäts- und Sicherheitsanforderungen reproduzierbar verifiziert sind.
-
-Konkrete Zielwerte werden nicht in dieser Vision erfunden. Noch fehlende
-Messwerte und Produktgrenzen sind in
-[Produktfragen und Entscheidungen](OPEN-QUESTIONS.md) gekennzeichnet und müssen
-vor ihrer verbindlichen Verwendung durch den Projekteigentümer entschieden
+Handschrift- und Musikerkennung sind bis auf Weiteres außerhalb des Scopes und
+dürfen frühestens nach Gesamtprodukt-Release als neue Feature Requests bewertet
 werden.
+
+## Produktgrenzen
+
+SoSeBaMa ist kein anonymes öffentliches Musikportal, kein soziales Netzwerk,
+kein Handelsplatz, keine Digital Audio Workstation und kein vollständiger
+Ersatz professioneller Notensatzsoftware. Automatisiertes Scraping, Umgehung
+von Schutzmaßnahmen und unkontrollierte Weitergabe geschützter Inhalte sind
+ausgeschlossen.
+
+Technologie folgt den Anforderungen. Architektur- und Betriebsentscheidungen
+werden erst nach ergebnisoffener Bewertung im dafür freigegebenen Arbeitspaket
+getroffen.
+
+## Erfolgskriterien
+
+Das Produkt ist erfolgreich, wenn:
+
+- Songs, Inhalte, Basisinhalte und Overlays konsistent getrennt bleiben,
+- Berechtigungen und Bandgrenzen positive Zusammenarbeit ohne implizite
+  Querzugriffe erlauben,
+- Eigentum, Eigentümerlosigkeit und Löschung nachvollziehbar funktionieren,
+- Setlists trotz einzelner fehlender Rechte sicher nutzbar bleiben,
+- Check-outs gemeinsame Bearbeitung ohne stillen Datenverlust koordinieren,
+- Offlinezustände und Konflikte verständlich behandelbar sind,
+- der PDF-zentrierte MVP auf unterstützten Primärgeräten barrierearm und im
+  dokumentierten Performancekorridor nutzbar ist.

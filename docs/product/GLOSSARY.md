@@ -2,397 +2,359 @@
 
 ## Bezug und Verwendung
 
-Dieses Glossar konkretisiert die Produktvision und die verbindlichen
-Eigentümerentscheidungen. Die bevorzugten Begriffe werden in allen Produkt- und
-Architekturdokumenten konsistent verwendet. Ein Synonym führt keine zusätzliche
-fachliche Bedeutung ein.
+Dieses Glossar definiert die bevorzugten Fachbegriffe. Ein Synonym führt keine
+zusätzliche Bedeutung ein. Das zusammenhängende Modell steht im
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
-## Begriffe
-
-### SoSeBaMa
-
-Kurzname für **Song-Setlist-Band-Manager**, das in der
-[Produktvision](VISION.md) beschriebene Produkt.
+## Akteure und Berechtigungen
 
 ### Benutzer
 
-Eine identifizierte Person, die nach erfolgreicher Zugangsprüfung und gemäß
-ihren wirksamen fachlichen Rechten mit SoSeBaMa interagiert.
+Eine identifizierte Person, die nach erfolgreicher Authentifizierung und gemäß
+ihren wirksamen Berechtigungen mit SoSeBaMa interagiert. Ein Benutzer ist aktiv,
+deaktiviert oder gelöscht.
 
 ### Mitglied
 
-Ein Benutzer mit einer aktiven Mitgliedschaft in einem Bandbereich.
-Mitgliedschaft allein vermittelt keine konkrete Änderungsberechtigung.
+Ein aktiver Benutzer mit Mitgliedschaft in einer Band. Mitgliedschaft allein
+vermittelt keine Objektberechtigung.
+
+### Gruppe
+
+Ein globaler oder genau einem Bandbereich zugeordneter
+Berechtigungsprinzipal. Gruppen dürfen nicht verschachtelt werden und sind keine
+Eigentümer. Eine bandbezogene Gruppe darf nur Mitglieder ihrer Band enthalten.
 
 ### Band
 
-Die fachliche Organisation eines Ensembles oder eines Zusammenschlusses von
-Musikern. Eine Band besitzt genau einen [Bandbereich](#bandbereich).
-
-In der Produkt- und Architekturdokumentation wird für diese fachliche
-Organisation ausschließlich „Band“ verwendet.
+Ein Eigentums- und Berechtigungsprinzipal für ein Ensemble. Eine Band verhält
+sich bei Berechtigungen wie eine Gruppe, darf aber Eigentümer sein. Sie besitzt
+genau einen Bandbereich, Mitglieder und optional weitere bandbezogene Gruppen.
 
 ### Bandbereich
 
-Die genau einer Band zugeordnete fachliche Verwaltungs-, Mitgliedschafts- und
-Berechtigungsgrenze.
+Die genau einer Band zugeordnete Mitgliedschafts- und Verwaltungsgrenze. Sie
+verhindert implizite Querzugriffe, verbietet aber keine ausdrückliche
+Objektfreigabe an eine andere Band.
 
-Jede Band besitzt genau einen Bandbereich und jeder Bandbereich gehört genau
-einer Band. Eine Installation kann mehrere getrennte Bandbereiche enthalten.
-Ein Benutzer kann Mitglied mehrerer Bandbereiche sein.
+### Systemgruppe `Plattformadministratoren`
 
-„Arbeitsbereich“ und „Workspace“ werden im Produktmodell nicht als Synonyme für
-Bandbereich verwendet.
+Die einzige geschützte administrative Systemgruppe. Ihre Mitglieder besitzen
+fachlichen Superuserstatus. Nur sie dürfen die Mitgliedschaft der Gruppe
+verändern. Technischer Betrieb ist davon getrennt.
 
-### Recht
+### Systemband `Öffentlich`
 
-Eine konkret benannte erlaubte fachliche Aktion. Ein Recht kann über eine Rolle
-oder unmittelbar einer einzelnen Person zugewiesen werden.
+Eine geschützte, nicht löschbare und nicht umbenennbare Band. Jeder aktive
+Benutzer ist automatisch Mitglied und erhält über die Grundmitgliedschaft nur
+Lesen. Sie ermöglicht keinen anonymen Internetzugriff. Nur
+Plattformadministratoren verwalten sie und setzen oder entfernen auf Antrag ihr
+Anzeigerecht an einem Inhalt.
 
-### Rolle
+### Globales Aktionsrecht
 
-Eine fachliche Zusammenfassung mehrerer Rechte. Eine Rolle gilt entweder global
-für die Plattform oder innerhalb genau eines Bandbereichs.
+Die erste notwendige Autorisierungsebene für eine geschützte Aktion. Normale
+Benutzer benötigen zusätzlich eine passende Objektberechtigung.
 
-Eine Rolle ist keine Festlegung einer technischen Autorisierungsmethode.
+### Objektberechtigung
 
-### Direktrecht
+Die zweite notwendige Autorisierungsebene für eine Aktion an einem konkreten
+Objekt. Allgemeine Objektberechtigungen sind Anzeigen, Bearbeiten, Löschen,
+Berechtigungen verwalten und Eigentum übertragen; objektspezifische
+Sonderrechte sind möglich.
 
-Ein Recht, das einer einzelnen Person unmittelbar und nicht ausschließlich über
-eine Rolle zugewiesen wird.
+Bearbeiten beinhaltet Anzeigen. Löschen beinhaltet global und objektbezogen
+Bearbeiten und Anzeigen. Berechtigungen verwalten sowie Eigentum übertragen
+beinhalten jeweils Anzeigen, aber keine weiteren administrativen Rechte.
 
-Das wirksame Ergebnis von Rollen- und Direktrechten muss eindeutig sein. Die
-abschließende Konfliktregel wird in den Produktfragen entschieden.
+### Additive Berechtigung
 
-### Standardrolle
+Auswertung ausschließlich positiver Zuweisungen an Benutzer und Gruppen. Der
+höchste positive Autorisierungsstatus gilt. Negative oder verweigernde Rechte
+existieren nicht.
 
-Eine von SoSeBaMa bereitgestellte Rolle mit vordefinierten Standardrechten.
-Bandbezogene Standardrollen dürfen pro Band angepasst werden. Globale Rollen und
-globale Rechte dürfen nicht durch eine Band verändert werden.
+### Fachlicher Superuserstatus
 
-### Bandadministrator
+Ausnahme von der Regel, dass globales Aktionsrecht und Objektberechtigung
+gemeinsam erforderlich sind. Er gilt ausschließlich für Mitglieder der
+Systemgruppe `Plattformadministratoren`.
 
-Eine bandbezogene fachliche Rolle zur Verwaltung der ausdrücklich erlaubten
-Aspekte einer Band und ihres Bandbereichs.
+### Berechtigungsanfrage
 
-Ein Bandadministrator besitzt keine impliziten technischen Betriebsrechte und
-keine impliziten globalen Plattformrechte.
+In-App-Antrag auf Anzeigen oder Bearbeiten für den Antragsteller selbst oder,
+mit dem erforderlichen bandbezogenen Recht, für eine Band. Bearbeiter benötigen
+globales Verwaltungsrecht und `Berechtigungen verwalten` am Objekt. Fehlt ein
+solcher Empfänger oder ist das Objekt eigentümerlos, ist die
+Plattformadministration zuständig.
 
-### Bandredakteur
-
-Eine bandbezogene Rolle zur Pflege der durch ihre konkreten Rechte erlaubten
-Inhalte, Inhaltsmetadaten, Band-Overlays und Setlists.
-
-Die Rolle vermittelt keine impliziten administrativen Rechte.
-
-### Globaler Administrator
-
-Eine ausdrücklich globale fachliche Rolle für plattformweite
-Verwaltungsaufgaben. Sie ist von technischen Betriebsidentitäten und
-technischen Administrationsrechten getrennt.
-
-### Plattform
-
-SoSeBaMa als fachlicher Eigentümer eines freiwillig übertragenen Inhalts.
-
-Ein zuvor privater Inhalt bleibt nach der Übertragung als privater Inhalt des
-Plattformeigentümers privat. Die Plattform als fachlicher Eigentümer ist keine
-technische Betriebsidentität.
+## Songs und Inhalte
 
 ### Song
 
-Der normalisierte fachliche Metadateneintrag für ein Musikstück.
-
-Ein Song ist weder PDF noch Text- oder Akkorddarstellung. Ein Song kann mehreren
-konkreten [Inhalten](#inhalt) zugrunde liegen.
+Ein plattformweites normalisiertes Metadatenobjekt eines Musikstücks. Es ist
+weder PDF noch Text- oder Chord-Inhalt. Es besitzt Titel, Komponist,
+Gemeinfreiheitsstatus und Prüfstatus.
 
 ### Songmetadaten
 
-Normalisierte fachliche Merkmale eines Songs, beispielsweise Titel, Interpret,
-Urheber oder weitere später festgelegte Angaben.
+- Titel als Pflichtfeld,
+- Komponist als genau ein Pflicht-String,
+- Gemeinfreiheitsstatus `Unbekannt`, `Gemeinfrei` oder `Nicht gemeinfrei`,
+- Prüfstatus `Ungeprüft` oder `Geprüft`.
+
+Der Komponisten-String darf mehrere Namen enthalten; `Unbekannt` und
+`Traditionell` sind zulässig.
+
+### Songidentität
+
+Normalisierte Übereinstimmung von Titel und Komponist. Groß- und Kleinschreibung
+wird ignoriert, Unicode normalisiert, äußere Leerzeichen werden entfernt und
+mehrere Leerzeichen zusammengefasst. Satzzeichen, Namensreihenfolge und andere
+Schreibweisen bleiben relevant. Der Gemeinfreiheitsstatus gehört nicht zur
+Identität.
+
+### Änderungsantrag für Songmetadaten
+
+Antrag eines normalen Benutzers mit dem globalen Recht
+`Songänderung beantragen`. Nur Plattformadministratoren dürfen den Antrag
+genehmigen oder ablehnen und bestehende Songmetadaten ändern.
 
 ### Inhalt
 
-Eine konkrete musikalische Darstellung genau eines Songs, beispielsweise ein
-PDF oder ein strukturierter Chord-/Textinhalt.
+Eine konkrete Darstellung genau eines Songs. Ein Inhalt besitzt genau einen
+aktuellen Basisinhalt, Inhaltsmetadaten, Berechtigungen und einen zulässigen
+Eigentümer. Im MVP ist der Inhalt PDF-zentriert; Text-/Chord-Inhalte folgen
+vollständig nach dem MVP.
 
-Ein Inhalt besitzt genau einen aktuellen Stand, ein
-[Original](#original), einen eindeutigen Eigentümer und eine
-[Änderungshistorie](#änderungshistorie). Er kann eigene
-[Inhaltsmetadaten](#inhaltsmetadaten) besitzen.
+### Basisinhalt
 
-Eine Setlist ist kein Inhalt im Sinne dieser Definition.
+Der aktuelle Inhalt ohne angewendete Overlays. Eine ersetzte PDF oder
+bearbeitete Textfassung ersetzt den vorherigen Basisinhalt. Der zuerst
+importierte Stand bleibt nicht als dauerhaft unveränderlicher zusätzlicher
+Stand erhalten.
 
 ### Inhaltsmetadaten
 
-Metadaten eines konkreten Inhalts, die von den normalisierten Songmetadaten
-abweichen dürfen.
+Fachliche Angaben eines Inhalts. `Arrangeur/Interpret` ist Pflicht. Tonart,
+Tempo, Dauer, Niveau, Genre und Beschreibung sind optional. Songmetadaten und
+Inhaltsmetadaten bleiben getrennt.
 
-Eine Änderung der Inhaltsmetadaten verändert nicht automatisch die
-Songmetadaten. Die Herkunft eines angezeigten Metadatenwerts muss
-nachvollziehbar sein.
+### Gemeinfreiheitsstatus
 
-### Original
+Songfeld mit den Werten `Unbekannt`, `Gemeinfrei` oder `Nicht gemeinfrei`. Es
+gehört nicht zur automatischen Songidentität.
 
-Der aktuelle Inhalt ohne angewendete Overlays.
+### Prüfstatus
 
-Ein Original wird durch eine reine Overlay-Aktion weder verändert noch kopiert.
-Es existieren keine auswählbaren Fassungen oder Revisionen des Originals.
+Songfeld mit den Werten `Ungeprüft` oder `Geprüft`. Neue Songs normaler Benutzer
+sind ungeprüft.
+
+## Eigentum und Lebenszyklus
 
 ### Eigentum
 
-Die fachliche Verantwortung für ein verwaltetes Objekt. Eigentum ist von
-Sichtbarkeit und Berechtigungen getrennt.
+Fachliche Verantwortung genau eines aktiven Benutzers oder genau einer
+bestehenden Band für Inhalt, Setlist oder Overlay. Die Plattform und normale
+Gruppen sind keine regulären Eigentümer. Die Systemband `Öffentlich` ist ein
+zulässiger administrativer Eigentümer.
 
-### Eigentümer
+### Eigentümerrechte
 
-Die Partei, die das Eigentum an einem Objekt trägt.
+Automatische und nicht entziehbare Objektberechtigungen Anzeigen, Bearbeiten,
+Löschen, Berechtigungen verwalten und Eigentum übertragen. Ihre Ausübung
+erfordert weiterhin globale Aktionsrechte. Bei Bandeigentum hält die Band die
+Rechte; Mitglieder erhalten sie nicht automatisch.
 
-Eigentümer eines Inhalts ist genau ein Benutzer, eine Band oder die Plattform.
-Setlists besitzen einen Benutzer oder eine Band als Eigentümer. Overlays
-besitzen entsprechend ihrer Reichweite einen Benutzer, eine Band oder den
-Inhaltseigentümer als Eigentümer.
+### Eigentumsübertragung
 
-### Ersteller
+Bewusster Wechsel zu einem aktiven Benutzer oder einer bestehenden, nicht zur
+Löschung vorgemerkten Band. Eine Annahme ist nicht erforderlich; bestehende
+Anzeige- und Bearbeitungsberechtigungen bleiben unverändert. Nur
+Plattformadministratoren dürfen an `Öffentlich` übertragen.
 
-Der Benutzer, der einen Song, Inhalt, ein Overlay oder eine Setlist ursprünglich
-angelegt hat.
+### Eigentümerlos
 
-Der Ersteller muss nicht dauerhaft der Eigentümer sein. Aus der Erstellung
-entstehen keine nicht ausdrücklich vergebenen Rechte.
+Objektzustand nach Löschung des Eigentümers oder ausdrücklicher administrativer
+Sonderaktion. Vorhandene wirksame Lese- und Schreibrechte bleiben bestehen; nur
+Plattformadministratoren dürfen Eigentum und Berechtigungen ändern.
 
-### Sichtbarkeit
+### Zur Löschung vorgemerkt
 
-Die fachliche Festlegung, wer ein Objekt finden oder sehen darf.
+Vom Zustand `Eigentümerlos` getrennte Markierung mit global konfigurierbarer
+Wiederherstellungsfrist. Lesen bleibt erlaubt; Bearbeiten, neue Freigaben und
+neue Setlistreferenzen sind gesperrt. Nur Plattformadministratoren dürfen
+wiederherstellen oder endgültig löschen.
 
-Sichtbarkeit allein erteilt kein Änderungsrecht und überträgt kein Eigentum.
-Neue Inhalte sind ohne abweichende wirksame Benutzervoreinstellung privat.
+### Endgültige Löschung
 
-### Berechtigung
+Nicht wiederherstellbare Entfernung nach administrativer Bestätigung. Bei
+Inhalten werden Overlays gelöscht und aktuelle Setlistreferenzen atomar
+entfernt. Betroffene Anzahlen werden vorher angezeigt.
 
-Das wirksame Ergebnis aller für eine konkrete Aktion relevanten Rechte,
-Eigentumsgrenzen, Sichtbarkeiten und inhaltsbezogenen Regeln.
-
-### Freigabe
-
-Die bewusste Erweiterung der Sichtbarkeit oder Nutzbarkeit eines Objekts für
-eine Band, mehrere Bands oder die Öffentlichkeit.
-
-Eine Freigabe überträgt kein Eigentum und vermittelt keine nicht ausdrücklich
-erteilten Bearbeitungsrechte.
-
-### Bandpublizierter Inhalt
-
-Ein Inhalt, der für mindestens eine Band sichtbar publiziert wurde.
-
-Änderungen an seiner bestehenden Bandpublikation richten sich nach den
-wirksamen Rechten und den festgelegten Zustimmungsregeln des Bandadministrators.
-
-### Dokument
-
-Ein konkreter Inhalt in einer dokumentorientierten Darstellungsform,
-beispielsweise PDF, Textblatt oder Akkordblatt.
-
-### PDF
-
-Ein Inhalt in einem portablen, seitenorientierten Dokumentformat. Sein Original
-wird getrennt von angewendeten Overlays geführt.
-
-### Textinhalt
-
-Ein bearbeitbarer, textorientierter Inhalt ohne zwingend strukturierte
-Akkordinformationen.
-
-### Chord-Inhalt
-
-Ein bearbeitbarer Inhalt, in dem Text und Akkorde so strukturiert sind, dass
-Akkorde erkannt, dargestellt und transponiert werden können.
-
-„Akkordblatt“ kann in benutzerorientierten Texten als verständliche
-Darstellungsbezeichnung verwendet werden. Der bevorzugte Modellbegriff ist
-Chord-Inhalt.
+## Overlays
 
 ### Overlay
 
-Eine zusätzliche Darstellungs- oder Bearbeitungsebene zu genau einem Inhalt.
+Ein normales berechtigtes Objekt mit Benutzer oder Band als Eigentümer, das
+genau zu einem Inhalt gehört. Es verändert den Basisinhalt nicht. Feste
+fachliche Reichweitentypen existieren nicht.
 
-Ein Overlay verändert oder kopiert das Original nicht. Zu einem Inhalt können
-beliebig viele Overlays existieren und mehrere berechtigte Overlays können
-gleichzeitig dargestellt werden.
+### Zunächst nicht vererbendes Overlay
 
-### Privates Overlay
+Eigenes Overlay eines Benutzers, das zunächst nur er lesen und bearbeiten darf.
+Solange nur er potenziell schreiben darf, benötigt es keinen Check-out.
 
-Ein Overlay eines Benutzers, das ausschließlich für diesen Benutzer sichtbar
-ist.
+### Dynamisch gekoppeltes Overlay
 
-Ein Benutzer kann mehrere private Overlays zu demselben Inhalt besitzen.
+Overlay mit stets demselben Eigentümer wie sein Inhalt. Es erbt dynamisch alle
+Leseberechtigungen des Inhalts, aber keine Schreib-, Lösch-, Verwaltungs- oder
+Übertragungsrechte. Es darf ausschließlich zusätzliche Bearbeitungsrechte für
+bereits am Basisinhalt Leseberechtigte erhalten und weder entkoppelt noch
+separat übertragen werden.
 
-### Band-Overlay
+### Overlay-Übernahme
 
-Ein Overlay einer Band. Es wird innerhalb des zugehörigen Bandbereichs nach den
-wirksamen Rollen, Direktrechten und inhaltsbezogenen Regeln angezeigt und
-bearbeitet.
-
-Eine Band kann mehrere Band-Overlays zu demselben Inhalt besitzen.
-
-### Globales Overlay
-
-Ein durch den Eigentümer eines Inhalts allgemein für die zum Inhalt
-berechtigten Benutzer bereitgestelltes Overlay.
-
-„Global“ erweitert weder die Sichtbarkeit des Inhalts noch vermittelt es
-implizite Bearbeitungsrechte.
+Umwandlung desselben eigenen Overlays in ein dynamisch gekoppeltes Overlay nach
+Genehmigung. Das Eigentum geht an den Inhaltseigentümer und das bisherige
+persönliche Schreibrecht entfällt. Bei Ablehnung bleibt das Overlay unverändert.
 
 ### Overlay-Auswahl
 
-Die im jeweiligen Nutzungskontext, insbesondere für einen Inhalt innerhalb
-einer Setlist, festgelegte Auswahl ein- und ausgeblendeter Overlays.
-
-Die Auswahl verändert weder Inhalt noch Overlay und darf bestehende
-Berechtigungen nicht umgehen.
+Auswahl und Reihenfolge der sichtbaren Overlays. Eine gemeinsame Auswahl darf
+je Setlisteintrag bestehen; persönliche Einstellungen dürfen sie für den
+Benutzer ergänzend übersteuern, ohne allgemeine Berechtigungen zu verändern.
 
 ### Annotation
 
-Eine zusätzliche grafische oder textuelle Markierung in einem Overlay.
+Grafische oder textuelle Ergänzung in einem Overlay. PDF-Annotationen im MVP
+umfassen Freihandstift, Radierer, Textnotiz, Textmarker sowie Auswahl,
+Verschieben und Löschen.
 
-### Transpositions-Overlay
-
-Ein Overlay oder ein Bestandteil eines Overlays, das eine
-benutzer- beziehungsweise auftrittsbezogene Transposition darstellt, ohne den
-zugrunde liegenden Chord-Inhalt zu verändern.
-
-### Check-out
-
-Die wirksame Reservierung eines gemeinsam bearbeitbaren Inhalts oder Overlays
-für genau einen Benutzer.
-
-Während eines Check-outs dürfen andere Benutzer denselben Gegenstand nicht
-parallel bearbeiten. Ein Check-out ist keine technische Implementierungsfestlegung.
-
-### Administrative Check-out-Rücknahme
-
-Die bewusste und nachvollziehbare Aufhebung eines Check-outs durch einen hierzu
-berechtigten Bandadministrator im eigenen Bandbereich.
-
-Die Rücknahme darf keinen stillen Datenverlust verursachen.
-
-### First come, first save
-
-Fachlicher Kollaborationsgrundsatz, nach dem der zuerst wirksam auscheckende und
-unter gültiger Berechtigung speichernde Benutzer seine Änderung abschließen
-kann.
-
-Spätere konkurrierende Bearbeitungen werden blockiert und müssen den aktuellen
-Stand neu laden. Ein stilles Überschreiben oder automatisches Zusammenführen ist
-nicht vorgesehen.
+## Setlists und Bearbeitung
 
 ### Setlist
 
-Ein eigenständiges Planungsobjekt mit einer geordneten Auswahl konkreter
-Inhalte, insbesondere für Probe oder Auftritt.
-
-Eine Setlist ist kein Inhalt. Sie enthält keine Songfassungen, Revisionen oder
-Referenzstrategien. Für jeden Eintrag können die im Setlistkontext sichtbaren
-Overlays ausgewählt werden.
-
-Eine Setlist besitzt genau einen aktuellen Stand und eine Änderungshistorie.
+Eigenständiges berechtigtes Planungsobjekt mit Benutzer oder Band als
+Eigentümer. Sie referenziert aktuelle Basisinhalte, aktuelle Songmetadaten und
+aktuell berechtigte Overlays. Snapshots oder eingefrorene Auftrittsstände
+existieren nicht.
 
 ### Setlisteintrag
 
-Die Zuordnung eines konkreten Inhalts zu einer Setlist einschließlich
-Reihenfolge und setlistenbezogener Darstellungsentscheidungen.
+Referenz eines Inhalts in einer Setlist mit Position sowie gemeinsamer
+Overlay-Auswahl und Reihenfolge. Fehlende Inhaltsrechte führen zur minimalen
+Anzeige und ermöglichen eine Berechtigungsanfrage.
 
-### Persönliches Ausblenden
+### Persönliche Setlisteinstellung
 
-Die rollenabhängig zulässige Entscheidung eines Benutzers, einen Setlisteintrag
-für seine eigene Nutzung nicht anzuzeigen.
+Persönliches Ein- oder Ausblenden von Overlays, persönliche Reihenfolge oder
+persönliches Ausblenden eines Eintrags. Diese Einstellungen verändern den
+gemeinsamen Setliststand nicht und benötigen keinen Setlist-Check-out.
 
-Persönliches Ausblenden entfernt den Eintrag weder aus der bandweiten Setlist
-noch für andere Benutzer.
+### Gemeinsam bearbeitbar
 
-### Änderungshistorie
+Objektzustand, sobald mehr als ein Benutzer potenziell Schreibrecht besitzt.
+Ein Schreibrecht für Band oder Gruppe genügt unabhängig von der aktuellen
+Mitgliederzahl.
 
-Die nachvollziehbare Folge fachlich relevanter Änderungen eines Songs, Inhalts,
-Overlays oder einer Setlist.
+### Check-out
 
-Eine Änderungshistorie erzeugt keine auswählbaren Versionen oder Revisionen. Sie
-muss mindestens Gegenstand, Akteur, Zeitpunkt und Art der Änderung erkennbar
-machen.
+Sitzungsgebundene Reservierung eines gemeinsam bearbeitbaren Inhalts, Overlays
+oder einer Setlist. Songs benötigen keinen Check-out. Speichern beendet den
+Check-out nicht, solange die Bearbeitungssitzung geöffnet bleibt.
+
+### Online-Lease
+
+Global konfigurierbare Inaktivitätsfrist eines Online-Check-outs. Nur die
+aktive verbundene Bearbeitungssitzung verlängert sie.
+
+### Offline-Check-out
+
+Nach dem MVP vorgesehene bewusste Online-Reservierung eines gemeinsamen Objekts
+für Offlinebearbeitung mit technischer Revisionskennung und fester,
+nicht offline verlängerbarer Lease.
+
+### Technische Revisionskennung
+
+Nicht auswählbare technische Konfliktkennung für Synchronisation. Sie ist keine
+fachliche Version oder Revision.
+
+### Nicht synchronisierter Entwurf
+
+Lokale Änderung, die wegen abgelaufener Lease oder Konflikt nicht still
+übernommen werden darf. Sie kann verworfen, manuell übertragen oder soweit
+zulässig als neues eigenes Objekt gespeichert werden.
+
+### Offlinebereitstellung
+
+Kontrollierte lokale Bereitstellung innerhalb der Anwendung. Sie ist kein
+Export.
+
+## Nachvollziehbarkeit
+
+### Audit
+
+Nicht editierbarer, datensparsamer Nachweis administrativer und
+sicherheitsrelevanter Ereignisse. Plattformadministratoren erhalten eine
+durchsuchbare Ansicht; normale Benutzer sehen keine globalen Security-Ereignisse.
+
+### Fachliche Änderungshistorie
+
+Nachvollziehbare Ereignisse eines vorhandenen Objekts für berechtigte
+Eigentümer. Sie erzeugt keine auswählbare Version und wird solange aufbewahrt,
+wie das Objekt besteht.
 
 ### Aktueller Stand
 
-Der genau eine fachlich wirksame Stand eines Inhalts, Overlays oder einer
-Setlist.
+Der genau eine fachlich wirksame Basisinhalt beziehungsweise Setliststand. Bei
+Songs gelten stets die aktuellen globalen Metadaten.
 
-Frühere Änderungen sind nur über die Änderungshistorie nachvollziehbar und
-nicht als alternative Version auswählbar.
+## Liefergrenzen
 
-### Offlineinhalt
+### MVP
 
-Ein ausdrücklich ausgewählter und lokal vorbereiteter Inhalt, der im Rahmen der
-wirksamen Berechtigung ohne Netzwerk verwendet werden darf.
+Früh nutzbarer PDF-zentrierter Produktstand mit Benutzer-, Band-, Gruppen-,
+Berechtigungs-, Eigentums-, Song-, PDF-, Overlay-, Setlist-, Anfrage-, Audit-,
+Such-, Offlineanzeige- und privater Offlinebearbeitungsfunktion.
 
-### Lokale private Overlay-Änderung
+### Zielmodell nach dem MVP
 
-Eine auf einem Offlinegerät entstandene Änderung an einem privaten Overlay, die
-noch nicht erfolgreich mit der zentralen Datenhaltung abgeglichen wurde.
+Fachlich beschlossene Fortführung, insbesondere vollständige gemeinsame
+Offlinebearbeitung über Offline-Check-outs und die Text-/Chord-Funktionsgruppe.
 
-Ob solche Änderungen zulässig sind und wie lange sie gespeichert werden dürfen,
-wird in den Produktfragen entschieden.
+### Spätere Anforderung
 
-### Synchronisation
+Vorgemerkte Funktion außerhalb des MVP, etwa optimistische Konkurrenzprüfung
+für Songs, Check-out-Freigabebenachrichtigung, Export oder optionales
+Bewertungssystem.
 
-Der kontrollierte Abgleich zulässiger zentraler und lokaler Zustände.
+### Architekturentscheidung
 
-Eine offline entstandene Änderung darf nicht still als kollaborative
-Bandänderung übernommen werden. Rechte werden vor einer Übernahme erneut
-geprüft.
+Noch festzulegendes technisches Verfahren, etwa für MFA, lokale
+Verschlüsselung oder Synchronisation. Eine solche Entscheidung ändert die
+fachliche Anforderung nicht.
 
-### Konflikt
+## Ausdrücklich ersetzte Altbegriffe
 
-Ein Zustand, in dem eine beabsichtigte Änderung wegen eines neueren Stands,
-eines wirksamen Check-outs, fehlender Rechte oder eines nicht zulässigen lokalen
-Zustands nicht übernommen werden kann.
+Folgende Ausdrücke dürfen nur noch zur Kennzeichnung des verworfenen Modells
+verwendet werden:
 
-### Zentrale Datenhaltung
+- `Original` als dauerhaft unveränderlicher erster Inhaltsstand: ersetzt durch
+  `Basisinhalt`.
+- `öffentliche Sichtbarkeit`, `öffentlich sichtbar`, `globale
+  Veröffentlichung` und `Bandpublikation`: ersetzt durch ausdrückliche
+  Objektberechtigungen; breite Lesbarkeit erfolgt über die Systemband
+  `Öffentlich`.
+- `Plattform als Eigentümer`: verworfen; nur Benutzer und Bands sind reguläre
+  Eigentümer.
+- `Plattform-Redakteur`: verworfen; es gibt nur die Systemgruppe
+  `Plattformadministratoren`.
+- `private Overlays`, `Band-Overlays` und `globale Overlays` als feste Typen:
+  ersetzt durch normale berechtigte Overlays und optionale dynamische Kopplung.
+- `Rollen und Direktrechte`: ersetzt durch Gruppen, globale Aktionsrechte und
+  Objektberechtigungen.
+- `first come, first save`: ersetzt durch den sitzungsgebundenen
+  Check-out-Lebenszyklus.
 
-Der fachlich maßgebliche Datenbestand einer Umgebung. Der Begriff legt kein
-konkretes Datenbankprodukt oder Speichermodell fest.
-
-### DEV
-
-Die getrennte Umgebung für Entwicklung und zulässige lokale Diagnose gemäß
-[Umgebungsmodell](../ENVIRONMENTS.md).
-
-### TST
-
-Die getrennte Umgebung für produktionsnahe Verifikation gemäß
-[Umgebungsmodell](../ENVIRONMENTS.md).
-
-### PRD
-
-Die getrennte Umgebung für produktiven Betrieb ohne Debugzugänge gemäß
-[Umgebungsmodell](../ENVIRONMENTS.md).
-
-## Nicht mehr verwendete Modellbegriffe
-
-Die folgenden Begriffe sind keine gültigen Bestandteile des Produktmodells:
-
-- Songfassung,
-- Revision als auswählbarer fachlicher Inhaltsstand,
-- Rolling Reference,
-- Pinned Reference,
-- Setlist-Standardstrategie,
-- Gruppe als Synonym für Band,
-- Gruppenadministrator,
-- Arbeitsbereich oder Workspace als Synonym für Bandbereich.
-
-Historische Erwähnungen müssen ausdrücklich als verworfene frühere Entscheidung
-gekennzeichnet sein.
-
-## Konsistenzregel
-
-Neue Begriffe dürfen bestehende Definitionen nicht still verändern. Eine
-fachliche Präzisierung aktualisiert dieses Glossar und alle betroffenen
-Produktdokumente gemeinsam. Nicht entschiedene Bedeutungsunterschiede werden in
-den [Produktfragen](OPEN-QUESTIONS.md) dokumentiert.
+Öffentliche Freigabelinks bleiben als gesonderte spätere Funktion zulässig und
+sind keine Freigabe über die Systemband `Öffentlich`.

@@ -1,407 +1,310 @@
-# Benutzer und fachliche Rollen
+# Benutzer, Gruppen und Berechtigungen
 
 ## Bezug und Grundsatz
 
-Dieses Dokument konkretisiert GitHub-Issue #3 und die verbindlichen
-Produktentscheidungen. Es beschreibt das fachliche Rechte- und Rollenmodell von
-SoSeBaMa. Es legt weder eine technische Autorisierungsmethode noch ein
-Identitäts-, Verzeichnis- oder Authentifizierungsprodukt fest.
+Dieses Dokument beschreibt das verbindliche fachliche Autorisierungsmodell.
+Der historische Dateiname bleibt für stabile Links erhalten; fachliche Rollen
+und Direktrechte werden nicht mehr als eigenes Produktmodell verwendet.
 
-Das verbindliche Verhältnis von Song, Inhalt, Eigentum, Sichtbarkeit,
-Bandbereich, Overlays und Setlists ist im
-[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md)
-beschrieben. Die bevorzugten Begriffe stehen im
-[Glossar](GLOSSARY.md).
+Das vollständige Verhältnis von Song, Inhalt, Eigentum, Bandbereich, Overlay,
+Setlist und Check-out steht im
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
+Begriffe stehen im [Glossar](GLOSSARY.md).
 
-## Grundmodell für Rechte und Rollen
+Die Dokumentation legt weder Autorisierungssoftware noch Identitätsprodukt oder
+Speicherverfahren fest.
 
-### Rechte
+## Autorisierungsregel
 
-Ein Recht erlaubt eine konkret benannte fachliche Aktion.
+Eine geschützte Aktion ist für normale Benutzer nur erlaubt, wenn beide
+notwendigen Ebenen positiv erfüllt sind:
 
-Rechte können wirksam werden:
+1. globales Aktionsrecht und
+2. Berechtigung am konkreten Objekt.
 
-- über eine Rolle,
-- durch unmittelbare Zuweisung an eine einzelne Person.
+Plattformadministratoren besitzen fachlichen Superuserstatus und sind die
+ausdrückliche Ausnahme.
 
-Mitgliedschaft, Sichtbarkeit oder Eigentum ersetzen keine Prüfung des für die
-konkrete Aktion erforderlichen Rechts.
+Rechte dürfen Benutzern oder Gruppen zugewiesen werden. Positive Zuweisungen
+werden additiv ausgewertet; der höchste positive Autorisierungsstatus gilt.
+Negative oder verweigernde Rechte existieren nicht.
 
-Die Auswertung mehrerer Rechte muss eindeutig und nachvollziehbar sein. Die
-abschließende Konfliktregel zwischen Rollenrechten und Direktrechten bleibt in
-`OQ-004` offen und darf nicht durch eine Implementierung still vorweggenommen
-werden.
+| Objektberechtigung | Eingeschlossene Objektberechtigungen |
+| --- | --- |
+| Anzeigen | keine |
+| Bearbeiten | Anzeigen |
+| Löschen | Bearbeiten und Anzeigen |
+| Berechtigungen verwalten | Anzeigen |
+| Eigentum übertragen | Anzeigen |
+| objektspezifisches Sonderrecht | nur die ausdrücklich dokumentierte Wirkung |
 
-### Rollen
+Auf globaler Ebene beinhaltet `Löschen` ebenfalls `Bearbeiten` und `Anzeigen`.
+Die Verwaltungsrechte `Berechtigungen verwalten` und `Eigentum übertragen`
+implizieren untereinander kein weiteres Verwaltungsrecht. Eigentum,
+Mitgliedschaft oder eine Freigabe ersetzt das erforderliche globale
+Aktionsrecht nicht.
 
-Eine Rolle bündelt mehrere Rechte und kann mehreren Personen zugewiesen werden.
+## Benutzer und Gruppen
 
-Rollen gelten entweder:
+Ein Benutzer ist aktiv, deaktiviert oder gelöscht. Nur ein aktiver Benutzer
+darf regulärer Eigentümer werden und neue geschützte Aktionen beginnen.
 
-- global für die Plattform,
-- innerhalb genau eines Bandbereichs.
+Ein Benutzer darf mehreren globalen oder bandbezogenen Gruppen angehören,
+Mitglied mehrerer Bands sein und über eigene und Gruppenrechte additive
+Berechtigungen erhalten.
 
-Eine bandbezogene Rolle vermittelt keine Rechte in einem anderen Bandbereich.
-Eine globale Rolle muss ausdrücklich als global definiert sein.
+Eine Gruppe ist entweder global oder genau einem Bandbereich zugeordnet.
+Gruppen dürfen nicht verschachtelt werden. Bandbezogene Gruppen dürfen nur
+Mitglieder der zugehörigen Band enthalten. Normale Gruppen dürfen globale
+Rechte und Objektberechtigungen tragen, aber kein Eigentum.
 
-SoSeBaMa stellt Standardrollen mit Standardrechten bereit. Die Rechte einer
-bandbezogenen Standardrolle dürfen pro Band angepasst werden. Eine Band darf
-globale Rollen und deren globale Rechte nicht verändern.
-
-### Direktrechte
-
-Ein Direktrecht wird einer einzelnen Person unmittelbar zugewiesen.
-
-Direktrechte dienen der gezielten Abweichung von einer Rollenbelegung, ohne
-dafür eine zusätzliche Rolle für mehrere Personen anlegen zu müssen. Sie dürfen
-keine Bandbereichsgrenzen, Sichtbarkeiten, Eigentumsgrenzen oder
-Zustimmungspflichten umgehen.
-
-Ob ein Direktrecht ein Rollenrecht nur ergänzen oder auch einschränken kann,
-bleibt Teil von `OQ-004`.
+Plattformadministratoren verwalten globale Gruppen, globale Rechte und
+Systemgruppen. Berechtigte Bandmitglieder verwalten nur bandbezogene Gruppen
+der eigenen Band und nur delegierbare bandbezogene Rechte.
 
 ## Band und Bandbereich
 
-Jede Band besitzt genau einen Bandbereich und jeder Bandbereich gehört genau
-einer Band.
+Jede Band besitzt genau einen Bandbereich; jeder Bandbereich gehört genau einer
+Band. Eine Installation darf mehrere Bandbereiche enthalten.
+
+Eine Band ist Eigentums- und Berechtigungsprinzipal, verhält sich für
+Berechtigungen wie eine Gruppe und darf Mitglieder sowie zusätzliche
+bandbezogene Gruppen besitzen.
+
+Bandmitgliedschaft vermittelt keine automatische Berechtigung an bandeigenen
+oder für die Band freigegebenen Objekten. Die Bandbereichstrennung verhindert
+implizite Querzugriffe.
+
+Ausdrückliche Objektfreigaben über Bandgrenzen sind zulässig. Eine Freigabe an
+Band B verändert weder das Eigentum von Band A noch erlaubt sie der
+Bandadministration von Band B automatisch, Berechtigungen oder Eigentum zu
+verwalten.
+
+## Bandverwaltung
+
+Berechtigte Bandmitglieder dürfen innerhalb der eigenen Band:
 
-Eine Installation kann mehrere getrennte Bandbereiche enthalten. Ein Benutzer
-kann Mitglied mehrerer Bands und damit mehrerer Bandbereiche sein.
+- Mitglieder einladen, deaktivieren oder entfernen,
+- bandbezogene Gruppen anlegen, ändern oder entfernen,
+- Mitglieder diesen Gruppen zuordnen,
+- ausdrücklich delegierbare bandbezogene Rechte vergeben.
 
-Bandbezogene Rollen und Rechte werden je Bandbereich getrennt ausgewertet.
-Mehrfachmitgliedschaft überträgt keine Rechte zwischen Bands.
+Sie dürfen nicht:
+
+- globale Gruppen, globale Rechte oder Systemgruppen verwalten,
+- Mitglieder oder Gruppen eines fremden Bandbereichs verwalten,
+- fremde oder lediglich freigegebene Objekte allein aufgrund ihrer
+  Bandfunktion bearbeiten, entsperren oder administrieren,
+- eine Bandlöschung endgültig bestätigen.
+
+Für die Vertretung einer Eigentümerband sind voneinander getrennte
+bandbezogene Rechte erforderlich:
 
-Der Bandbereich ist die fachliche Grenze für:
+- `Bandobjekte bearbeiten`,
+- `Bandobjekte löschen`,
+- `Berechtigungen von Bandobjekten verwalten`,
+- `Eigentum von Bandobjekten übertragen`,
+- `Berechtigung für Band anfragen`.
 
-- Mitgliedschaften,
-- Bandrollen,
-- bandbezogene Rechte,
-- Band-Overlays,
-- bandbezogene Inhalte,
-- bandbezogene Setlists,
-- bandbezogene Check-outs.
+Diese Rechte gelten nur zusammen mit dem erforderlichen globalen Aktionsrecht
+und den von der Band gehaltenen Objektberechtigungen.
 
-## Eigentümer und Ersteller
+## Systemgruppe `Plattformadministratoren`
+
+Es gibt genau eine geschützte Systemgruppe `Plattformadministratoren`. Es gibt
+keine Rolle `Plattform-Redakteur`.
+
+Mitglieder besitzen fachlichen Superuserstatus und dürfen:
 
-Eigentümer ist keine Rolle, sondern die fachliche Verantwortung für ein
-verwaltetes Objekt.
+- alle Objekte und Bands sehen und administrieren,
+- Bands anlegen und umbenennen,
+- Bandlöschungen endgültig bestätigen,
+- globale Gruppen, globale Rechte und Systemgruppen verwalten,
+- Songmetadaten ändern, Songs prüfen und Dubletten verwalten,
+- Eigentum beliebiger und eigentümerloser Objekte ändern,
+- eigentümerlose Objekte administrieren,
+- Löschungen wiederherstellen oder endgültig durchführen,
+- Check-outs administrativ zurücknehmen,
+- die Systemband `Öffentlich` und ihre Grundrechte verwalten.
 
-Eigentümer eines Inhalts ist genau ein Benutzer, eine Band oder die Plattform.
-Eigentümer einer Setlist ist ein Benutzer oder eine Band. Eigentümer eines
-Overlays ist entsprechend seiner Reichweite ein Benutzer, eine Band oder der
-Eigentümer des zugrunde liegenden Inhalts.
+Nur Plattformadministratoren dürfen die Mitgliedschaft dieser Systemgruppe
+ändern. Der letzte aktive Plattformadministrator darf durch normale
+Verwaltungsabläufe weder entfernt noch deaktiviert, seiner Administratorrechte
+beraubt oder dauerhaft ausgesperrt werden.
 
-Eigentum vermittelt keine automatischen Rechte an anderen Objekten und ersetzt
-keine Autorisierung einer geschützten Aktion.
+MFA ist für Plattformadministratoren verpflichtend und für andere Benutzer
+optional. Änderungen und Wiederherstellung werden auditiert. Für den letzten
+Administrator muss ein dokumentierter Wiederherstellungsweg bestehen. Das
+konkrete MFA-Verfahren bleibt eine Architekturentscheidung.
 
-Der Ersteller ist der Benutzer, der einen Song, Inhalt, ein Overlay oder eine
-Setlist ursprünglich angelegt hat. Ersteller und aktueller Eigentümer können
-auseinanderfallen.
+Technischer Betrieb ist keine fachliche Plattformadministration. Die
+Berechtigungen bleiben getrennt, auch wenn dieselbe reale Person beide
+Funktionen ausübt.
 
-Eine Freigabe verändert das Eigentum nicht. Eine Eigentumsübertragung muss
-bewusst erfolgen und nachvollziehbar sein.
+## Systemband `Öffentlich`
 
-Bei Benutzer- und Bandlöschung gelten die verbindlichen Eigentumsübergänge aus
-dem Inhalts- und Overlaymodell sowie den zugehörigen Anforderungen und
-Workflows. Ein freiwillig an die Plattform übertragener privater Inhalt bleibt
-privat.
+Die Systemband `Öffentlich` ist ein geschützter Berechtigungsprinzipal:
 
-## Fachliche Standardrollen
+- nicht löschbar und nicht umbenennbar,
+- jeder aktive Benutzer ist automatisch Mitglied,
+- Mitgliedschaft ist nicht verlassbar oder durch normale Bandadministration
+  entziehbar,
+- deaktivierte oder gelöschte Benutzer verlieren den Zugriff,
+- Grundrecht der Mitgliedschaft ist ausschließlich Lesen,
+- kein anonymer Internetzugriff,
+- Verwaltung ausschließlich durch Plattformadministratoren.
 
-Die folgenden Rollen bilden den vorgesehenen fachlichen Ausgangspunkt. Ihre
-abschließenden Standardrechte bleiben in `OQ-004` zu entscheiden.
+Nur Plattformadministratoren dürfen auf Antrag die Objektberechtigung
+`Anzeigen` für diese Systemband setzen oder entfernen. Eine Freigabe an
+`Öffentlich` ist kein eigenständiger Sichtbarkeitszustand und vermittelt keine
+Schreibberechtigung.
 
-### Globaler Administrator
+Die Systemband darf regulärer Eigentümer sein. Eigentum darf ihr nur durch
+Plattformadministratoren übertragen und nur durch diese verwaltet werden.
 
-**Geltungsbereich:** gesamte Plattform.
+## Eigentum
 
-**Ziele:** Plattformweite fachliche Verwaltungsaufgaben ausführen, die
-ausdrücklich nicht auf einen einzelnen Bandbereich begrenzt sind.
+Regulärer Eigentümer eines Inhalts, einer Setlist oder eines Overlays ist genau
+ein aktiver Benutzer oder genau eine bestehende Band. Normale Gruppen und die
+Plattform selbst sind keine regulären Eigentümer.
 
-**Mögliche Aufgaben:**
+Der Eigentümer hält automatisch und nicht entziehbar Anzeigen, Bearbeiten,
+Löschen, Berechtigungen verwalten und Eigentum übertragen. Die Ausübung
+erfordert weiterhin das globale Aktionsrecht. Bei Bandeigentum hält die Band
+diese Rechte; ihre Mitglieder erhalten sie nicht automatisch.
 
-- globale fachliche Rollen und Rechte verwalten,
-- plattformweite fachliche Konfiguration verwalten,
-- ausdrücklich vorgesehene Eigentums- oder Supportabläufe begleiten,
-- globale Overlays entsprechend den dafür erteilten Rechten verwalten.
+Eine Eigentumsübertragung benötigt keine Annahme, lässt vorhandene Anzeige- und
+Bearbeitungsberechtigungen unverändert und darf an einen aktiven Benutzer oder
+eine bestehende, nicht zur Löschung vorgemerkte Band erfolgen. Die Übertragung
+an `Öffentlich` ist nur administrativ zulässig.
 
-**Nicht erlaubt:**
+Eigentümerlosigkeit darf nur durch Löschung des Eigentümers oder ausdrückliche
+administrative Sonderaktion entstehen.
 
-- technische Betriebsrechte aus der fachlichen Rolle ableiten,
-- private oder bandbezogene Inhalte ohne konkrete fachliche Berechtigung
-  einsehen oder verändern,
-- Bandbereichsgrenzen umgehen,
-- Rechte des technischen Betriebs übernehmen.
+## Eigentümerlose Objekte und Löschung
 
-Die Rolle ist von technischen Administratoren und Betriebsidentitäten strikt
-getrennt.
+Bei Benutzerlöschung werden dessen Objekte eigentümerlos. Bei bestätigter
+Bandlöschung entfallen das Bandeigentum und unmittelbar an die Band oder ihre
+gelöschten Gruppen vergebene Rechte. Andere Benutzer-, Gruppen- und Bandrechte
+bleiben bestehen.
 
-### Bandadministrator
+Eigentümerlose Objekte behalten ihre wirksamen Lese- und Schreibrechte. Nur
+Plattformadministratoren dürfen ihr Eigentum oder ihre Berechtigungen ändern.
+Berechtigungsanfragen gehen immer an die Plattformadministration.
 
-**Geltungsbereich:** genau ein Bandbereich.
+Eigentümerlosigkeit ist keine Löschvormerkung und startet keine
+Wiederherstellungsfrist. Während einer Löschvormerkung bleiben Leserechte
+wirksam; Bearbeitung, neue Freigaben und neue Setlistreferenzen sind gesperrt.
+Nur Plattformadministratoren dürfen wiederherstellen oder endgültig löschen.
 
-**Ziele:** Mitgliedschaft, Bandrollen, Bandrechte und die sichere fachliche
-Zusammenarbeit der eigenen Band verwalten.
+## Objektbezogene Sonderrechte
 
-**Mögliche Aufgaben, abhängig von den wirksamen Rechten:**
+Neben den allgemeinen Objektberechtigungen bestehen fachlich unterscheidbare
+Sonderrechte.
 
-- Benutzer einladen und Mitgliedschaften verwalten,
-- bandbezogene Rollen zuweisen oder entziehen,
-- anpassbare Rechte bandbezogener Standardrollen verwalten,
-- zulässige Direktrechte innerhalb der eigenen Band verwalten,
-- Band-Overlays und bandbezogene Setlists verwalten,
-- zustimmungspflichtige Änderungen bestehender Bandpublikationen prüfen,
-- Check-outs im eigenen Bandbereich nachvollziehbar zurücknehmen.
+### Songs
 
-**Nicht erlaubt:**
+- `Songänderung beantragen`,
+- Song ohne Inhalt anlegen,
+- Songmetadaten ändern und Song prüfen,
+- Songänderungsantrag entscheiden,
+- Dubletten zusammenführen,
+- Inhalt auf anderen Song umhängen,
+- referenzfreien Song löschen.
 
-- Rollen oder Rechte anderer Bandbereiche verwalten,
-- globale Rollen verändern,
-- technische Betriebsrechte ableiten,
-- private Inhalte oder private Overlays ohne ausdrückliche Berechtigung
-  einsehen,
-- bestehende Eigentums-, Sichtbarkeits- oder Inhaltsgrenzen still umgehen.
+Bis auf `Songänderung beantragen` sind diese Aktionen
+Plattformadministratoren vorbehalten.
 
-**Bei Rechteentzug:** Die entzogenen bandbezogenen Rechte enden zentral. Offene
-Sitzungen, Check-outs und lokale Offline-Daten werden nach den verbindlichen
-Security-Regeln und den noch offenen Offlineentscheidungen behandelt.
+### Inhalte
 
-### Bandredakteur beziehungsweise Inhaltsredakteur
-
-**Geltungsbereich:** genau ein Bandbereich oder ausdrücklich zugewiesene
-Einzelobjekte.
-
-**Ziele:** Songs, Inhalte, Inhaltsmetadaten und Band-Overlays im erlaubten
-Umfang fachlich pflegen.
-
-**Mögliche Aufgaben, abhängig von den wirksamen Rechten:**
-
-- Songs und normalisierte Songmetadaten anlegen oder bearbeiten,
-- konkrete Inhalte anlegen und genau einem Song zuweisen,
-- Inhaltsmetadaten bearbeiten,
-- Inhalte bearbeiten,
-- Band-Overlays anlegen oder bearbeiten,
-- Sichtbarkeitsänderungen auslösen oder beantragen,
-- Freigaben verwalten,
-- Inhalte archivieren oder löschen,
-- gemeinsam bearbeitbare Objekte auschecken und speichern.
-
-**Nicht erlaubt:**
-
-- Mitgliedschaften oder globale Rollen verwalten,
-- nicht ausdrücklich zugewiesene Inhalte verändern,
-- private Overlays anderer Benutzer lesen oder bearbeiten,
-- das Original durch eine reine Overlay-Aktion verändern,
-- einen bestehenden Check-out umgehen,
-- urheberrechtliche Schutzmaßnahmen umgehen.
-
-**Bei Rechteentzug:** Schreibzugriff und weitere kollaborative Speicherung
-enden. Ein bestehender Check-out wird kontrolliert behandelt; lokale Änderungen
-dürfen nicht still übernommen werden.
-
-### Setlist-Verantwortlicher
-
-**Geltungsbereich:** eigene Setlists oder ausdrücklich berechtigte Setlists
-einer Band.
-
-**Ziele:** Für Probe oder Auftritt geeignete und nachvollziehbare Setlists
-bereitstellen.
-
-**Mögliche Aufgaben, abhängig von den wirksamen Rechten:**
-
-- Setlists anlegen,
-- konkrete Inhalte hinzufügen, entfernen und ordnen,
-- bandweite Overlay-Auswahl je Setlisteintrag festlegen,
-- persönliche und bandweite Ausblendung eindeutig unterscheiden,
-- Setlists freigeben,
-- Offlinevorbereitung prüfen,
-- eine Setlist bewusst als unabhängigen Planungsstand kopieren.
-
-**Nicht erlaubt:**
-
-- aus einer Setlistberechtigung Bearbeitungsrechte am zugeordneten Inhalt
-  ableiten,
-- private Inhalte ohne Sichtberechtigung hinzufügen oder anzeigen,
-- private Overlay-Auswahl eines anderen Benutzers verändern,
-- Mitgliedschaften oder allgemeine Bandrollen verwalten.
-
-**Bei Rechteentzug:** Bandweite Bearbeitung und Freigabe enden. Bereits
-rechtmäßig freigegebene Setlists bleiben entsprechend ihrer eigenen
-Berechtigungen nutzbar.
-
-### Bandmitglied beziehungsweise Musiker
-
-**Geltungsbereich:** die Bandbereiche, in denen der Benutzer Mitglied ist.
-
-**Ziele:** Freigegebene Inhalte und Setlists in Probe und Auftritt zuverlässig
-nutzen und persönliche Anpassungen im erlaubten Umfang führen.
-
-**Mögliche Aufgaben, abhängig von den wirksamen Rechten:**
-
-- freigegebene Songs und Inhalte suchen und anzeigen,
-- Setlists verwenden,
-- eigene private Overlays anlegen und bearbeiten,
-- private Notizen, Markierungen oder Transpositionsanpassungen führen,
-- verfügbare Overlays im persönlichen Setlistkontext ein- oder ausblenden,
-- rollenabhängig einzelne Setlisteinträge persönlich ausblenden,
-- Inhalte für eine erlaubte Offlineverwendung vorbereiten.
-
-**Nicht erlaubt:**
-
-- aus der Mitgliedschaft allgemeine Änderungsrechte ableiten,
-- fremde private Inhalte oder Overlays lesen,
-- Band-Overlays ohne ausdrückliches Recht bearbeiten,
-- bandweite Setlists durch persönliches Ausblenden verändern,
-- gemeinsam bearbeitete Objekte ohne wirksamen Check-out ändern.
-
-**Bei Rechteentzug:** Zentraler Zugriff, weitere Synchronisation und neue
-geschützte Aktionen enden. Lokale Daten und offene private Änderungen werden
-nach den Security-Regeln und den noch offenen Offlineentscheidungen behandelt.
-
-### Lesender oder eingeschränkter Zugriff
-
-**Geltungsbereich:** ausdrücklich freigegebene Objekte und Bandbereiche.
-
-**Ziele:** Freigegebene Inhalte und Setlists ohne weitergehende
-Änderungsberechtigung nutzen.
-
-**Mögliche Aufgaben:**
-
-- freigegebene Songs, Inhalte, Overlays und Setlists anzeigen,
-- freigegebene Offlineinhalte im erlaubten Umfang vorbereiten und verwenden.
-
-**Nicht erlaubt:**
-
-- Songs, Inhalte, Overlays, Setlists, Rollen oder Freigaben ändern,
-- aus einer Leseberechtigung ein Export-, Weitergabe- oder Bearbeitungsrecht
-  ableiten.
-
-**Bei Rechteentzug:** Zugriff, Synchronisation und Offlineverwendung enden nach
-den verbindlichen Security-Regeln.
-
-## Direkt berechtigte Person
-
-Eine direkt berechtigte Person ist ein Benutzer, dem mindestens ein Direktrecht
-für eine konkrete Aktion oder ein konkretes Objekt zugewiesen wurde.
-
-Dies ist keine eigenständige Hierarchiestufe und keine automatische
-Standardrolle. Die Person darf nur die konkret zugewiesenen Aktionen innerhalb
-der weiterhin geltenden Bandbereichs-, Sichtbarkeits-, Eigentums- und
-Zustimmungsgrenzen ausführen.
-
-## Inhaltsspezifische Rechte
-
-Das Modell muss mindestens die getrennte Vergabe folgender fachlicher Aktionen
-ermöglichen:
-
-### Song und Inhalt
-
-- Song anlegen,
-- Songmetadaten bearbeiten,
 - Inhalt anlegen,
-- Inhalt einem Song zuweisen,
-- Inhalt bearbeiten,
+- Basisinhalt ersetzen,
 - Inhaltsmetadaten bearbeiten,
-- Inhalt veröffentlichen,
-- Sichtbarkeit ändern,
-- Inhalt archivieren,
-- Inhalt löschen,
-- Eigentumsübertragung auslösen oder bestätigen.
+- Freigabe an `Öffentlich` beantragen,
+- Overlay-Übernahme prüfen,
+- zur Löschung vormerken,
+- endgültige Löschung oder Wiederherstellung administrieren.
 
 ### Overlays
 
-- privates Overlay anlegen,
-- eigenes privates Overlay anzeigen,
-- eigenes privates Overlay bearbeiten,
-- eigenes privates Overlay löschen,
-- Band-Overlay anlegen,
-- Band-Overlay anzeigen,
-- Band-Overlay bearbeiten,
-- Band-Overlay löschen,
-- globales Overlay anlegen,
-- globales Overlay anzeigen,
-- globales Overlay bearbeiten,
-- globales Overlay löschen,
-- Overlay-Auswahl im Setlistkontext ändern.
+- Overlay anlegen,
+- dynamisch gekoppeltes Overlay anlegen,
+- zusätzliche Overlay-Bearbeiter verwalten,
+- eigenes Overlay zur Übernahme einreichen,
+- Overlay-Übernahme prüfen,
+- gekoppeltes Overlay für eigene Nutzung kopieren.
+
+Ein dynamisch gekoppeltes Overlay erbt ausschließlich Leserechte des Inhalts
+und darf nur zusätzliche Bearbeitungsrechte erhalten. Ein zusätzlicher
+Bearbeiter muss den Basisinhalt bereits lesen dürfen.
 
 ### Setlists
 
-- Setlist anlegen,
-- Setlist anzeigen,
-- Setlist bearbeiten,
-- Inhalte hinzufügen oder entfernen,
-- Reihenfolge ändern,
-- bandweite Overlay-Auswahl je Eintrag ändern,
-- Setlist veröffentlichen oder freigeben,
-- Setlist kopieren,
-- Setlisteintrag persönlich ausblenden.
+- Setlist anlegen und bearbeiten,
+- Inhalt einfügen oder entfernen,
+- gemeinsame Overlay-Auswahl und -Reihenfolge ändern,
+- persönliche Setlisteinstellungen ändern.
 
-### Kollaboration und Administration
+Persönliche Einstellungen benötigen keinen Check-out.
+
+### Check-outs und Export
 
 - gemeinsam bearbeitbares Objekt auschecken,
-- eigenes Check-out beenden,
-- fremdes Check-out im eigenen Bandbereich administrativ zurücknehmen,
-- Bandmitgliedschaften verwalten,
-- Bandrollen zuweisen,
-- bandbezogene Rollenrechte anpassen,
-- Direktrechte vergeben oder entziehen,
-- zustimmungspflichtige Bandpublikationsänderung genehmigen oder ablehnen.
+- eigenen Check-out beenden,
+- fremden Check-out ausdrücklich zurücknehmen,
+- Offline-Check-out nach dem MVP anfordern.
 
-Die Liste beschreibt unterscheidbare Aktionen, aber noch keine abschließende
-Zuordnung zu Standardrollen.
+Bandverwaltung beinhaltet keine automatische Check-out-Rücknahme fremder
+Objekte.
 
-## Zusammenarbeit und Check-out
+Ein späterer Export erfordert zusätzlich zur Objektberechtigung `Exportieren`
+das globale Aktionsrecht `Exportieren`. Anzeigen, Bearbeiten oder
+Offlinebereitstellung vermittelt kein Exportrecht.
 
-Private eigene Inhalte und private eigene Overlays können entsprechend den
-wirksamen Rechten bearbeitet werden.
+## Berechtigungsanfragen
 
-Gemeinsam bearbeitbare Inhalte und Overlays müssen bei bestehender Verbindung
-vor der Bearbeitung wirksam ausgecheckt werden. Während des Check-outs ist
-parallele Bearbeitung desselben Gegenstands ausgeschlossen.
+Benutzer dürfen für sich `Anzeigen` oder `Bearbeiten` beantragen. Für eine Band
+dürfen sie dies mit `Berechtigung für Band anfragen`. Empfänger müssen
+gleichzeitig das globale Verwaltungsrecht und am Objekt
+`Berechtigungen verwalten` besitzen. Fehlt ein solcher Empfänger oder ist das
+Objekt eigentümerlos, geht die Anfrage an die Plattformadministration.
 
-Es gilt **first come, first save**:
+Im MVP erfolgen Anfrage und Bearbeitung in der Anwendung. Die Zustände sind
+`offen`, `genehmigt` und `abgelehnt`; Antragsteller sehen den Status. E-Mail-
+oder Push-Benachrichtigungen sind nicht erforderlich.
 
-- Der zuerst wirksam auscheckende Benutzer erhält den Bearbeitungszugriff.
-- Ein späterer konkurrierender Versuch wird blockiert.
-- Nach einer zwischenzeitlichen Änderung muss der aktuelle Stand neu geladen
-  werden.
-- Stilles Überschreiben und automatisches Zusammenführen sind nicht zulässig.
+Fehlt Zugriff auf einen Setlistinhalt, dürfen nur Songtitel, Komponist,
+Eigentümer-Anzeigename oder Bandname, `Inhalt nicht verfügbar` und die
+Anfrageaktion erscheinen. E-Mail-Adresse, Benutzer-ID und
+Mitgliedschaftsinformationen bleiben verborgen. Bei Eigentümerlosigkeit wird
+`Plattformadministration` angezeigt.
 
-Ein berechtigter Bandadministrator darf einen Check-out im eigenen Bandbereich
-nachvollziehbar zurücknehmen. Die Rücknahme muss für den bisherigen Bearbeiter
-sichtbar sein und darf keinen stillen Datenverlust verursachen.
+## Check-out-Autorisierung
 
-## Technischer Betrieb außerhalb der App-Rollen
+Ein Check-out ersetzt weder globales Aktionsrecht noch Objektberechtigung. Ein
+Objekt benötigt einen Check-out, sobald mehr als ein Benutzer potenziell
+Schreibrecht besitzt. Gruppen- oder Bandschreibrecht erfüllt diese Bedingung
+unabhängig von der Mitgliederzahl.
 
-Technischer Betrieb ist keine fachliche App-Rolle.
+Zur Rücknahme berechtigt sind der Inhaber der Bearbeitungssitzung, der
+Objekteigentümer mit erforderlichen Rechten, ausdrücklich berechtigte Benutzer
+oder Gruppen und Plattformadministratoren.
 
-Betriebsverantwortliche erhalten durch ihre technische Aufgabe keine implizite
-Berechtigung, fachliche Songs, Inhalte, Overlays oder Setlists zu lesen oder zu
-verändern.
+Plattformadministratoren müssen einen fremden Check-out zurücknehmen und
+anschließend selbst auschecken; sie dürfen ihn nicht umgehen. Rechteentzug
+beendet den Check-out und verhindert Speichern. Eine Eigentumsübertragung
+beendet ihn nur, wenn dem Bearbeiter danach eine erforderliche Berechtigung
+fehlt. Eine Löschvormerkung beendet ihn immer.
 
-Notwendige Betriebszugriffe werden separat, minimal und je Umgebung nach
-[Umgebungsmodell](../ENVIRONMENTS.md) und
-[Netzwerkgrenzen](../NETWORK-BOUNDARIES.md) freigegeben.
+## Übergreifende Sicherheitsregeln
 
-## Rollenübergreifende Regeln
-
-- Jede geschützte Aktion wird gegen die aktuell wirksame fachliche Berechtigung
-  geprüft.
-- Mitgliedschaft und Sichtbarkeit allein vermitteln kein Änderungsrecht.
-- Eigentümer, Ersteller, Sichtbarkeit, Rollenrechte, Direktrechte und
-  Bearbeitungsberechtigungen bleiben getrennt und nachvollziehbar.
-- Bandrollen und Bandrechte gelten ausschließlich in ihrem Bandbereich.
-- Mehrfachmitgliedschaft überträgt keine Rechte zwischen Bands.
-- Globale Rollen müssen ausdrücklich global sein.
-- Eine Band darf globale Rollen oder deren globale Rechte nicht verändern.
-- Private Overlays bleiben für andere Benutzer unsichtbar.
-- Band- und globale Overlays umgehen keine Sichtbarkeit des zugrunde liegenden
-  Inhalts.
-- Persönliches Ausblenden eines Setlisteintrags verändert keine bandweite
-  Setlist.
-- Gemeinsame Onlinebearbeitung benötigt einen wirksamen Check-out.
-- Rechteänderung, Rechteentzug und administrative Check-out-Rücknahme müssen
-  nachvollziehbar sein.
-- Nicht entschiedene Detailregeln bleiben in den
-  [Produktfragen](OPEN-QUESTIONS.md) offen und werden nicht durch Umsetzung
-  vorweggenommen.
+- Berechtigungen werden serverseitig und aktuell geprüft.
+- Eine ausgeblendete Bedienaktion ersetzt keine Autorisierung.
+- Bandmitgliedschaft vermittelt keinen impliziten Objektzugriff.
+- Ausdrückliche Freigaben über Bandgrenzen sind zulässig; andere Querzugriffe
+  bleiben verboten.
+- Eigentum, Freigabe, Ersteller und Berechtigung bleiben getrennt.
+- Die Dublettenprüfung offenbart keine fremden Inhalte oder Beziehungen.
+- Die Systemband `Öffentlich` ermöglicht keinen anonymen Zugriff.
+- Sicherheitsereignisse und fachliche Historien sind datensparsam getrennt.
+- Nicht festgelegte technische Verfahren bleiben Architekturentscheidungen.
