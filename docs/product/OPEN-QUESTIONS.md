@@ -54,9 +54,15 @@ Objektberechtigung; globales Anlagerecht, Eigentümerfähigkeit und gegebenenfal
 Bandvertretung werden geprüft, Eigentum und anfängliche Rechte entstehen
 atomar. Berechtigungsanfragen benötigen keine Zielberechtigung;
 Songänderungsanträge benötigen Sichtbarkeit und das globale Sonderrecht, aber
-kein Song-Bearbeitungsrecht. Plattformadministratoren sind fachliche
-Superuser. Rechte werden positiv und additiv ausgewertet; negative Rechte und
-Gruppenverschachtelung existieren nicht.
+kein Song-Bearbeitungsrecht. Zwei eng begrenzte Eigentümerausnahmen gelten am
+eigenen Objekt: Der aktive persönliche Inhaltseigentümer darf eine
+Overlay-Übernahme entscheiden und der aktive persönliche Objekteigentümer einen
+Check-out zurücknehmen. Bei Bandeigentum ist ausdrückliche Vertretungsbefugnis
+für die jeweilige Aktion nötig; andere bestellte Prüfer oder Rücknehmer
+benötigen globales und objektspezifisches Sonderrecht. Diese Befugnisse
+verändern den Basissatz von `Alle Benutzer` nicht. Plattformadministratoren
+sind fachliche Superuser. Rechte werden positiv und additiv ausgewertet;
+negative Rechte und Gruppenverschachtelung existieren nicht.
 
 Objektberechtigungen sind Anzeigen, Bearbeiten, Löschen, Berechtigungen
 verwalten, Eigentum übertragen und Sonderrechte. Bearbeiten beinhaltet
@@ -82,8 +88,9 @@ Inhalts-, Overlay- und Setlistanlagen samt atomarer Songanlage, direkte
 gekoppelte Overlayanlage, Overlay-Einreichung und -Privatkopie, Antrag auf
 `Öffentlich`, Setlistbefüllung und Selbstanfrage. Nicht enthalten sind
 Songänderung, Löschen, Berechtigungsverwaltung, Eigentumsübertragung,
-Bandanfrage, Overlay-Prüfung und Administration. Globale Rechte begrenzen nicht
-auf eigene Objekte; die Objektberechtigung bildet die Objektgrenze. Die Gruppe
+Bandanfrage, Overlay-Prüfung, Check-out-Rücknahme und Administration. Globale
+Rechte begrenzen nicht auf eigene Objekte; die Objektberechtigung bildet die
+Objektgrenze. Die Gruppe
 ist kein Eigentümer und von `Öffentlich` getrennt. Ausdrückliche Freigaben über
 Bandgrenzen sind zulässig und verändern Eigentum nicht.
 
@@ -98,9 +105,12 @@ Der MVP ist ein früh nutzbarer PDF-zentrierter Produktstand. Er umfasst:
 - die Systemband `Öffentlich`,
 - globale und objektbezogene Berechtigungen,
 - Eigentum, Eigentümerlosigkeit, Löschung und Wiederherstellung,
-- Songanlage, Prüfung, Anträge und Dublettenverwaltung,
+- Songanlage, gemeinsame administrative Prüfarbeitsliste, Prüfung, Anträge und
+  Dublettenverwaltung ohne erforderliche Einsicht in private Basisinhalte,
 - PDF-Inhalte und Inhaltsmetadaten,
-- PDF-Navigation, Zoom und die festgelegten PDF-Overlay-Werkzeuge,
+- PDF-Navigation, Zoom und die festgelegten PDF-Overlay-Werkzeuge; geometrische
+  Formen, Bild- oder Stempelelemente und Layergruppen gehören nicht zum MVP und
+  sind dadurch nicht als Post-MVP-Funktionen eingeplant,
 - Setlists, Berechtigungsanfragen, Audit und fachliche Historien,
 - Suche und Filter,
 - Offlineanzeige und private Offlinebearbeitung.
@@ -114,10 +124,13 @@ nach dem MVP. Es gibt keinen reduzierten Texteditor im MVP.
 
 Im MVP dürfen eigene, nur durch einen Benutzer beschreibbare Inhalte, Overlays
 und Setlists sowie persönliche Setlisteinstellungen offline bearbeitet werden.
-Offline angelegte Inhalte gehören dem Benutzer, bleiben ohne Freigaben und
-werden samt Pflichtfeldern und Songzuordnung gegen alle Songs serverseitig
-erneut geprüft, ohne unsichtbare Beziehungen offenzulegen. Wird ein vorbereitetes
-privates Objekt serverseitig gemeinsam bearbeitbar, ist Synchronisation ohne
+Offline angelegte Inhalte gehören dem Benutzer und bleiben ohne Freigaben.
+Offline auswählbar sind nur bereits lokal bekannte sichtbare Songs; unsichtbare
+Songs sind kein lokaler Katalog- oder Vorschlagsbestand und freie Eingaben
+bleiben bis zur Serversynchronisation unaufgelöst. Dort werden Pflichtfelder und
+Songzuordnung gegen alle Songs geprüft, ohne unsichtbare Beziehungen
+offenzulegen. Wird ein vorbereitetes privates Objekt serverseitig gemeinsam
+bearbeitbar, ist Synchronisation ohne
 Check-out abzulehnen; wurde es endgültig gelöscht, darf seine technische
 Identität nicht wiederbelebt werden. Zulässige lokale Stände können bewusst als
 neues privates Objekt gerettet werden. Neue Rechte laden nichts automatisch.
@@ -141,8 +154,12 @@ werden nicht automatisch synchronisiert und verlängern keine Berechtigung.
 
 Eine Offline-Lease darf die maximale Offlinesitzung nicht überschreiten und
 kann offline nicht verlängert werden. Nach Lease-Ablauf darf ein lokaler
-Entwurf fortgeführt werden, besitzt aber keine Serverreservierung. Konkrete
-Werte werden erst mit Architektur und Risikobewertung festgelegt.
+Entwurf fortgeführt werden, besitzt aber keine Serverreservierung.
+Plattformadministratoren dürfen eine Gerätesitzung serverseitig widerrufen; der
+Widerruf wird beim nächsten Kontakt wirksam. Ein dauerhaft getrenntes Gerät
+erkennt ihn nicht, weshalb spätestens die maximale Offlinesitzung das
+Restrisiko begrenzt. Konkrete Werte und das technische Widerrufsverfahren werden
+erst mit Architektur und Risikobewertung festgelegt.
 
 ### OQ-008: Lokale Daten nach Rechteentzug und Offlinekonflikte
 
@@ -152,8 +169,10 @@ Vorbereitete geschützte Daten bleiben höchstens bis zur nächsten erfolgreiche
 Rechteprüfung oder zum Ablauf der maximalen Offlinesitzung lesbar. Danach
 werden Basisinhalt und Overlays gesperrt beziehungsweise entfernt; minimale
 Setlistinformationen dürfen verbleiben. Eigene Entwürfe dürfen nur klar
-getrennt erhalten bleiben. Abmeldung warnt vor Verlust, erlaubt vorherige
-Synchronisation und entfernt lokale Daten sowie Sitzungsschlüssel kontrolliert.
+getrennt erhalten bleiben. Bei einer Abmeldewarnung muss der Benutzer die
+Abmeldung abbrechen oder vor der bewussten Bestätigung synchronisieren können;
+erst die bestätigte Abmeldung entfernt lokale Daten und Sitzungsschlüssel.
+Gerätesitzungswiderruf und abgelehnte Folgeverwendung werden auditiert.
 
 Private Offlineobjekte verwenden technische Revisionskennungen. Veraltete
 Änderungen sowie Speichern eines inzwischen gemeinsam bearbeitbaren Objekts
@@ -183,8 +202,12 @@ unerreichbar sein. PRD besitzt keine Debugports, -tunnel oder -schnittstellen.
 
 Tablets, Notebooks und Desktoprechner sind vollständig unterstützte
 Primärgeräte. Unterstützt werden aktuelle und vorherige Hauptversion von
-Chrome, Edge, Firefox und Safari einschließlich Safari auf iPadOS/iOS.
-Eingebettete Browser und herstellerspezifische WebViews sind nicht verbindlich.
+Chrome, Edge, Firefox und Safari einschließlich Safari auf iPadOS/iOS. Endet
+für eine Browser- oder Betriebssystemversion die sicherheitsrelevante
+Herstellerunterstützung, endet der verbindliche SoSeBaMa-Support unabhängig von
+der Zwei-Versionen-Regel. Diese Sicherheitsausnahme darf die übrige
+Supportmatrix nicht still aufweichen. Eingebettete Browser und
+herstellerspezifische WebViews sind nicht verbindlich.
 
 Smartphones unterstützen Anmeldung, Navigation, Suche, Metadaten,
 Berechtigungsanfragen, einfache Administration, lesende Setlists und
@@ -256,8 +279,12 @@ Berechtigungen, früherer Benutzereigentümer und Overlays fehlen.
 
 Export gehört nicht zum MVP. Offlinebereitstellung innerhalb der Anwendung ist
 kein Export. Später sind globales und objektbezogenes `Exportieren`
-erforderlich; Anzeigen oder Bearbeiten genügt nicht. Formate,
-Overlayeinbeziehung und Setlistpakete werden später entschieden.
+erforderlich; Anzeigen oder Bearbeiten vermittelt weder Exportrecht noch
+pauschale Weitergabeberechtigung. Der exportierende Benutzer bleibt für
+vorhandene Nutzungsrechte, zulässige Weitergabe und geltende fachliche sowie
+rechtliche Beschränkungen verantwortlich. Formate, Overlayeinbeziehung,
+Setlistpakete und ein technisches DRM-Verfahren werden dadurch nicht
+festgelegt.
 
 ### OQ-015: Erster produktiver Zielbetrieb
 
@@ -288,16 +315,23 @@ erst nach Festlegung von Referenzhardware und Betriebsdaten beschlossen.
 Die MVP-Kernabläufe Anmeldung, Navigation, Suche, Inhaltsverwaltung, Setlists,
 Berechtigungsanfragen und Administration orientieren sich verbindlich an WCAG
 2.2 AA. Tastaturbedienung, Fokusdarstellung, Beschriftungen und Kontraste sind
-verbindlich. Freihandannotation darf dokumentierte fachliche Grenzen besitzen;
-ihre Steuerelemente müssen zugänglich sein.
+verbindlich. Jede bekannte Abweichung benötigt dokumentierte Begründung,
+Auswirkung, Ersatzbedienung oder Schutzmaßnahme und einen Prüf- beziehungsweise
+Behebungstermin. Sie darf den Kernablauf für die betroffene Nutzergruppe nicht
+unbenutzbar machen. Freihandannotation darf dokumentierte fachliche Grenzen
+besitzen; ihre Steuerelemente müssen zugänglich sein.
 
 ### OQ-018: Wiederherstellungsziele
 
 **Status:** Entschieden.
 
-RPO beträgt 4 Stunden, RTO 8 Stunden. Das konkrete Sicherungs- und
-Wiederherstellungsverfahren bleibt eine spätere Betriebs- und
-Architekturentscheidung und muss in TST verifiziert werden.
+RPO beträgt 4 Stunden, RTO 8 Stunden für den zentralen Datenbestand. Lokale
+Offlinekopien und nicht synchronisierte Entwürfe ersetzen keine zentrale
+Sicherung und dürfen keines der beiden Ziele nachweisen. Das spätere
+Sicherungs- und Wiederherstellungskonzept muss RPO und RTO für den zentralen
+Datenbestand in TST belegen. Die konkrete Auslegung auf der Ziel-Synology
+erfolgt zusammen mit Referenzhardware und `OQ-016`; das technische Verfahren
+bleibt Betriebs- und Architekturentscheidung.
 
 ### OQ-019: Audit- und Historienaufbewahrung
 
@@ -326,9 +360,13 @@ MVP.
 **Status:** Entschieden.
 
 MFA ist für Plattformadministratoren verpflichtend und für andere Benutzer
-optional. Änderung und Wiederherstellung werden auditiert. Für den letzten
-Administrator besteht ein dokumentierter Wiederherstellungsweg. Das konkrete
-Verfahren bleibt Architekturentscheidung.
+optional. Bandadministratoren dürfen MFA eines Plattformadministrators weder
+deaktivieren noch zurücksetzen; Bandmitgliedschaft vermittelt keine
+MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
+Wiederherstellung eines Plattformadministrator-Zugangs darf nur über den
+globalen, auditierten Wiederherstellungsprozess erfolgen und den letzten
+Administrator nicht dauerhaft aussperren. Das konkrete Verfahren bleibt
+Architekturentscheidung.
 
 ### OQ-021: Band und Bandbereich
 

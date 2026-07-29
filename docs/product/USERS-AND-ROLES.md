@@ -33,6 +33,15 @@ Aktionsart ab:
   eine Band zusätzlich `Berechtigung für Band anfragen`.
 - `Songänderung beantragen` ist ein globales Sonderrecht. Ein Benutzer benötigt
   Sichtbarkeit des Songs, aber keine Objektberechtigung zum Bearbeiten.
+- Als eng begrenzte eigentümerspezifische Sonderbefugnisse darf ein aktiver
+  persönlicher Inhaltseigentümer eine Overlay-Übernahme für den eigenen Inhalt
+  entscheiden und ein aktiver persönlicher Objekteigentümer einen Check-out des
+  eigenen Objekts zurücknehmen. Diese Ausnahmen von der Zwei-Ebenen-Regel
+  erweitern keine Rechte an anderen Objekten und sind keine globalen Rechte.
+  Bei Bandeigentum benötigen aktive Vertreter eine ausdrückliche
+  bandbezogene Befugnis für die jeweilige Aktion. Andere bestellte Prüfer oder
+  Rücknahmeberechtigte benötigen globales Aktionsrecht und passende
+  objektspezifische Sonderberechtigung.
 
 Positive Zuweisungen werden additiv ausgewertet; der höchste positive
 Autorisierungsstatus gilt. Negative oder verweigernde Rechte existieren nicht.
@@ -114,9 +123,11 @@ Globale Rechte gelten nicht nur für eigene Objekte; die wirksame
 Objektberechtigung begrenzt die konkrete Aktion. Globales `Bearbeiten` erlaubt
 somit keine Bearbeitung ohne `Bearbeiten` am Objekt. Nicht im Basissatz sind
 `Songänderung beantragen`, Löschen, Berechtigungen verwalten, Eigentum
-übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen sowie
-globale oder bandbezogene Administration. Eine Reduktion des Mindestbasissatzes
-benötigt eine neue dokumentierte Produktentscheidung.
+übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen,
+Check-outs anderer Sitzungen zurücknehmen sowie globale oder bandbezogene
+Administration. Die eigentümerspezifischen Sonderbefugnisse sind keine Rechte
+des Basissatzes. Eine Reduktion des Mindestbasissatzes benötigt eine neue
+dokumentierte Produktentscheidung.
 
 `Alle Benutzer` ist von der Systemband `Öffentlich` getrennt: Die Systemgruppe
 vermittelt globale Funktionsrechte, die Systemband ausschließlich
@@ -166,10 +177,14 @@ bandbezogene Rechte erforderlich:
 - `Bandobjekte löschen`,
 - `Berechtigungen von Bandobjekten verwalten`,
 - `Eigentum von Bandobjekten übertragen`,
-- `Berechtigung für Band anfragen`.
+- `Berechtigung für Band anfragen`,
+- `Overlay-Übernahmen für Bandinhalte prüfen`,
+- `Check-outs von Bandobjekten zurücknehmen`.
 
-Diese Rechte gelten nur zusammen mit dem erforderlichen globalen Aktionsrecht
-und den von der Band gehaltenen Objektberechtigungen.
+Die letzten beiden Rechte bilden ausschließlich die jeweilige
+Eigentümerband-Sonderbefugnis ab. Alle übrigen Vertretungsrechte gelten nur
+zusammen mit dem erforderlichen globalen Aktionsrecht und den von der Band
+gehaltenen Objektberechtigungen.
 
 ## Systemgruppe `Plattformadministratoren`
 
@@ -183,6 +198,7 @@ Mitglieder besitzen fachlichen Superuserstatus und dürfen:
 - Bands anlegen und umbenennen,
 - Bandlöschungen endgültig bestätigen,
 - globale Gruppen, globale Rechte und Systemgruppen verwalten,
+- die gemeinsame administrative Song-Prüfarbeitsliste bearbeiten,
 - Songmetadaten ändern, Songs prüfen und Dubletten verwalten,
 - Eigentum beliebiger und eigentümerloser Objekte ändern,
 - eigentümerlose Objekte administrieren,
@@ -196,9 +212,13 @@ Verwaltungsabläufe weder entfernt noch deaktiviert, seiner Administratorrechte
 beraubt oder dauerhaft ausgesperrt werden.
 
 MFA ist für Plattformadministratoren verpflichtend und für andere Benutzer
-optional. Änderungen und Wiederherstellung werden auditiert. Für den letzten
-Administrator muss ein dokumentierter Wiederherstellungsweg bestehen. Das
-konkrete MFA-Verfahren bleibt eine Architekturentscheidung.
+optional. Bandadministratoren dürfen MFA eines Plattformadministrators weder
+deaktivieren noch zurücksetzen. Aus einer Bandmitgliedschaft entsteht keine
+MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
+Wiederherstellung eines Plattformadministrator-Zugangs darf ausschließlich
+über den festgelegten globalen Wiederherstellungsprozess erfolgen, wird
+auditiert und darf den letzten Plattformadministrator nicht dauerhaft
+aussperren. Das konkrete MFA-Verfahren bleibt eine Architekturentscheidung.
 
 Technischer Betrieb ist keine fachliche Plattformadministration. Die
 Berechtigungen bleiben getrennt, auch wenn dieselbe reale Person beide
@@ -334,9 +354,14 @@ die dynamische Leserechtevererbung aktiviert und dem Ersteller ein entziehbares
 zusätzliches Bearbeitungsrecht gegeben, sofern er nicht bereits Eigentümer ist.
 Bei Einreichung eines privaten Overlays entsteht dagegen nur ein temporärer,
 zweckgebundener Lesezugriff für zuständige Prüfer. Er endet bei Ablehnung oder
-Rücknahme und wird bei Genehmigung durch endgültige Rechte ersetzt. Das private
-Schreibrecht des Erstellers entfällt bei Übernahme und wird nicht automatisch
-neu vergeben.
+Rücknahme und wird bei Genehmigung durch endgültige Rechte ersetzt. Ein aktiver
+persönlicher Inhaltseigentümer darf aufgrund seiner begrenzten
+Eigentümerbefugnis entscheiden. Bei Bandeigentum dürfen nur ausdrücklich für
+Overlay-Übernahmen vertretungsberechtigte aktive Benutzer oder bandbezogene
+Gruppen entscheiden. Andere bestellte Prüfer benötigen `Overlay-Übernahme
+prüfen` global und am konkreten Objekt. Bei eigentümerlosen Inhalten entscheiden
+nur Plattformadministratoren. Das private Schreibrecht des Erstellers entfällt
+bei Übernahme und wird nicht automatisch neu vergeben.
 
 Ein dynamisch gekoppeltes Overlay erbt ausschließlich Leserechte des Inhalts
 und darf kein direktes zusätzliches Leserecht erhalten. Wird der Inhalt
@@ -366,7 +391,10 @@ Objekte.
 
 Ein späterer Export erfordert zusätzlich zur Objektberechtigung `Exportieren`
 das globale Aktionsrecht `Exportieren`. Anzeigen, Bearbeiten oder
-Offlinebereitstellung vermittelt kein Exportrecht.
+Offlinebereitstellung vermittelt weder ein Exportrecht noch eine pauschale
+Weitergabeberechtigung. Der exportierende Benutzer bleibt für Nutzungsrechte,
+zulässige Weitergabe und geltende fachliche sowie rechtliche Beschränkungen
+verantwortlich. Exportformat und technisches DRM-Verfahren bleiben offen.
 
 ## Berechtigungsanfragen
 
@@ -399,9 +427,14 @@ Objekt benötigt einen Check-out, sobald mehr als ein Benutzer potenziell
 Schreibrecht besitzt. Gruppen- oder Bandschreibrecht erfüllt diese Bedingung
 unabhängig von der Mitgliederzahl.
 
-Zur Rücknahme berechtigt sind der Inhaber der Bearbeitungssitzung, der
-Objekteigentümer mit erforderlichen Rechten, ausdrücklich berechtigte Benutzer
-oder Gruppen und Plattformadministratoren.
+Der Inhaber darf den eigenen Check-out bewusst beenden. Ein aktiver
+persönlicher Objekteigentümer darf einen Check-out des eigenen Objekts aufgrund
+seiner begrenzten Eigentümerbefugnis zurücknehmen. Bei Bandeigentum darf dies
+nur ein ausdrücklich für Check-out-Rücknahmen vertretungsberechtigter aktiver
+Benutzer oder eine entsprechende bandbezogene Gruppe; normale
+Bandmitgliedschaft genügt nicht. Andere bestellte Rücknahmeberechtigte benötigen
+`Check-out zurücknehmen` global und am konkreten Objekt.
+Plattformadministratoren dürfen jeden Check-out zurücknehmen.
 
 Plattformadministratoren müssen einen fremden Check-out zurücknehmen und
 anschließend selbst auschecken; sie dürfen ihn nicht umgehen. Nach Rücknahme

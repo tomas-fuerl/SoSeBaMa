@@ -142,6 +142,23 @@ ohne Treffer entsteht ein neuer ungeprüfter Song. Der Benutzer erfährt nur
 dieses Ergebnis und keine Inhalte, Eigentümer, Bands, Berechtigungen oder
 Beziehungen.
 
+### Administrative Song-Prüfarbeitsliste im MVP
+
+Plattformadministratoren erhalten eine gemeinsame administrative
+Prüfarbeitsliste mindestens für ungeprüfte Songs, offene
+Songänderungsanträge, mögliche Dubletten und abweichende
+Gemeinfreiheitsangaben bei exakter Songzuordnung. Entsprechend ihren
+bestehenden Rechten dürfen sie daraus Songmetadaten korrigieren, den
+Prüfstatus setzen, Anträge genehmigen oder ablehnen, Dubletten atomar
+zusammenführen, Inhalte atomar umhängen und referenzfreie Songs löschen.
+
+Alle Entscheidungen und Änderungen werden mit dem festgelegten
+Audit-Mindestdatensatz protokolliert. Die Arbeitsliste darf keine Einsicht in
+private Basisinhalte voraussetzen. Plattformadministratoren müssen
+Songmetadaten bearbeiten können, ohne private Basisinhalte zu öffnen oder
+anzuzeigen. Normale Benutzer erhalten dadurch keine Einsicht in private
+Inhalte oder Beziehungen.
+
 ## Inhalt und Inhaltsmetadaten
 
 ### Inhalt und Basisinhalt
@@ -215,6 +232,23 @@ ausdrückliche Ausnahme. Für normale Benutzer gelten vier klar getrennte Fälle
    Sonderrecht. Der Song muss für den Antragsteller sichtbar sein; eine
    Objektberechtigung zum Bearbeiten des Songs ist nicht erforderlich.
 
+Für zwei Aktionen auf bestehenden Objekten gelten eng begrenzte
+**eigentümerspezifische Sonderbefugnisse**:
+
+- Ein aktiver persönlicher Inhaltseigentümer darf eine für seinen Inhalt
+  eingereichte Overlay-Übernahme genehmigen oder ablehnen.
+- Ein aktiver persönlicher Objekteigentümer darf einen Check-out seines Objekts
+  zurücknehmen.
+
+Diese Befugnisse sind ausdrückliche Ausnahmen von der Zwei-Ebenen-Regel. Sie
+wirken nur am eigenen Objekt und erweitern weder den Basissatz von `Alle
+Benutzer` noch Rechte an anderen Inhalten, Overlays, Setlists oder Check-outs.
+Bei Bandeigentum dürfen sie nur aktive Benutzer oder bandbezogene Gruppen
+nutzen, die ausdrücklich für die jeweilige Eigentümerband und Aktion
+vertretungsberechtigt sind. Andere bestellte Prüfer oder
+Rücknahmeberechtigte benötigen das jeweilige globale Aktionsrecht und die
+passende objektspezifische Berechtigung.
+
 Globale Aktionsrechte dürfen ausschließlich direkt aktiven Benutzern oder
 globalen Gruppen zugewiesen werden. Bands und bandbezogene Gruppen dürfen keine
 globalen Aktionsrechte tragen. Sie dürfen nur bandbezogene Rechte und
@@ -281,8 +315,10 @@ die konkrete Objektgrenze. Globales `Bearbeiten` erlaubt daher nur die
 Bearbeitung eines Objekts, an dem `Bearbeiten` wirksam ist. Nicht im Basissatz
 enthalten sind `Songänderung beantragen`, Löschen, Berechtigungen verwalten,
 Eigentum übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme
-prüfen sowie globale oder bandbezogene Administration. Eine Reduktion des
-Mindestbasissatzes benötigt eine neue dokumentierte Produktentscheidung.
+prüfen, Check-outs anderer Sitzungen zurücknehmen sowie globale oder
+bandbezogene Administration. Die eigentümerspezifischen Sonderbefugnisse sind
+keine globalen Rechte des Basissatzes. Eine Reduktion des Mindestbasissatzes
+benötigt eine neue dokumentierte Produktentscheidung.
 
 Ein Benutzer darf mehreren Gruppen angehören. Eine Gruppe ist entweder global
 oder genau einem Bandbereich zugeordnet. Gruppen dürfen nicht verschachtelt
@@ -330,10 +366,14 @@ deaktiviert, seiner Administratorrechte beraubt oder durch einen normalen
 Verwaltungsablauf dauerhaft ausgesperrt werden.
 
 MFA ist für Plattformadministratoren verpflichtend und für andere Benutzer
-optional. Das konkrete Verfahren bleibt eine Architekturentscheidung.
-MFA-Änderungen und -Wiederherstellung werden auditiert. Für den letzten
-Administrator muss ein dokumentierter Wiederherstellungsweg bestehen.
-Technischer Betrieb und fachliche Plattformadministration bleiben getrennt.
+optional. Bandadministratoren dürfen MFA eines Plattformadministrators weder
+deaktivieren noch zurücksetzen; aus Bandmitgliedschaft entsteht keine
+MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
+Wiederherstellung eines Plattformadministrator-Zugangs darf ausschließlich über
+den globalen, auditierten Wiederherstellungsprozess erfolgen und den letzten
+Plattformadministrator nicht dauerhaft aussperren. Das konkrete MFA-Verfahren
+bleibt eine Architekturentscheidung. Technischer Betrieb und fachliche
+Plattformadministration bleiben getrennt.
 
 ## Eigentum, Eigentümerlosigkeit und Löschung
 
@@ -520,11 +560,18 @@ dynamisch und darf kein separates direktes Band-Anzeigenrecht erhalten.
 
 Ein Benutzer ohne Schreibrecht am Inhalt darf ein eigenes Overlay zur
 Übernahme einreichen. Vor der Einreichung bleibt es ausschließlich privat. Mit
-der Einreichung entsteht atomar ein zweckgebundener temporärer Lesezugriff für
-die zuständigen Prüfer: Inhaltseigentümer mit wirksamen Rechten, ausdrücklich
-berechtigte Prüfer oder bei eigentümerlosen Inhalten
-Plattformadministratoren. Dieser Prüfzugriff vermittelt kein reguläres
-Bearbeitungsrecht und endet bei Ablehnung oder Rücknahme der Einreichung.
+der Einreichung entsteht atomar ein zweckgebundener temporärer Lesezugriff
+für die nachfolgend festgelegten zuständigen Prüfer. Dieser Prüfzugriff
+vermittelt kein reguläres Bearbeitungsrecht und endet bei Ablehnung oder
+Rücknahme der Einreichung.
+
+Entscheiden darf ein aktiver persönlicher Inhaltseigentümer aufgrund seiner
+begrenzten eigentümerspezifischen Sonderbefugnis. Bei Bandeigentum entscheiden
+nur aktive Benutzer oder bandbezogene Gruppen mit ausdrücklicher
+Vertretungsbefugnis für Overlay-Übernahmen der Eigentümerband. Andere bestellte
+Prüfer benötigen das globale Aktionsrecht `Overlay-Übernahme prüfen` und die
+passende objektspezifische Prüfberechtigung. Bei eigentümerlosen Inhalten
+entscheiden ausschließlich Plattformadministratoren.
 
 Bei Genehmigung wird dasselbe Overlay ohne Kopie umgewandelt: Eigentum geht an
 den Inhaltseigentümer, dynamische Leserechtevererbung wird aktiviert und der
@@ -536,6 +583,17 @@ muss persönliche Inhalte vor der Einreichung entfernen. Bei Ablehnung bleibt
 das Overlay unverändert privat. Ein gekoppeltes Overlay darf für persönliche
 Weiterverwendung kopiert werden; die Kopie gehört dem kopierenden Benutzer und
 ist zunächst nur für ihn verfügbar.
+
+### PDF-Overlay-Werkzeuge im MVP
+
+Der MVP umfasst Freihandstift, Radierer, Textnotiz, Textmarker, Auswahl,
+Verschieben und Löschen, konfigurierbare Strichstärke, eine begrenzte
+Farbauswahl sowie Touch- und Stiftbedienung. Geometrische Formen, Bild- oder
+Stempelelemente und Ebenen- beziehungsweise Layergruppen gehören nicht zum
+MVP. Diese Ausschlüsse sind keine geplanten Post-MVP-Anforderungen.
+Handschrift- und Musikerkennung bleiben bis auf Weiteres außerhalb des Scopes
+und dürfen frühestens nach dem Gesamtprodukt-Release als neue Feature Requests
+bewertet werden.
 
 Mehrere lesbare Overlays dürfen gleichzeitig in festgelegter Reihenfolge
 dargestellt werden. Overlay-Aktionen verändern den Basisinhalt nicht.
@@ -585,11 +643,15 @@ aber keine E-Mail-Adresse oder zusätzlichen Profildaten. Leser sehen während
 einer Bearbeitung ausschließlich den letzten erfolgreich gespeicherten
 Serverstand, niemals ungespeicherte Eingaben.
 
-Zur Rücknahme berechtigt sind Inhaber, Objekteigentümer mit erforderlichen
-Rechten, ausdrücklich berechtigte Benutzer oder Gruppen und
-Plattformadministratoren. Bandadministratoren dürfen fremde oder nur lesbar
-freigegebene Objekte nicht aufgrund ihrer Bandfunktion entsperren.
-Plattformadministratoren müssen zurücknehmen und anschließend selbst
+Der Inhaber darf seinen eigenen Check-out bewusst beenden. Ein aktiver
+persönlicher Objekteigentümer darf einen Check-out seines Objekts aufgrund der
+begrenzten eigentümerspezifischen Sonderbefugnis zurücknehmen. Bei
+Bandeigentum darf dies nur ein ausdrücklich für Check-out-Rücknahmen
+vertretungsberechtigter aktiver Benutzer oder eine entsprechend berechtigte
+bandbezogene Gruppe. Andere bestellte Rücknahmeberechtigte benötigen das
+globale Aktionsrecht `Check-out zurücknehmen` und die objektspezifische
+Rücknahmeberechtigung. Normale Bandmitgliedschaft genügt nicht.
+Plattformadministratoren dürfen zurücknehmen. Sie müssen anschließend selbst
 auschecken; sie dürfen einen Check-out nicht umgehen. Nach administrativer
 Rücknahme verliert die frühere Sitzung ausschließlich ihre serverseitige
 Speicherberechtigung. Lokale Eingaben dürfen erhalten bleiben. Beim nächsten
@@ -652,6 +714,14 @@ den Benutzer beschreibbare Inhalte, Overlays und Setlists sowie persönliche
 Setlisteinstellungen dürfen offline bearbeitet werden. Vollständige gemeinsame
 Offlinebearbeitung über Offline-Check-outs folgt nach dem MVP.
 
+Offline auswählbar sind ausschließlich Songs, die auf dem Gerät bereits lokal
+bekannt und für den Benutzer nach dem Sichtbarkeitsmodell sichtbar sind.
+Unsichtbare Songs dürfen nicht als lokaler Katalog oder Vorschlagsbestand
+bereitgestellt werden. Freie Songangaben bleiben offline zunächst unaufgelöst.
+Erst die Serversynchronisation ordnet sie nach den bestehenden Regeln einem
+sichtbaren oder unsichtbaren exakten Song zu oder erzeugt einen neuen
+ungeprüften Song, ohne fremde Beziehungen offenzulegen.
+
 Offline angelegte Inhalte gehören dem Benutzer und bleiben zunächst ohne
 Freigaben. Basisinhalt und Metadaten werden lokal gespeichert. Pflichtfelder
 und Songzuordnung werden serverseitig erneut geprüft; bei Fehler bleibt der
@@ -708,10 +778,19 @@ vertrauenswürdiger Benutzertext, und enthält keine unnötigen Geräte- oder
 Personendaten. Lokale Aktions- und serverseitige Annahmezeit bleiben
 unterscheidbar; dieses Audit erzeugt keine fachliche Versionierung.
 
-Abmeldung warnt vor der Löschung nicht synchronisierter Entwürfe, erlaubt
-vorherige Synchronisation und entfernt lokale Inhalte und Sitzungsschlüssel
-kontrolliert. Lokale Daten müssen verschlüsselt gespeichert werden; das
-Verfahren bleibt Architekturentscheidung.
+Plattformadministratoren dürfen eine Gerätesitzung serverseitig widerrufen.
+Der Widerruf wird beim nächsten Serverkontakt wirksam und verhindert danach
+weitere geschützte Zugriffe und Synchronisationen dieser Sitzung. Ein dauerhaft
+getrenntes Gerät kann den Widerruf nicht erkennen; die maximale Offlinesitzung
+begrenzt dieses Restrisiko. Widerruf und abgelehnte Folgeverwendung werden
+auditiert. Das konkrete Sitzungs- oder Schlüsselverfahren bleibt eine
+Architekturentscheidung.
+
+Bei nicht synchronisierten Entwürfen muss die Abmeldewarnung ausdrücklich
+ermöglichen, die Abmeldung abzubrechen oder vor der bestätigten Abmeldung zu
+synchronisieren. Erst die bewusst bestätigte Abmeldung entfernt lokale Inhalte
+und Sitzungsschlüssel kontrolliert. Lokale Daten müssen verschlüsselt
+gespeichert werden; das Verfahren bleibt Architekturentscheidung.
 
 ## Setlists
 
@@ -799,10 +878,21 @@ Audit enthält keine Secrets, vollständigen Basisinhalte oder Dateien,
 unnötigen Inhaltsdaten beziehungsweise personenbezogenen Daten und keine
 auswählbaren alten Song- oder Inhaltsversionen.
 
+Lokale Offlinekopien und nicht synchronisierte Entwürfe ersetzen keine zentrale
+Sicherung und dürfen weder als Nachweis für das RPO von 4 Stunden noch das RTO
+von 8 Stunden herangezogen werden. Das spätere Sicherungs- und
+Wiederherstellungskonzept muss diese Ziele für den zentralen Datenbestand in TST
+nachweisen. Die konkrete Auslegung auf der Ziel-Synology erfolgt zusammen mit
+der Referenzhardware und `OQ-016`.
+
 Export gehört nicht zum MVP; Offlinebereitstellung ist kein Export. Späterer
 Export benötigt global und objektbezogen `Exportieren`. Anzeigen oder
-Bearbeiten vermittelt dieses Recht nicht. Formate, Overlays und Setlistpakete
-werden später entschieden.
+Bearbeiten vermittelt weder ein Exportrecht noch eine pauschale
+Weitergabeberechtigung. Der exportierende Benutzer bleibt für vorhandene
+Nutzungsrechte, zulässige Weitergabe und die Einhaltung fachlicher sowie
+rechtlicher Beschränkungen verantwortlich. Diese Verantwortung legt weder ein
+Exportformat noch ein technisches DRM-Verfahren fest. Formate, Overlayeinbezug
+und Setlistpakete werden später entschieden.
 
 ## Integritätsregeln
 
@@ -818,7 +908,8 @@ Das Produkt muss insbesondere verhindern:
    Leserecht.
 8. Aktion auf einem bestehenden Objekt ohne beide Autorisierungsebenen oder
    Anlage, die unzutreffend eine noch nicht existente Objektberechtigung
-   voraussetzt.
+   voraussetzt; ausgenommen sind ausschließlich die dokumentierten
+   eigentümerspezifischen Sonderbefugnisse am eigenen Objekt.
 9. globales Aktionsrecht auf einer Band oder bandbezogenen Gruppe.
 10. negatives Recht oder impliziten Querzugriff zwischen Bandbereichen.
 11. reguläres Eigentum der Plattform oder einer normalen Gruppe.

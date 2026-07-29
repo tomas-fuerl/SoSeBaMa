@@ -74,12 +74,19 @@ dem
   Gleicher Titel allein genügt nicht; Satzzeichen, Namensreihenfolge und
   sonstige Schreibweise bleiben relevant. Ein referenzierter Song darf nicht
   gelöscht werden.
+- **Administrative Arbeitsliste:** Plattformadministratoren sehen im MVP
+  gemeinsam mindestens ungeprüfte Songs, offene Songänderungsanträge, mögliche
+  Dubletten und abweichende Gemeinfreiheitsangaben bei exakter Zuordnung. Daraus
+  dürfen sie Songmetadaten korrigieren, den Prüfstatus setzen, Anträge
+  entscheiden, Dubletten atomar zusammenführen, Inhalte atomar umhängen und
+  referenzfreie Songs löschen. Private Basisinhalte müssen dafür weder geöffnet
+  noch angezeigt werden.
 - **Änderung:** Normale Benutzer benötigen das globale Sonderrecht
   `Songänderung beantragen` und Sichtbarkeit des Songs, aber keine
   Objektbearbeitungsberechtigung. Plattformadministratoren genehmigen oder
-  lehnen ab. Alle Ereignisse werden
-  auditiert; Songs haben im MVP keinen Check-out und der letzte gespeicherte
-  Stand gilt.
+  lehnen ab. Alle Arbeitslistenentscheidungen und Songereignisse werden mit dem
+  Audit-Mindestdatensatz protokolliert; Songs haben im MVP keinen Check-out und
+  der letzte gespeicherte Stand gilt.
 
 ## WF-004: PDF-Inhalt anlegen und anzeigen
 
@@ -111,7 +118,9 @@ dem
   entziehbares Bearbeitungsrecht gegeben, sofern er nicht bereits Eigentümer
   ist. Er nutzt Freihandstift, Radierer, Textnotiz, Textmarker,
   Auswahl, Verschieben oder Löschen; Strichstärke und begrenzte Farben sind
-  konfigurierbar.
+  konfigurierbar. Geometrische Formen, Bild- oder Stempelelemente und Ebenen-
+  beziehungsweise Layergruppen gehören nicht zum MVP und sind nicht als
+  Post-MVP-Funktionen eingeplant.
 - **Ergebnis:** Mehrere berechtigte Overlays können gleichzeitig sichtbar sein.
   Der Basisinhalt bleibt unverändert.
 - **Check-out:** Ein Overlay benötigt einen Check-out, sobald mehr als ein
@@ -199,7 +208,9 @@ dem
   ist.
 - **Ablauf:** Der Benutzer liest Setlist, Basisinhalte und berechtigte Overlays
   und bearbeitet im MVP nur eigene Einzelbenutzerobjekte und persönliche
-  Setlisteinstellungen.
+  Setlisteinstellungen. Für eine Offline-Songauswahl erscheinen ausschließlich
+  bereits lokal bekannte, für ihn sichtbare Songs. Unsichtbare Songs dürfen
+  weder Katalog noch Vorschlag sein; freie Angaben bleiben lokal unaufgelöst.
 - **Ergebnis:** Offlinezustand, Einschränkungen und nicht verfügbare Elemente
   sind sichtbar.
 - **Ablaufwirkung:** Bei Rechteentzug oder Ablauf der maximalen Offlinesitzung
@@ -218,8 +229,9 @@ dem
   Objekt, lokale Aktionszeit, serverseitige Synchronisationszeit, technische
   datensparsame Gerätekennung und Ergebnis.
 - **Ergebnis:** Eine unveränderte Ausgangsrevision wird atomar gespeichert. Bei
-  einer Offlineanlage prüft der Server die normalisierte Übereinstimmung gegen
-  alle Songs, einschließlich für den Benutzer unsichtbarer Songs. Exakter
+  einer Offlineanlage bleiben freie Songangaben bis zu dieser Serverprüfung
+  unaufgelöst. Der Server prüft die normalisierte Übereinstimmung gegen alle
+  Songs, einschließlich für den Benutzer unsichtbarer Songs. Exakter
   Treffer von Titel und Komponist ordnet den bestehenden Song zu; ohne Treffer
   entsteht ein neuer ungeprüfter Song. Der Benutzer erfährt nur Zuordnung oder
   Neuanlage, niemals fremde Beziehungen.
@@ -281,9 +293,16 @@ dem
 
 - **Ausgangszustand:** Das Gerät enthält vorbereitete Daten oder nicht
   synchronisierte Entwürfe.
-- **Abmeldung:** Das Produkt warnt vor Löschung offener Entwürfe und erlaubt
-  vorherige Synchronisation. Danach werden Inhalte und Sitzungsschlüssel
-  kontrolliert entfernt.
+- **Abmeldung:** Das Produkt warnt vor Löschung offener Entwürfe und bietet
+  ausdrücklich `Abmeldung abbrechen` oder `vor Abmeldung synchronisieren` an.
+  Erst nach einer bewusst bestätigten Abmeldung werden lokale Inhalte und
+  Sitzungsschlüssel kontrolliert entfernt.
+- **Gerätesitzungswiderruf:** Plattformadministratoren dürfen eine
+  Gerätesitzung serverseitig widerrufen. Beim nächsten Serverkontakt werden
+  weitere geschützte Zugriffe und Synchronisationen dieser Sitzung abgelehnt.
+  Ein dauerhaft getrenntes Gerät erkennt den Widerruf nicht; spätestens die
+  maximale Offlinesitzung begrenzt das Restrisiko. Widerruf und abgelehnte
+  Folgeverwendung werden auditiert, das technische Verfahren bleibt offen.
 - **Rechteentzug oder Sitzungsablauf:** Spätestens mit Ablauf der maximalen
   Offlinesitzung werden geschützte Basisinhalte und Overlays gesperrt; erneute
   Onlineanmeldung oder Rechteprüfung ist nötig. Endgültig gelöschte Objekte
@@ -370,10 +389,15 @@ dem
   wird vor Lease-Ablauf verständlich gewarnt.
 - **Ende:** Bewusstes Verlassen, Abbrechen, ausdrückliches Ende,
   administrative Rücknahme, Rechteentzug, Löschvormerkung oder Lease-Ablauf.
-- **Rücknahme:** Inhaber, Eigentümer mit Rechten, ausdrücklich Berechtigte und
-  Plattformadministratoren dürfen zurücknehmen. Bandverwaltung allein genügt
-  nicht. Plattformadministratoren dürfen nicht umgehen, sondern müssen danach
-  selbst auschecken. Die frühere Sitzung verliert nur ihre serverseitige
+- **Rücknahme:** Der Inhaber darf den eigenen Check-out bewusst beenden. Ein
+  aktiver persönlicher Objekteigentümer darf einen Check-out seines Objekts als
+  begrenzte Eigentümerbefugnis zurücknehmen. Bei Bandeigentum darf dies nur ein
+  ausdrücklich dafür vertretungsberechtigter aktiver Benutzer oder eine
+  bandbezogene Gruppe; normale Bandmitgliedschaft genügt nicht. Andere
+  bestellte Rücknahmeberechtigte benötigen das globale Aktionsrecht `Check-out
+  zurücknehmen` und die objektspezifische Berechtigung.
+  Plattformadministratoren dürfen zurücknehmen, aber nicht umgehen, sondern
+  müssen danach selbst auschecken. Die frühere Sitzung verliert nur ihre serverseitige
   Speicherberechtigung; lokale Eingaben bleiben bis zum nächsten Kontakt
   erhalten. Dann wird der Benutzer informiert und kann kopieren, verwerfen oder
   bewusst einen neuen Check-out anfordern.
@@ -399,9 +423,14 @@ dem
   lesbaren Inhalt, aber kein Schreibrecht am Inhalt.
 - **Ablauf:** Er entfernt persönliche Inhalte und reicht dasselbe Overlay ein.
   Atomar entsteht ein zweckgebundener temporärer Lesezugriff ausschließlich für
-  Inhaltseigentümer mit wirksamen Rechten, ausdrücklich berechtigte Prüfer oder
-  bei Eigentümerlosigkeit Plattformadministratoren. Er vermittelt kein
-  reguläres Bearbeiten und endet bei Rücknahme oder Ablehnung.
+  zuständige Prüfer. Ein aktiver persönlicher Inhaltseigentümer entscheidet als
+  begrenzte Eigentümerbefugnis. Bei Bandeigentum entscheiden nur ausdrücklich
+  für Overlay-Übernahmen vertretungsberechtigte aktive Benutzer oder
+  bandbezogene Gruppen. Andere bestellte Prüfer benötigen das globale
+  Aktionsrecht `Overlay-Übernahme prüfen` und die objektspezifische
+  Prüfberechtigung; bei Eigentümerlosigkeit entscheiden ausschließlich
+  Plattformadministratoren. Der Zugriff vermittelt kein reguläres Bearbeiten
+  und endet bei Rücknahme oder Ablehnung.
 - **Genehmigung:** Keine Kopie entsteht. Eigentum wechselt zum
   Inhaltseigentümer, dynamische Leserechtevererbung wird aktiv, der Prüfzugriff
   wird durch endgültige Rechte ersetzt und das persönliche Schreibrecht des

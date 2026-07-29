@@ -111,6 +111,16 @@ Ausnahme von den für normale Benutzer je Aktionsart geltenden
 Autorisierungsregeln. Er gilt ausschließlich für Mitglieder der Systemgruppe
 `Plattformadministratoren`.
 
+### Eigentümerspezifische Sonderbefugnis
+
+Eng begrenzte Ausnahme von der Zwei-Ebenen-Regel am eigenen Objekt. Ein aktiver
+persönlicher Inhaltseigentümer darf eine Overlay-Übernahme für diesen Inhalt
+entscheiden; ein aktiver persönlicher Objekteigentümer darf einen Check-out des
+eigenen Objekts zurücknehmen. Bei Bandeigentum handeln nur ausdrücklich für die
+jeweilige Aktion vertretungsberechtigte aktive Benutzer oder bandbezogene
+Gruppen. Die Befugnis ist kein globales Recht, gehört nicht zum Basissatz von
+`Alle Benutzer` und erweitert keine Rechte an anderen Objekten.
+
 ### Berechtigungsanfrage
 
 In-App-Antrag auf Anzeigen oder Bearbeiten für den Antragsteller selbst oder,
@@ -199,6 +209,14 @@ Abweichung wird als administrativer Prüfhinweis erfasst.
 Songfeld mit den Werten `Ungeprüft` oder `Geprüft`. Neue Songs normaler Benutzer
 sind ungeprüft.
 
+### Administrative Song-Prüfarbeitsliste
+
+Gemeinsame MVP-Arbeitsliste für Plattformadministratoren mit ungeprüften Songs,
+offenen Songänderungsanträgen, möglichen Dubletten und abweichenden
+Gemeinfreiheitsangaben bei exakter Zuordnung. Sie ermöglicht die bereits
+berechtigten Prüf-, Korrektur-, Entscheidungs-, Zusammenführungs-, Umhängungs-
+und Löschaktionen, ohne private Basisinhalte öffnen oder anzeigen zu müssen.
+
 ## Eigentum und Lebenszyklus
 
 ### Eigentum
@@ -285,9 +303,13 @@ nicht bereits Eigentümer ist.
 ### Temporärer Overlay-Prüfzugriff
 
 Zweckgebundener Lesezugriff, der atomar mit der Einreichung eines bis dahin
-privaten Overlays ausschließlich für zuständige Prüfer entsteht. Er vermittelt
-kein reguläres Bearbeiten und endet bei Ablehnung oder Rücknahme; bei
-Genehmigung wird er durch die endgültigen Rechte ersetzt.
+privaten Overlays ausschließlich für zuständige Prüfer entsteht. Zuständig sind
+der aktive persönliche Inhaltseigentümer, ausdrücklich für die Eigentümerband
+vertretungsberechtigte Prüfer, andere Prüfer mit globalem und objektspezifischem
+`Overlay-Übernahme prüfen` oder bei Eigentümerlosigkeit ausschließlich
+Plattformadministratoren. Der Zugriff vermittelt kein reguläres Bearbeiten und
+endet bei Ablehnung oder Rücknahme; bei Genehmigung wird er durch die
+endgültigen Rechte ersetzt.
 
 ### Overlay-Übernahme
 
@@ -307,7 +329,9 @@ Benutzer ergänzend übersteuern, ohne allgemeine Berechtigungen zu verändern.
 
 Grafische oder textuelle Ergänzung in einem Overlay. PDF-Annotationen im MVP
 umfassen Freihandstift, Radierer, Textnotiz, Textmarker sowie Auswahl,
-Verschieben und Löschen.
+Verschieben und Löschen. Geometrische Formen, Bild- oder Stempelelemente und
+Ebenen- beziehungsweise Layergruppen gehören nicht zum MVP und sind dadurch
+nicht als Post-MVP-Funktionen eingeplant.
 
 ## Setlists und Bearbeitung
 
@@ -399,10 +423,44 @@ abgelaufener Sitzung oder Lease beziehungsweise Konflikt nicht automatisch
 zulässig als neues eigenes Objekt gespeichert werden. Nach Ablauf einer
 Offline-Lease besitzt sie keine Serverreservierung.
 
+### Offline-Songauswahl
+
+Auswahl ausschließlich aus bereits lokal bekannten Songs, die für den Benutzer
+nach dem Sichtbarkeitsmodell sichtbar sind. Unsichtbare Songs sind kein lokaler
+Katalog- oder Vorschlagsbestand. Freie Eingaben bleiben bis zur
+Serversynchronisation unaufgelöst; erst dort darf die exakte Zuordnung auch zu
+einem unsichtbaren Song erfolgen, ohne Beziehungen offenzulegen.
+
+### Gerätesitzungswiderruf
+
+Serverseitiger Widerruf durch Plattformadministratoren. Er wird beim nächsten
+Serverkontakt wirksam und verhindert dann weitere geschützte Zugriffe und
+Synchronisationen. Bis dahin begrenzt die maximale Offlinesitzung das Risiko
+eines dauerhaft getrennten Geräts. Widerruf und abgelehnte Folgeverwendung
+werden auditiert; das technische Verfahren bleibt Architekturentscheidung.
+
 ### Offlinebereitstellung
 
 Kontrollierte lokale Bereitstellung innerhalb der Anwendung. Sie ist kein
-Export.
+Export und keine zentrale Sicherung. Offlinekopien und nicht synchronisierte
+Entwürfe belegen weder RPO noch RTO.
+
+### Export
+
+Spätere, nicht zum MVP gehörende Ausgabe mit globalem und objektbezogenem
+`Exportieren`. Anzeigen oder Bearbeiten vermittelt weder Exportrecht noch
+pauschale Weitergabeberechtigung. Der exportierende Benutzer bleibt für
+Nutzungsrechte, zulässige Weitergabe und geltende Beschränkungen verantwortlich;
+Formate und technische DRM-Verfahren sind nicht festgelegt.
+
+### MFA-Wiederherstellung
+
+Globaler, auditierter Wiederherstellungsprozess für
+Plattformadministrator-Zugänge. Bandadministration und Bandmitgliedschaft
+vermitteln keine Befugnis, MFA anderer Benutzer oder eines
+Plattformadministrators zu deaktivieren oder zurückzusetzen. Der letzte
+Plattformadministrator darf nicht dauerhaft ausgesperrt werden; das konkrete
+MFA-Verfahren bleibt Architekturentscheidung.
 
 ## Nachvollziehbarkeit
 
