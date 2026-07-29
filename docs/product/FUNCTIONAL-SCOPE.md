@@ -2,151 +2,149 @@
 
 ## Bezug und Leseregel
 
-Dieses Dokument konkretisiert GitHub-Issue #3. Jede funktionale Anforderung
-besitzt eine stabile `FR-xxx`-Kennung. Eine Kennung wird nicht wiederverwendet;
-ersetzte oder verworfene Anforderungen bleiben nachvollziehbar markiert.
+Jede Anforderung besitzt eine stabile `FR-xxx`-Kennung. Frühere Aussagen dieses
+Dokuments werden durch die nachstehenden Tabellen vollständig ersetzt. `MVP`,
+`Zielmodell nach dem MVP`, `später` und `außerhalb des Scopes` sind verbindlich
+voneinander getrennt.
 
-Jeder produktiv nutzbare SoSeBaMa-MVP besteht aus zwei Ebenen:
+Das fachliche Gesamtmodell steht im
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
-1. der verbindlichen produktweiten Basis `FR-001` bis `FR-007`, die immer
-   vollständig erfüllt sein muss,
-2. einem zusätzlichen fachlichen Funktionsschnitt aus den nachfolgend
-   beschriebenen Kandidaten.
+## PDF-zentrierter MVP
 
-`OQ-005` entscheidet ausschließlich über diesen zusätzlichen fachlichen
-Funktionsschnitt und dessen Lieferreihenfolge. Die Entscheidung kann keine
-Anforderung der verbindlichen Basis abwählen oder auf eine spätere Erweiterung
-verschieben.
+Der MVP ist ein früh nutzbarer Produktstand. Er umfasst Benutzer, Bands,
+Gruppen einschließlich der Systemgruppe `Alle Benutzer`,
+Plattformadministration, die Systemband `Öffentlich`, globale und
+objektbezogene Berechtigungen, Eigentum und Löschung, Songs, PDF-Inhalte,
+Inhaltsmetadaten, PDF-Overlays, Setlists, Berechtigungsanfragen, Audit, Suche,
+Offlineanzeige und private Offlinebearbeitung.
 
-## Verbindliche Basis jedes produktiven MVP
-
-`FR-001` bis `FR-007` sind weder optional noch MVP-Kandidaten. Jeder
-produktive MVP muss sie nachweisbar erfüllen, unabhängig davon, welche
-fachlichen Funktionen durch `OQ-005` zusätzlich ausgewählt werden.
-
-| ID | Anforderung | Verifikation |
+| ID | Verbindliche Anforderung | Verifikation |
 | --- | --- | --- |
-| FR-001 | SoSeBaMa muss mehrere Benutzer mit getrennten fachlichen Berechtigungen unterstützen. | Mindestens zwei Benutzer können im selben Arbeitsbereich unterschiedliche erlaubte und verbotene Aktionen nachvollziehbar ausführen. |
-| FR-002 | Die zentrale Datenhaltung muss der fachlich maßgebliche Datenbestand sein. | Nach erfolgreichem Abgleich ist der zentrale Stand eindeutig erkennbar; lokale Kopien werden nicht still zum konkurrierenden Hauptbestand. |
-| FR-003 | Jede geschützte Aktion muss anhand der aktuell wirksamen Rolle im betroffenen Arbeitsbereich erlaubt oder abgelehnt werden. | Rollenbasierte Positiv- und Negativfälle sind für jeden geschützten Kernablauf nachweisbar. |
-| FR-004 | Berechtigte Benutzer müssen ausgewählte Inhalte gezielt für eine erlaubte Offlineverwendung vorbereiten können. | Auswahl, Vorbereitungszustand und erfolgreiche Offlineöffnung sind ohne implizite Gesamtkopie nachvollziehbar. |
-| FR-005 | Offline-, Speicher-, Synchronisations-, Fehler- und Konfliktzustände müssen verständlich sichtbar sein. | Ein Benutzer kann in den zugehörigen Kernabläufen Zustand und erforderliche nächste Handlung bestimmen. |
-| FR-006 | Annotation oder Bearbeitung darf ein Originaldokument nicht unbemerkt zerstören. | Original und zusätzliche oder bearbeitete Inhalte bleiben unterscheidbar; ein unbeabsichtigtes Überschreiben wird verhindert. |
-| FR-007 | Import muss benutzergesteuert erfolgen und darf keine automatisierte unkontrollierte Inhaltsübernahme auslösen. | Jeder Import beginnt mit einer bewussten Benutzeraktion und zeigt Ergebnis oder Fehler eindeutig an. |
+| FR-001 | SoSeBaMa muss mehrere Benutzer, mehrere Bands, globale und bandbezogene Gruppen sowie mehrere getrennte Bandbereiche unterstützen. Das globale Benutzerkonto und jede Bandmitgliedschaft müssen getrennte Zustände besitzen. Nur Plattformadministratoren dürfen Konten aktivieren, deaktivieren oder löschen; Bandberechtigte verwalten ausschließlich Mitgliedschaften ihrer eigenen Band. Benutzer dürfen mehreren Bands und Gruppen angehören. | Kontoaktivierung, -deaktivierung und -löschung sowie Einladung, Aktivierung, Deaktivierung und Entfernung einer Bandmitgliedschaft werden getrennt geprüft; andere Bands bleiben unverändert. |
+| FR-002 | Der zentrale Serverstand muss der fachlich maßgebliche Datenbestand sein. Lokale Kopien und technische Revisionskennungen dürfen keine auswählbaren fachlichen Versionen erzeugen. | Nach Synchronisation ist genau ein aktueller Stand bestimmbar. |
+| FR-003 | Auf einem bestehenden Objekt muss jede geschützte Aktion eines normalen Benutzers globales Aktionsrecht und passende Objektberechtigung erfordern. Bei einer Anlage gelten stattdessen Anlagerecht, gegebenenfalls Bandvertretung und Eigentümerfähigkeit; Eigentum und anfängliche Rechte entstehen atomar. Anfragen folgen ihren Sonderregeln. Eng begrenzte Ausnahmen sind ausschließlich die Entscheidung eines aktiven persönlichen Inhaltseigentümers über eine Overlay-Übernahme am eigenen Inhalt und die Check-out-Rücknahme durch den aktiven persönlichen Eigentümer des eigenen Objekts. Bei Bandeigentum ist ausdrückliche Vertretungsbefugnis erforderlich; andere bestellte Prüfer oder Rücknahmeberechtigte benötigen globales und objektspezifisches Recht. Plattformadministratoren sind Superuser. | Zwei-Ebenen-Regel, Anlagen, Anfragen, persönliche Eigentümerausnahme, Bandvertretung und bestellte Sonderberechtigte werden positiv und negativ geprüft. |
+| FR-004 | Berechtigte Benutzer müssen ausgewählte Inhalte und Setlists für Offlineanzeige vorbereiten können. | Vollständiger, unvollständiger und fehlgeschlagener Zustand ist sichtbar. |
+| FR-005 | Offline-, Speicher-, Synchronisations-, Lösch-, Check-out- und Konfliktzustände müssen verständlich angezeigt werden. Eine aktive Check-out-Sitzung muss vor Lease-Ablauf gewarnt werden; nach Ablauf, Verbindungsverlust oder administrativer Rücknahme müssen lokale Eingaben und fehlende serverseitige Speicherberechtigung klar getrennt sein. | Benutzer können Zustand und sichere nächste Handlung einschließlich Kopieren, Verwerfen oder bewusstem neuen Check-out bestimmen. |
+| FR-006 | Overlay-Aktionen müssen vom Basisinhalt getrennt bleiben und dürfen ihn nicht verändern. | Speichern eines Overlays verändert weder Basisinhalt noch andere Overlays. |
+| FR-007 | Import muss benutzergesteuert erfolgen und Dateien sicher prüfen. | Jeder Import beginnt bewusst; unsichere oder fehlerhafte Dateien erzeugen keinen Teilimport. |
+| FR-008 | Berechtigte Bandmitglieder müssen Bandmitgliedschaften der eigenen Band einladen, aktivieren, deaktivieren oder entfernen, bandbezogene Gruppen verwalten und delegierbare bandbezogene Rechte vergeben können. Diese Vorgänge dürfen weder das globale Konto noch andere Bandmitgliedschaften ändern. Globale Aktionsrechte dürfen nur direkt aktiven Benutzern oder globalen Gruppen zugewiesen werden; Bands und bandbezogene Gruppen dürfen nur bandbezogene Rechte und Objektberechtigungen tragen. Nur Plattformadministratoren dürfen Konten, Bands, globale Gruppen, globale Rechte, Systemgruppen und global rechtevermittelnde Gruppenmitgliedschaften verwalten. | Konto- und Mitgliedschaftsstatus bleiben getrennt; Bandverwaltung kann weder globale Rechte erteilen oder entziehen noch fremde Zuordnungen ändern. |
+| FR-009 | Neue Inhalte müssen ohne Freigaben angelegt werden. Breite Lesbarkeit muss ausschließlich durch administrativ genehmigtes `Anzeigen` für die Systemband `Öffentlich` entstehen; anonymer Zugriff ist ausgeschlossen. | Normale Benutzer können `Öffentlich` nicht direkt als ungeprüfte Standardfreigabe anwenden. |
+| FR-010 | MFA muss für Plattformadministratoren verpflichtend und für andere Benutzer optional sein. Bandadministration oder Bandmitgliedschaft darf keine MFA-Verwaltung für andere Benutzer oder Plattformadministratoren vermitteln. Die auditierte administrative Wiederherstellung eines Plattformadministrator-Zugangs muss ausschließlich über den globalen Wiederherstellungsprozess erfolgen und darf den letzten Administrator nicht dauerhaft aussperren. | Pflicht-, Optional-, Bandgrenz-, Änderungs- und Wiederherstellungsfälle sind nachweisbar; das konkrete Verfahren bleibt Architekturentscheidung. |
+| FR-011 | Normale Benutzer müssen einen neuen Song atomar mit einem Inhalt anlegen dürfen. Plattformadministratoren müssen Songs ohne Inhalt anlegen sowie bestehende Songs ändern, prüfen und verwalten dürfen. Im MVP benötigen sie eine gemeinsame Prüfarbeitsliste mindestens für ungeprüfte Songs, offene Änderungsanträge, mögliche Dubletten und abweichende Gemeinfreiheitsangaben; daraus müssen die bestehenden Korrektur-, Prüf-, Entscheidungs-, Zusammenführungs-, Umhängungs- und Löschaktionen ohne Öffnen privater Basisinhalte möglich sein. Andere Benutzer dürfen mit `Songänderung beantragen` einen Antrag für sichtbare Songs stellen. | Arbeitslistenkategorien und berechtigte Aktionen werden einschließlich Audit und ohne Einsicht in private Basisinhalte geprüft; unsichtbare Songs bleiben für normale Benutzer nicht beantragbar. |
+| FR-012 | Normale Benutzer dürfen einen Song im Katalog, in Suche und Inhaltsanlage nur sehen, wenn sie mindestens einen zugehörigen Inhalt lesen; Plattformadministratoren sehen alle. Im MVP müssen Songs nach Titel, Komponist, Gemeinfreiheits- und Prüfstatus, Inhalte nach Songtitel, Komponist, Arrangeur/Interpret, Beschreibung, Eigentümer, Band, Inhaltsart, Tonart, Niveau und Genre sowie Setlists nach Name, Eigentümer, Band und enthaltenen Songtiteln such- oder filterbar sein. Tempo und Dauer müssen angezeigt und sortierbar sein, müssen im MVP aber keine Freitextsuchfelder sein. | Ergebnisse, Vorschläge, Filterwerte und Anzahlen offenbaren keine unsichtbaren Songs oder Inhaltsbeziehungen; die minimale Setlistanzeige erweitert die Katalogsichtbarkeit nicht. |
+| FR-013 | Ein Song darf ohne Inhalt bestehen und mehreren Inhalten zugrunde liegen; jeder Inhalt muss genau einem Song gehören. Automatische Zuordnung darf nur bei normalisierter Übereinstimmung von Titel und Komponist erfolgen. Ein abweichender Gemeinfreiheitsstatus ändert weder Identität noch vorhandenen Status, sondern erzeugt einen datensparsamen Hinweis in der administrativen Prüfarbeitsliste, dessen Bearbeitung auditiert wird. | Gleicher Titel allein ordnet nie zu; exakter Titel-/Komponisten-Treffer ordnet auch bei Statusabweichung zu, ohne private Beziehungen offenzulegen. |
+| FR-014 | Songs müssen aktuelle globale Metadaten ohne auswählbare Version oder fachliche Historie besitzen. Anlage, Prüfung, Antrag, Entscheidung, Änderung, Zusammenführung, Umhängung und Löschung müssen auditiert werden. | Setlists und Inhalte zeigen aktuelle Songmetadaten; Audit ist nicht editierbar. |
+| FR-015 | Ein berechtigter Benutzer muss ein PDF als Basisinhalt genau einem Song zuordnen, Pflichtmetadaten bestätigen und ohne Freigaben anlegen können. | Inhalt, Song und Pflichtfelder entstehen atomar oder gar nicht. |
+| FR-016 | Die PDF-Anzeige muss eindeutige Seitennavigation unterstützen. | Vor, zurück und direkte Seitenauswahl sind mit unterstützter Eingabe nutzbar. |
+| FR-017 | Die PDF-Anzeige muss geeigneten Zoom unterstützen. | Zoom funktioniert auf den unterstützten Primärgeräten. |
+| FR-018 | PDF-Overlays im MVP müssen Freihandstift, Radierer, Textnotiz, Textmarker, Auswahl, Verschieben und Löschen, konfigurierbare Strichstärke, begrenzte Farben sowie Touch- und Stiftbedienung unterstützen. Geometrische Formen, Bild- oder Stempelelemente und Ebenen- beziehungsweise Layergruppen gehören nicht zum MVP und werden dadurch nicht als Post-MVP-Funktionen eingeplant. | Jedes MVP-Werkzeug speichert ausschließlich im gewählten Overlay; die ausgeschlossenen Werkzeuge erscheinen nicht als MVP-Funktion oder geplante spätere Anforderung. |
+| FR-019 | Benutzer müssen beliebig viele normale Overlays zu lesbaren Inhalten anlegen und mehrere gleichzeitig anzeigen dürfen. Direkte gekoppelte Anlage muss atomar Inhaltseigentum, dynamische Leserechte und ein entziehbares Ersteller-Bearbeitungsrecht anwenden. Eine Einreichung erzeugt nur temporären Prüf-Lesezugriff. Entscheiden dürfen der aktive persönliche Inhaltseigentümer als begrenzte Eigentümerausnahme, ausdrücklich für die Eigentümerband vertretungsberechtigte aktive Benutzer oder Bandgruppen, andere Prüfer mit globalem und objektspezifischem `Overlay-Übernahme prüfen` oder bei Eigentümerlosigkeit ausschließlich Plattformadministratoren. | Einreichung, temporärer Zugriff, alle Prüferkategorien, Rücknahme, Ablehnung, Genehmigung, Kopie sowie Eigentums- und Rechtefolgen werden positiv und negativ geprüft. |
+| FR-020 | Ausgewählte PDF-Inhalte und berechtigte Overlays müssen offline angezeigt werden können. | Vorbereitete PDFs öffnen ohne Netzwerk; fehlende Bestandteile sind erkennbar. |
 
-## Fachliche Kandidaten für den ersten MVP-Funktionsschnitt
+## Text-/Chord-Funktionsgruppe nach dem MVP
 
-`FR-008` bis `FR-037` gehören zum vorgesehenen Produktumfang. `OQ-005`
-entscheidet, welche dieser zusätzlichen Anforderungen den ersten
-Funktionsschnitt bilden. Abhängige Detailentscheidungen sind jeweils genannt.
+Es gibt keinen reduzierten Texteditor im MVP. Die Gruppe wird vollständig nach
+dem MVP geliefert.
 
-### Benutzer und Zusammenarbeit
+| ID | Verbindliche spätere Anforderung |
+| --- | --- |
+| FR-021 | Berechtigte Benutzer müssen Text- und Chord-Inhalte manuell anlegen und genau einem Song zuordnen können. |
+| FR-022 | Text- und Chord-Basisinhalte müssen entsprechend Eigentum, Berechtigungen und Check-out bearbeitbar sein. |
+| FR-023 | Text- und Chord-Inhalte müssen benutzergesteuert per Copy-and-paste übernommen werden können. |
+| FR-024 | Chords müssen erkannt und strukturiert dargestellt werden können. |
+| FR-025 | Erkannte Chords müssen kontrolliert korrigiert, transponiert und vereinfacht werden können. |
+| FR-026 | Text- und Chord-Inhalte müssen kontrollierbaren Autoscroll unterstützen. |
+| FR-027 | Text-/Chord-Inhalte und ihre berechtigten Overlays müssen offline verwendbar sein. |
 
-| ID | Anforderung | Offene Abgrenzung |
+## Setlists im MVP
+
+| ID | Verbindliche Anforderung | Verifikation |
 | --- | --- | --- |
-| FR-008 | Eine berechtigte Administration muss Benutzer einladen und Mitgliedschaften deaktivieren können. | Umfang und Ablauf der Einladung bleiben technologieoffen. |
-| FR-009 | SoSeBaMa muss private und gemeinsam sichtbare Inhalte eindeutig unterscheiden und berechtigen können. | Standardsichtbarkeit und Änderungsrechte: `OQ-003`, `OQ-004`. |
-| FR-010 | SoSeBaMa soll einen optionalen zusätzlichen Authentifizierungsfaktor ermöglichen, ohne ein Produkt oder Verfahren festzulegen. | Rollen, Auslöser und Verbindlichkeit: `OQ-020`. |
+| FR-028 | Setlists müssen eigenständige Objekte mit genau einem Benutzer oder einer Band als Eigentümer sein. Benutzereigene Setlists starten nur für den Ersteller; bandeigene benötigen globales und bandbezogenes Anlagerecht. Eigentum und anfängliche Rechte entstehen atomar. Die Eigentumsrechte schlagen nicht auf Mitglieder durch; der Bandprinzipal erhält bei jedem Eigentumserwerb standardmäßig Anzeigen. Eine Setlistkopie ist eine normale neue Anlage: Standard-Eigentümer ist der Kopierende, eine Band benötigt globale und bandbezogene Anlagerechte, `Öffentlich` ist nur administrativ zulässig. Die Kopie erhält eigene Rechte und Historie, ohne Inhalte oder Overlays zu kopieren. | Benutzer- und Bandanlage ohne vorbestehende Objektberechtigung, atomare Referenzkopie und administrative Eigentümerschaft von `Öffentlich` werden geprüft. |
+| FR-029 | Jeder Setlistbearbeiter muss jeden selbst lesbaren Inhalt unabhängig von Eigentümer oder Band einfügen dürfen. Gemeinsame Overlay-Auswahl und -Reihenfolge sowie persönliche Übersteuerungen müssen getrennt sein. | Setlistberechtigung erweitert keine Inhalts- oder Overlayrechte; persönliche Einstellungen benötigen keinen Check-out. |
+| FR-030 | Setlists müssen eine ablenkungsarme Nutzung ermöglichen und auch unvollständig verwendbar bleiben. | Zahl und Warnung nicht verfügbarer Inhalte erscheinen vor Offlinevorbereitung oder Auftritt, ohne automatische Blockade. |
+| FR-031 | Setlists, lesbare Inhalte und aktuell berechtigte Overlays müssen gemeinsam für Offlineanzeige vorbereitet werden können. | Nicht lesbare Inhalte und Overlays sind markiert; verfügbare Teile bleiben nutzbar. |
+| FR-032 | Setlists müssen genau einen aktuellen Stand ohne auswählbare Versionen oder Snapshots besitzen. Hinzufügen und Entfernen von Einträgen, Reihenfolge, gemeinsame Overlay-Auswahl und -Reihenfolge, Setlistmetadaten, Eigentum und relevante gemeinsame Berechtigungsänderungen müssen vollständig historisiert werden; persönliche Einstellungen nicht. Bei endgültiger Inhaltslöschung entsteht innerhalb dieser Historie nur der festgelegte minimale, nicht anklickbare Löschhinweis. | Vollständige gemeinsame Historie ist nachvollziehbar; der Löschhinweis enthält keine Datei, Basisinhalt, vollständigen Metadaten, Berechtigungen, früheren Benutzereigentümer oder Overlays. |
 
-### Songs
+## Offline und Synchronisation im MVP
 
-| ID | Anforderung | Offene Abgrenzung |
+| ID | Verbindliche Anforderung | Verifikation |
 | --- | --- | --- |
-| FR-011 | Ein berechtigter Benutzer muss einen Song mit Titel und fachlich erforderlichen Metadaten anlegen können. | Der genaue Metadatenkatalog wird in einem späteren Facharbeitspaket bestimmt. |
-| FR-012 | Songs müssen gesucht, gefiltert und sortiert werden können. | Konkrete Suchfelder und Sortierregeln folgen aus dem Metadatenkatalog. |
-| FR-013 | Ein Song muss mehrere zugehörige Dokumente und unterscheidbare alternative Fassungen aufnehmen können. | Verhältnis von Fassung und Revision: `OQ-012`. |
-| FR-014 | Aktualisierungen an gemeinsam genutzten Songinhalten müssen für berechtigte Benutzer nachvollziehbar sein. | Tiefe und Dauer der Historie: `OQ-012`. |
+| FR-033 | Für lokale Inhalte und Overlays muss der Vorbereitungszustand vollständig, unvollständig oder nicht vorbereitet sichtbar sein. | Status entspricht dem tatsächlich lokal nutzbaren Umfang. |
+| FR-034 | Der Synchronisationszustand muss verständlich und innerhalb des Qualitätskorridors sichtbar sein. | Start, Fortschritt, Erfolg und Fehler sind unterscheidbar. |
+| FR-035 | Eigene, nur durch einen Benutzer beschreibbare Inhalte, Overlays und Setlists sowie persönliche Setlisteinstellungen müssen offline bearbeitbar sein. Offline dürfen nur bereits lokal bekannte und sichtbare Songs ausgewählt werden; unsichtbare Songs dürfen kein lokaler Katalog oder Vorschlag sein, freie Angaben bleiben bis zur Serverprüfung unaufgelöst. Offlineanlagen bleiben ohne Freigaben; bei Synchronisation erfolgt die Zuordnung gegen alle Songs ohne Beziehungslecks. Neu erteilte Rechte lösen keinen automatischen Download aus. | Lokale Auswahl, freie Eingabe, serverseitige Zuordnung oder Neuanlage und bewusste Offlinevorbereitung werden ohne Offenlegung unsichtbarer Beziehungen geprüft. |
+| FR-036 | Private Offlineobjekte müssen eine technische Revisionskennung verwenden. Veraltete Änderungen, Synchronisation eines inzwischen gemeinsam bearbeitbaren Objekts ohne Check-out und Wiederbelebung eines endgültig gelöschten technischen Objekts müssen abgelehnt werden; Freigabe beziehungsweise Löschung bleiben wirksam. Automatisches Merge, stilles Überschreiben und Last-write-wins sind unzulässig. Der Server muss lokale Aktion, Synchronisation, Ablehnung und zulässigen Rettungsweg mit den festgelegten Offline-Auditfeldern einschließlich technischer datensparsamer Gerätekennung protokollieren. | Neuladen mit bewusstem Check-out, Verwerfen, neues privates Objekt und manuelle Übertragung sind als bewusste Wege verfügbar; lokale und serverseitige Zeit sowie Ablehnungsgrund bleiben unterscheidbar. |
+| FR-037 | Eine Abmeldewarnung muss bei nicht synchronisierten Entwürfen ausdrücklich Abbruch oder vorherige Synchronisation erlauben; erst bestätigte Abmeldung entfernt lokale Inhalte und Sitzungsschlüssel. Plattformadministratoren müssen Gerätesitzungen serverseitig widerrufen können; ab dem nächsten Serverkontakt sind geschützte Zugriffe und Synchronisationen gesperrt, während die maximale Offlinesitzung das Restrisiko dauerhaft getrennter Geräte begrenzt. Widerruf und Folgeverwendung werden auditiert. Geschützte Daten, getrennte Entwürfe und endgültig gelöschte Objekte folgen den bestehenden Ablaufregeln. | Abmeldeabbruch, Synchronisation vor Bestätigung, Widerruf online und dauerhaft offline, Audit, Rechteentzug, Sitzungsablauf und Löschung werden geprüft. |
 
-### PDF-Dokumente
+## Spätere mögliche Erweiterungen
 
-| ID | Anforderung | Offene Abgrenzung |
-| --- | --- | --- |
-| FR-015 | Ein berechtigter Benutzer muss ein zulässiges PDF hinzufügen und anzeigen können. | Uploadgrenzen werden aus Security- und Qualitätsanforderungen abgeleitet. |
-| FR-016 | Die PDF-Anzeige muss eine eindeutige Seitennavigation unterstützen. | Konkrete Bediengesten sind keine Entscheidung dieses Arbeitspakets. |
-| FR-017 | Die PDF-Anzeige muss eine für das Lesen geeignete Vergrößerung und Verkleinerung unterstützen. | Messbare Geräte- und Reaktionsziele: `OQ-010`, `OQ-011`. |
-| FR-018 | Berechtigte Benutzer müssen PDFs per Touch oder Stift annotieren können. | Unterstützte Werkzeuge und Geräteklassen: `OQ-010`. |
-| FR-019 | Annotationen müssen privat oder ausdrücklich gemeinsam sichtbar geführt werden können. | Standardwert: `OQ-003`; Bearbeitungsrechte: `OQ-004`. |
-| FR-020 | Ausgewählte PDFs und berechtigte Annotationen müssen offline bereitgestellt und angezeigt werden können. | Offline-Schreibumfang und Sitzungsdauer: `OQ-006`, `OQ-007`. |
-
-### Texte und Akkorde
-
-| ID | Anforderung | Offene Abgrenzung |
-| --- | --- | --- |
-| FR-021 | Berechtigte Benutzer müssen Text- und Akkordblätter manuell anlegen können. | Gemeinsame Änderungsrechte: `OQ-004`. |
-| FR-022 | Text- und Akkordblätter müssen im erlaubten Umfang bearbeitbar sein. | Offline- und Rollenabgrenzung: `OQ-004`, `OQ-006`. |
-| FR-023 | Text- und Akkordinhalte müssen durch benutzergesteuertes Copy-and-paste importiert werden können. | Weitere Importwege sind nicht Teil dieser Anforderung. |
-| FR-024 | Akkorde müssen erkannt oder strukturiert dargestellt werden können, ohne die freie Verwaltung des Inhalts an einen Drittanbieter zu binden. | Unterstützte Schreibweisen werden später fachlich festgelegt. |
-| FR-025 | Strukturierte Akkorde müssen kontrolliert transponiert werden können, ohne den Ausgangsinhalt unbemerkt zu zerstören. | Darstellung alternativer Tonarten bleibt fachlich zu präzisieren. |
-| FR-026 | Text- und Akkordblätter müssen für Probe oder Auftritt automatisch scrollen können; Start, Stopp und Kontrolle bleiben beim Benutzer. | Messbare Reaktion und Bedienung: `OQ-011`. |
-| FR-027 | Ausgewählte Text- und Akkordblätter müssen offline verfügbar sein. | Offline-Schreibumfang und Sitzungsdauer: `OQ-006`, `OQ-007`. |
-
-### Setlists
-
-| ID | Anforderung | Offene Abgrenzung |
-| --- | --- | --- |
-| FR-028 | Berechtigte Benutzer müssen Setlists anlegen können. | Historisierung oder Versionierung: `OQ-013`. |
-| FR-029 | Songs müssen einer Setlist hinzugefügt, daraus entfernt und in eine eindeutige Reihenfolge gebracht werden können. | Gemeinsame Änderungsrechte: `OQ-004`. |
-| FR-030 | Eine Setlist muss eine für Probe oder Auftritt geeignete, ablenkungsarme Nutzung der freigegebenen Inhalte ermöglichen. | Konkrete Oberflächengestaltung ist nicht Bestandteil dieses Arbeitspakets. |
-| FR-031 | Eine Setlist und ihre erforderlichen Dokumente müssen gemeinsam für die Offlineverwendung vorbereitet werden können. | Genauer MVP-Inhalt: `OQ-005`; Offline-Schreibumfang: `OQ-006`. |
-| FR-032 | Versions-, Freigabe- und Synchronisationszustände einer Setlist müssen für Benutzer unterscheidbar sein. | Umfang der Versionierung: `OQ-013`. |
-
-### Offline und Synchronisation
-
-| ID | Anforderung | Offene Abgrenzung |
-| --- | --- | --- |
-| FR-033 | SoSeBaMa muss für ausgewählte Inhalte anzeigen, ob sie lokal vollständig, unvollständig oder nicht vorbereitet sind. | Geräte- und Speichergrenzen folgen aus `OQ-010` und `OQ-016`. |
-| FR-034 | SoSeBaMa muss den aktuellen Synchronisationszustand verständlich anzeigen. | Messbare Rückmeldezeiten: `OQ-011`. |
-| FR-035 | Noch nicht übertragene lokale Änderungen müssen in einer erkennbaren Warteschlange verbleiben, bis sie erfolgreich behandelt oder bewusst verworfen wurden. | Zulässige Änderungstypen: `OQ-006`. |
-| FR-036 | Fehler und fachliche Konflikte müssen sichtbar sein und dürfen nicht als erfolgreicher Abgleich erscheinen. | Konfliktlösungsregeln werden je Änderungstyp später fachlich definiert. |
-| FR-037 | Lokale Inhalte müssen bei Abmeldung, Geräteverlust oder Rechteentzug kontrolliert gesperrt oder entfernt werden können. | Fristen und Umgang mit offenen Änderungen: `OQ-007`, `OQ-008`. |
-
-## Spätere Erweiterungen
-
-Diese Anforderungen sind mögliche Erweiterungen und für den ersten produktiv
-sinnvollen Stand nicht vorausgesetzt. Eine spätere Aufnahme benötigt ein
+Diese Punkte sind nicht Bestandteil des MVP. Ihre Umsetzung benötigt ein
 eigenes freigegebenes Arbeitspaket.
 
-| ID | Mögliche Erweiterung |
+| ID | Spätere mögliche Erweiterung |
 | --- | --- |
 | FR-038 | Kalender und Probenplanung. |
-| FR-039 | Benachrichtigungen zu fachlich relevanten Änderungen. |
-| FR-040 | Audio- oder Übungsdateien als zusätzliche Songdokumente. |
-| FR-041 | Optische Zeichenerkennung für benutzergesteuert eingebrachte Dokumente. |
-| FR-042 | Weitergehender automatischer Dokumentimport aus ausdrücklich erlaubten Quellen. |
-| FR-043 | Anbindung externer Cloudspeicher nach separater Security- und Datenschutzbewertung. |
-| FR-044 | Echtzeit-Kollaboration an gemeinsam bearbeitbaren Inhalten. |
+| FR-039 | Benachrichtigung auf Wunsch, wenn ein ausgechecktes Objekt wieder frei wird; keine Check-out-Warteschlange im MVP. |
+| FR-040 | Audio- oder Übungsdateien als zusätzliche Inhaltsarten. |
+| FR-042 | Weitergehender benutzergesteuerter Import aus ausdrücklich erlaubten Quellen. |
+| FR-043 | Externe Cloudspeicher nach eigener Security-, Datenschutz- und Architekturentscheidung. |
+| FR-044 | Gleichzeitige Echtzeit-Kollaboration jenseits des Check-out-Modells. |
 | FR-045 | Öffentliche Freigabelinks mit gesonderter Rechte- und Ablaufkontrolle. |
 | FR-046 | Erweiterte fachliche Statistiken. |
 
 ## Ausdrücklich nicht vorgesehen
 
+Handschrift- und Musikerkennung sind keine eingeplanten Post-MVP-Anforderungen.
+Sie dürfen frühestens nach Gesamtprodukt-Release als neue Feature Requests
+bewertet werden.
+
 | ID | Ausschluss |
 | --- | --- |
+| FR-041 | Handschrifterkennung ist bis auf Weiteres außerhalb des Scopes. |
 | FR-047 | Automatisiertes Scraping fremder Musikplattformen. |
-| FR-048 | Umgehung von Zugriffsbeschränkungen, technischen Schutzmaßnahmen oder DRM. |
+| FR-048 | Umgehung von Zugriffsbeschränkungen, Schutzmaßnahmen oder DRM. |
 | FR-049 | Öffentlicher Handel mit Musikdokumenten. |
 | FR-050 | Vollständiger Ersatz professioneller Notensatzsoftware. |
 | FR-051 | Funktion einer Digital Audio Workstation. |
 | FR-052 | Öffentliches soziales Musiknetzwerk. |
 | FR-053 | Unkontrollierte Weitergabe urheberrechtlich geschützter Inhalte. |
+| FR-061 | Musikerkennung ist bis auf Weiteres außerhalb des Scopes. |
 
-## Weitere noch nicht entschiedene Produktgrenzen
+## Entschiedene Querschnittsanforderungen
 
-| ID | Offene funktionale Grenze | Entscheidung |
-| --- | --- | --- |
-| FR-054 | Mitgliedschaft eines Benutzers in mehreren Arbeitsbereichen. | `OQ-001` |
-| FR-055 | Ein oder mehrere Arbeitsbereiche je Installation. | `OQ-002` |
-| FR-056 | Umfang exportierbarer Dokumente und Annotationen. | `OQ-014` |
-| FR-057 | Erster Zielbetrieb für eine oder mehrere Bands. | `OQ-015` |
+| ID | Verbindliche Anforderung |
+| --- | --- |
+| FR-054 | Benutzer dürfen gleichzeitig Mitglied mehrerer Bands und Gruppen sein. Bandbezogene Rechte bleiben je Bandbereich getrennt. |
+| FR-055 | Eine Installation muss mehrere Bandbereiche unterstützen. Jede Band besitzt genau einen Bandbereich. Ausdrückliche Objektfreigaben über Bandgrenzen sind zulässig und verändern Eigentum nicht. |
+| FR-056 | Export ist nicht Bestandteil des MVP. Später muss er globales und objektbezogenes `Exportieren` erfordern; Anzeigen oder Bearbeiten vermittelt weder Exportrecht noch pauschale Weitergabeberechtigung. Offlinebereitstellung ist kein Export. Der exportierende Benutzer bleibt für Nutzungsrechte, zulässige Weitergabe und geltende Beschränkungen verantwortlich; Format und technisches DRM-Verfahren bleiben unentschieden. |
+| FR-057 | Der erste produktive Betrieb muss mindestens zwei unabhängige reguläre Bands, zusätzlich `Öffentlich`, Benutzer mit Mehrfachmitgliedschaften und nachgewiesene Berechtigungstrennung umfassen. |
+| FR-058 | Jeder Inhalt muss genau einem Song gehören und genau einen aktuellen Basisinhalt ohne auswählbare Version oder Revision besitzen. Songänderungen gelten global. |
+| FR-059 | Regulärer Eigentümer von Inhalt, Setlist oder Overlay muss ein nicht gelöschter Benutzer oder eine bestehende Band sein. Deaktivierung lässt Eigentum und Beziehungen bestehen, sperrt aber ihre Ausübung; nur aktive Benutzer dürfen neues Übertragungsziel sein. Wird Inhalt, Setlist oder nicht gekoppeltes Overlay durch Anlage oder Übertragung bandeigen, muss der Bandprinzipal atomar zusätzlich Anzeigen erhalten. Gekoppelte Overlays folgen dem Inhalt ohne separates Band-Anzeigenrecht. Bei Übertragung bleiben alle ausdrücklichen Objekt- und Sonderrechte erhalten; nur automatische Eigentümerrechte wechseln. Vor administrativer Benutzer- und Bandlöschung müssen Eigentums- und Rechtefolgen angezeigt und bestätigt werden. |
+| FR-060 | Globale Aktionsrechte, Objektberechtigungen, Gruppen, Eigentum, Bandbereich, Overlay-Kopplung und Check-out müssen getrennt ausgewertet werden. Feste Overlay-Reichweitentypen und eigenständige Sichtbarkeitszustände sind ausgeschlossen. |
+| FR-062 | Jeder Inhalt muss `Arrangeur/Interpret` als bestätigtes Pflichtfeld besitzen. Tonart, BPM-Tempo, Sekundendauer mit formatierter Anzeige, Niveau 1 bis 3 mit Symbolik, normalisierte Genres und Beschreibung müssen optional sein. Das Feld Bewertung entfällt. |
+| FR-063 | In-App-Berechtigungsanfragen auf Anzeigen oder Bearbeiten müssen ohne bestehende Zielberechtigung für Benutzer und berechtigte Bands möglich sein. Offline darf ein Entwurf `noch nicht gesendet` erfasst werden; erst serverseitige Neuprüfung und erfolgreiche Übermittlung erzeugt `offen`. Empfänger, Fallback, Fehlerstatus und datensparsame Setlistanzeige müssen dem Referenzmodell folgen. |
+| FR-064 | Eigentümerlose Objekte müssen vorhandene wirksame Rechte behalten. Nur Plattformadministratoren dürfen Eigentum und Berechtigungen ändern. Löschvormerkung muss Wiederherstellungsfrist, Lesbarkeit und Schreibsperren besitzen; nach Fristablauf muss automatisch endgültig gelöscht, ein technischer Zwischen- oder Fehlerzustand sichtbar und die fachliche Frist unverändert bleiben. Bei Inhaltslöschung müssen Overlays, aktuelle Setlistreferenzen und minimaler Historienhinweis atomar konsistent behandelt werden. |
+| FR-065 | Audit muss nicht editierbar und für Plattformadministratoren durchsuchbar sein. Es muss den festgelegten Mindestdatensatz sowie zusätzliche Song-, Eigentums-, Check-out- und Offlinefelder führen, ohne Secrets, Dateien, Basisinhalte, unnötige Personen- oder Inhaltsdaten und ohne fachliche Versionierung. Fachliche Historien und Aufbewahrungsfristen bleiben getrennt; Auditexport gehört nicht zum MVP. |
+| FR-066 | Jedes gemeinsam bearbeitbare Objekt außer Songs muss einen sitzungsgebundenen Check-out verwenden. Der Inhaber darf ihn beenden; ein aktiver persönlicher Eigentümer darf ihn am eigenen Objekt als begrenzte Eigentümerausnahme zurücknehmen. Bei Bandeigentum ist ausdrückliche Vertretungsbefugnis nötig; andere bestellte Rücknehmer benötigen globales und objektspezifisches `Check-out zurücknehmen`; Plattformadministratoren dürfen zurücknehmen, aber nicht umgehen. Inhalt, Overlay und Setlist bleiben getrennt. Lease-, Wiederverbindungs-, Rücknahme-, Mehrfachsitzungs- und dynamische Übergangsregeln gelten vollständig; Rücknahme entzieht nur die alte serverseitige Speicherberechtigung. |
+| FR-070 | Es muss genau eine geschützte globale Systemgruppe `Alle Benutzer` geben. Jeder aktive Benutzer ist automatisch und nicht manuell entziehbar Mitglied. Ihr Basissatz muss globales Anzeigen und Bearbeiten innerhalb wirksamer Objektberechtigungen, eigene Inhalts-, Overlay- und Setlistanlagen samt atomarer Songanlage, direkte gekoppelte Overlayanlage, Overlay-Einreichung und -Privatkopie, Antrag auf `Öffentlich`, Setlistbefüllung und Selbstanfrage umfassen. Songänderung, Löschen, Berechtigungsverwaltung, Eigentumsübertragung, Bandanfrage, Overlay-Prüfung, Check-out-Rücknahme und Administration sind ausgeschlossen. Die beiden eigentümerspezifischen Sonderbefugnisse sind keine Rechte dieses Basissatzes. Deaktivierte oder gelöschte Benutzer verlieren die wirksamen Rechte. Nur Plattformadministratoren verwalten die nichteigentumsfähige Gruppe; ihr Mindestbasissatz darf ohne neue Produktentscheidung nicht reduziert werden und bleibt von `Öffentlich` getrennt. |
 
-## Übergreifende Grenzen
+## Verbindliches Zielmodell nach dem MVP
 
-- Inhalte werden nur aufgrund einer bewussten Benutzeraktion importiert.
-- Benutzer bleiben für Herkunft, Nutzungsrecht und zulässige Weitergabe der von
-  ihnen eingebrachten Inhalte verantwortlich.
-- Weder eine funktionale Anforderung noch ein offener Punkt legt
-  Programmiersprache, Framework, Datenbank, Authentifizierungsprodukt,
-  Synchronisationstechnologie oder Deploymentarchitektur fest.
-- Security-Anforderungen stehen in
-  [Security-Anforderungen](SECURITY-REQUIREMENTS.md), messbare Qualität in
-  [Qualitätsanforderungen](QUALITY-ATTRIBUTES.md).
+| ID | Anforderung nach dem MVP |
+| --- | --- |
+| FR-067 | Gemeinsame Inhalte, dynamisch gekoppelte Overlays und gemeinsame Setlists müssen über einen bewusst online angeforderten Offline-Check-out mit technischer Revisionskennung, fester separater Lease und konfliktfreier atomarer Synchronisation offline bearbeitbar werden. |
+
+## Weitere spätere Anforderungen
+
+| ID | Spätere Anforderung |
+| --- | --- |
+| FR-068 | Für Songs soll eine optimistische Konkurrenzprüfung einen auf veraltetem Stand beruhenden Speicherversuch ablehnen. |
+| FR-069 | Ein optionales Bewertungssystem darf in einem späteren Arbeitspaket fachlich konkretisiert werden; im aktuellen Modell existiert kein Bewertungsfeld. |
+
+## Noch nicht nummerierte technische Festlegungen
+
+Folgende Verfahren sind Architekturentscheidungen und keine zusätzlichen
+Produktfunktionen: konkrete MFA-Lösung, lokale Verschlüsselung,
+Synchronisationstechnik sowie Referenzmessbedingungen. Das Ressourcenbudget
+bleibt allein in `OQ-016` offen.

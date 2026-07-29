@@ -22,21 +22,32 @@ Die Meldung soll knapp enthalten:
 - Secrets existieren ausschließlich auf der Synology. Sie werden weder
   versioniert noch in Beispieldateien mit realistischen Werten abgebildet.
 - DEV, TST und PRD verwenden getrennte Konfigurationen, Daten, Secrets und
-  Zugriffswege.
-- Produktive Daten werden nicht nach DEV oder TST kopiert.
-- Portainer und code-server dürfen öffentlich ausschließlich über jeweils einen
-  eigenen gehärteten Reverse Proxy erreichbar sein.
-- SoSeBaMa PRD wird über einen eigenen gehärteten App-Reverse-Proxy
-  veröffentlicht. Nutzer-Clients erreichen das App-Backend beziehungsweise BFF
-  nicht direkt.
-- Der App-Reverse-Proxy darf ausschließlich die vorgesehenen
+  Zugriffswege. Produktive Daten werden nicht nach DEV oder TST kopiert.
+- Portainer darf über einen eigenen gehärteten externen Zugang erreichbar sein.
+- code-server darf über einen eigenen gehärteten externen Zugang erreichbar
+  sein.
+- SoSeBaMa TST darf für Frontendtests über einen eigenen, von PRD getrennten,
+  geschützten externen App-Zugang erreichbar sein.
+- SoSeBaMa PRD darf ausschließlich über einen eigenen gehärteten App-Zugang
+  erreichbar sein. Nutzer-Clients erreichen das App-Backend beziehungsweise
+  BFF nicht direkt.
+- Externe Erreichbarkeit vermittelt weder fachliche noch technische Rechte auf
+  andere Netze, Umgebungen, Komponenten oder Objekte.
+- Der PRD-App-Zugang darf ausschließlich die vorgesehenen
   Anwendungsendpunkte des App-Backends beziehungsweise BFF von PRD erreichen.
-- Öffentliche Erreichbarkeit erteilt keine impliziten Zugriffsrechte auf andere
-  Netze, Umgebungen oder Komponenten.
+- TST darf zusätzlich geschützte technische Diagnosezugriffe auf detaillierte
+  Logs, Traces, Statusendpunkte, Backend-APIs sowie definierte Test- und
+  Prüfschnittstellen besitzen. Sie sind ausschließlich benannten technischen
+  Identitäten mit eigener Authentifizierung, minimalen Rechten, Audit,
+  Widerrufsmöglichkeit und secretfreier Ausgabe zugänglich.
+- TST besitzt keinen pauschalen fachlichen Autorisierungs-Bypass. Seine
+  technischen Diagnose-, Test- und Prüfwege müssen in PRD technisch fehlen
+  oder dort nachweislich unerreichbar sein.
 - PRD besitzt keine Debugports, Debugtunnel oder Debugschnittstellen.
 - Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Die
-  Datenbank veröffentlicht keinen öffentlichen Endpunkt.
-- Der ausgehende Entwicklungszugriff von code-server ist vom öffentlichen
+  Datenbank veröffentlicht keinen externen Endpunkt; Nutzer-Clients,
+  code-server und Verwaltungswerkzeuge dürfen nicht direkt auf sie zugreifen.
+- Der ausgehende Entwicklungszugriff von code-server ist vom externen
   eingehenden code-server-Zugang getrennt. code-server erreicht ausschließlich
   DEV über explizit definierte, freigegebene und nachvollziehbare
   SSH-/Debugwege.
@@ -44,10 +55,14 @@ Die Meldung soll knapp enthalten:
   oder lokalen Infrastrukturwerte offenlegen.
 - Berechtigungen folgen dem Minimalprinzip und werden je Umgebung vergeben.
 
-Konkrete Domains, IP-Adressen, Hostnamen, Ports und Härtungsparameter bleiben
-außerhalb des öffentlichen Repositorys. Die konkrete Härtung der drei
-öffentlich erreichbaren Reverse-Proxy-Zugänge ist eine spätere Architektur- und
-Betriebsentscheidung und benötigt ein separates freigegebenes Arbeitspaket.
+Damit bestehen vier voneinander getrennte extern erreichbare Zugänge:
+Portainer, code-server, SoSeBaMa TST und SoSeBaMa PRD. Konkrete Domains,
+IP-Adressen, Hostnamen, Ports und Härtungsparameter bleiben außerhalb des
+öffentlichen Repositorys. Ihre konkrete Härtung ist eine spätere Architektur-
+und Betriebsentscheidung und benötigt ein separates freigegebenes
+Arbeitspaket. Der Begriff `Systemband Öffentlich` bezeichnet dagegen
+ausschließlich das fachliche Berechtigungsprinzip innerhalb von SoSeBaMa und
+keinen Netzwerkzugang.
 
 Weitere verbindliche Details stehen in
 [ENVIRONMENTS.md](docs/ENVIRONMENTS.md) und

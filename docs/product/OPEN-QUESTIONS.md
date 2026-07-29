@@ -1,354 +1,380 @@
-# Offene Produktfragen
+# Produktfragen und Entscheidungen
 
 ## Status und Entscheidungsregel
 
-Dieses Dokument konkretisiert die in GitHub-Issue #3 noch nicht entschiedenen
-Produktfragen. Alle Einträge haben den Status **Offen**. Optionen sind keine
-Empfehlung oder Eigentümerentscheidung. Eine Entscheidung trifft ausschließlich
-der Projekteigentümer; anschließend werden betroffene Anforderungen und der
-Eintrag nachvollziehbar aktualisiert.
+Entschiedene Einträge bleiben unter ihrer stabilen `OQ-xxx`-Kennung erhalten.
+Sie dokumentieren die verbindliche Produktentscheidung, keine technische
+Umsetzung.
 
-## Fragen
+## Statusübersicht
 
-### OQ-001: Mitgliedschaft in mehreren Arbeitsbereichen
+**Entschieden:** `OQ-001` bis `OQ-015` sowie `OQ-017` bis `OQ-021`.
 
-**Frage:** Kann ein Benutzer gleichzeitig Mitglied mehrerer Arbeitsbereiche
-sein?
+**Offen:** ausschließlich `OQ-016` Ressourcenbudget.
 
-**Optionen:** genau ein Arbeitsbereich je Benutzer; mehrere Arbeitsbereiche mit
-getrennten Rollen.
+## Entscheidungen und offene Frage
 
-**Auswirkungen:** Navigation, Berechtigungsprüfung, Offlineauswahl,
-Konfliktanzeige und Datentrennung werden bei Mehrfachmitgliedschaft komplexer.
+### OQ-001: Mitgliedschaft in mehreren Bandbereichen
 
-### OQ-002: Anzahl Arbeitsbereiche je Installation
+**Status:** Entschieden.
 
-**Frage:** Unterstützt eine Installation genau einen oder mehrere
-Arbeitsbereiche?
+Benutzer dürfen gleichzeitig Mitglied mehrerer Bands, Bandbereiche und Gruppen
+sein. Globales Benutzerkonto und Bandmitgliedschaften besitzen unabhängige
+Zustände: Nur Plattformadministratoren verwalten Konten; berechtigte
+Bandmitglieder verwalten ausschließlich Mitgliedschaften der eigenen Band.
+Bandbezogene Rechte werden je Bandbereich getrennt ausgewertet und vermitteln
+keinen impliziten Querzugriff.
 
-**Optionen:** Einzelarbeitsbereich; mehrere strikt getrennte Arbeitsbereiche.
+### OQ-002: Anzahl Bandbereiche je Installation
 
-**Auswirkungen:** Fachliche Trennung, Administration, Ressourcenplanung und
-spätere Betriebsanforderungen. Die Option legt noch keine Architektur fest.
-Diese Frage entscheidet ausschließlich über die Anzahl der Arbeitsbereiche je
-Installation; die fachliche Zuordnung von Band und Arbeitsbereich klärt
-`OQ-021`.
+**Status:** Entschieden.
 
-### OQ-003: Standardsichtbarkeit von Annotationen
+Eine Installation muss mehrere getrennte Bandbereiche unterstützen. Die
+Entscheidung legt keine Mandanten-, Datenbank- oder Deploymentarchitektur fest.
 
-**Frage:** Sind neue Annotationen standardmäßig privat oder gemeinsam sichtbar?
+### OQ-003: Standard für neue Inhalte und breite Lesbarkeit
 
-**Optionen:** privat als sicherer Standard; gemeinsam für direkte
-Zusammenarbeit; bewusste Auswahl bei jeder Erstellung.
+**Status:** Entschieden; die frühere Standardsichtbarkeit ist ersetzt.
 
-**Auswirkungen:** Datenschutz, Bedienaufwand, Erwartbarkeit und Risiko
-unbeabsichtigter Veröffentlichung.
+Neue Inhalte entstehen ohne Freigaben. Es gibt keinen eigenständigen Zustand
+für öffentliche Sichtbarkeit. Breite Lesbarkeit für alle angemeldeten aktiven
+Benutzer entsteht ausschließlich durch `Anzeigen` für die Systemband
+`Öffentlich`. Eigentümer oder berechtigte Bearbeiter stellen einen Antrag; nur
+Plattformadministratoren genehmigen, lehnen ab, setzen oder entfernen das
+Recht. Diese Ereignisse werden auditiert. Anonymer Internetzugriff und eine
+ungeprüfte direkte Standardfreigabe durch normale Benutzer sind ausgeschlossen.
 
-### OQ-004: Änderungsrechte regulärer Mitglieder
+### OQ-004: Gruppen- und Objektberechtigungsmodell
 
-**Frage:** Welche gemeinsamen Inhalte dürfen reguläre Mitglieder bearbeiten?
+**Status:** Entschieden; das frühere Rollen-/Direktrechtemodell ist ersetzt.
 
-**Optionen:** nur persönliche Annotationen; zusätzlich ausgewählte Text- und
-Akkordblätter; alle explizit freigegebenen Inhalte.
+Normale Benutzer benötigen für Aktionen auf bestehenden Objekten globales
+Aktionsrecht und Objektberechtigung. Bei Anlagen existiert noch keine
+Objektberechtigung; globales Anlagerecht, Eigentümerfähigkeit und gegebenenfalls
+Bandvertretung werden geprüft, Eigentum und anfängliche Rechte entstehen
+atomar. Berechtigungsanfragen benötigen keine Zielberechtigung;
+Songänderungsanträge benötigen Sichtbarkeit und das globale Sonderrecht, aber
+kein Song-Bearbeitungsrecht. Zwei eng begrenzte Eigentümerausnahmen gelten am
+eigenen Objekt: Der aktive persönliche Inhaltseigentümer darf eine
+Overlay-Übernahme entscheiden und der aktive persönliche Objekteigentümer einen
+Check-out zurücknehmen. Bei Bandeigentum ist ausdrückliche Vertretungsbefugnis
+für die jeweilige Aktion nötig; andere bestellte Prüfer oder Rücknehmer
+benötigen globales und objektspezifisches Sonderrecht. Diese Befugnisse
+verändern den Basissatz von `Alle Benutzer` nicht. Plattformadministratoren
+sind fachliche Superuser. Rechte werden positiv und additiv ausgewertet;
+negative Rechte und Gruppenverschachtelung existieren nicht.
 
-**Auswirkungen:** Rollenmodell, Nachvollziehbarkeit, Konfliktrisiko und Aufwand
-für Freigaben.
+Objektberechtigungen sind Anzeigen, Bearbeiten, Löschen, Berechtigungen
+verwalten, Eigentum übertragen und Sonderrechte. Bearbeiten beinhaltet
+Anzeigen; Löschen beinhaltet global und objektbezogen Bearbeiten und Anzeigen;
+die beiden administrativen Rechte beinhalten jeweils Anzeigen, aber
+untereinander keine weiteren Rechte.
+
+Globale Aktionsrechte dürfen nur aktiven Benutzern direkt oder globalen
+Gruppen zugewiesen werden. Bands und bandbezogene Gruppen tragen nur
+bandbezogene Rechte und Objektberechtigungen. Eine Band ist Eigentums- und
+Berechtigungsprinzipal. Ihre automatischen Eigentümerrechte werden nicht an
+Mitglieder vererbt. Wird Inhalt, Setlist oder nicht gekoppeltes Overlay durch
+Anlage oder Übertragung bandeigen, erhält der Bandprinzipal atomar die normale
+Berechtigung Anzeigen; gekoppelte Overlays erben Lesen ausschließlich vom
+Inhalt. Höhere Aktionen benötigen ausdrückliche Objekt-, globale und
+bandbezogene Vertretungsrechte. Plattformadministratoren verwalten globale
+Rechte und global rechtevermittelnde Gruppenmitgliedschaften.
+
+Die geschützte globale Systemgruppe `Alle Benutzer` enthält jeden aktiven
+Benutzer. Ihr administrativ nicht reduzierbarer Basissatz umfasst globales
+Anzeigen und Bearbeiten innerhalb wirksamer Objektberechtigungen, eigene
+Inhalts-, Overlay- und Setlistanlagen samt atomarer Songanlage, direkte
+gekoppelte Overlayanlage, Overlay-Einreichung und -Privatkopie, Antrag auf
+`Öffentlich`, Setlistbefüllung und Selbstanfrage. Nicht enthalten sind
+Songänderung, Löschen, Berechtigungsverwaltung, Eigentumsübertragung,
+Bandanfrage, Overlay-Prüfung, Check-out-Rücknahme und Administration. Globale
+Rechte begrenzen nicht auf eigene Objekte; die Objektberechtigung bildet die
+Objektgrenze. Die Gruppe
+ist kein Eigentümer und von `Öffentlich` getrennt. Ausdrückliche Freigaben über
+Bandgrenzen sind zulässig und verändern Eigentum nicht.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
 
-**Frage:** Welcher zusätzliche fachliche Funktionsschnitt ergänzt die in
-[Funktionaler Scope](FUNCTIONAL-SCOPE.md) verbindlich festgelegte Basis
-`FR-001` bis `FR-007` zum ersten produktiv nutzbaren MVP?
+**Status:** Entschieden.
 
-Die verbindliche Basis gehört zu jeder Variante und kann durch diese
-Entscheidung weder abgewählt noch verschoben werden. `FR-047` bis `FR-053`
-bleiben ausdrücklich ausgeschlossen; `FR-054` bis `FR-057` bleiben offene
-Produktgrenzen. Keine Variante legt eine Technologie fest oder gilt ohne
-Eigentümerentscheidung als beschlossen.
+Der MVP ist ein früh nutzbarer PDF-zentrierter Produktstand. Er umfasst:
 
-#### Variante A: Dokumentenorientierter Einstieg
+- Benutzer, Bands, Gruppen, die Systemgruppe `Alle Benutzer` und
+  Plattformadministration,
+- die Systemband `Öffentlich`,
+- globale und objektbezogene Berechtigungen,
+- Eigentum, Eigentümerlosigkeit, Löschung und Wiederherstellung,
+- Songanlage, gemeinsame administrative Prüfarbeitsliste, Prüfung, Anträge und
+  Dublettenverwaltung ohne erforderliche Einsicht in private Basisinhalte,
+- PDF-Inhalte und Inhaltsmetadaten,
+- PDF-Navigation, Zoom und die festgelegten PDF-Overlay-Werkzeuge; geometrische
+  Formen, Bild- oder Stempelelemente und Layergruppen gehören nicht zum MVP und
+  sind dadurch nicht als Post-MVP-Funktionen eingeplant,
+- Setlists, Berechtigungsanfragen, Audit und fachliche Historien,
+- Suche und Filter,
+- Offlineanzeige und private Offlinebearbeitung.
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
-  Zusammenarbeit `FR-008` bis `FR-009`, Songverwaltung `FR-011` bis `FR-014`,
-  PDF-Anzeige und -Annotation `FR-015` bis `FR-020`, Setlists `FR-028` bis
-  `FR-032` sowie lesender Offlinebetrieb mit Status und kontrollierter lokaler
-  Entfernung `FR-033`, `FR-034` und `FR-037`.
-- **Bewusst nicht enthalten:** zusätzlicher Authentifizierungsfaktor `FR-010`,
-  Text- und Akkordfunktionen `FR-021` bis `FR-027`, Offline-
-  Änderungswarteschlange und Konfliktbehandlung `FR-035` bis `FR-036` sowie
-  spätere Erweiterungen `FR-038` bis `FR-046`.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`, `OQ-010` bis
-  `OQ-013`, `OQ-015` und `OQ-021`; insbesondere müssen Annotationssichtbarkeit,
-  Rollen, Offlinefrist und Band-Arbeitsbereich-Zuordnung geklärt werden.
-- **Produktiver Nutzen:** Eine Band oder ein Ensemble kann Songs, PDF-Dokumente
-  und Setlists gemeinsam verwalten und für Probe oder Auftritt vorbereiten.
-  Berechtigte Mitglieder können PDFs online grundlegend annotieren und
-  vorbereitete Unterlagen ohne Netzwerk lesen.
-- **Fachliche Hauptrisiken:** Unklare Sichtbarkeit von Annotationen, noch offene
-  Fassungshistorie und eingeschränkter Nutzen für Mitglieder, die primär mit
-  Text- oder Akkordblättern arbeiten.
-- **Technische Hauptrisiken:** sichere Dateiverarbeitung, Erhalt der
-  Originaldokumente, Touch- und Stifteignung sowie konsistente lesende
-  Offlinebereitstellung auf den später festgelegten Geräten.
-- **Testumfang und Lieferreihenfolge:** zuerst Zusammenarbeit und Songs, danach
-  PDF-Anzeige und Annotation, anschließend Setlist und lesender Offlinebetrieb.
-  Der Schwerpunkt liegt auf Upload-Negativfällen, Dokumentrechten,
-  Originalerhalt, Eingabegeräten und vollständiger Offlinevorbereitung.
+Vollständige Text-/Chord-Funktionen und gemeinsame Offlinebearbeitung folgen
+nach dem MVP. Es gibt keinen reduzierten Texteditor im MVP.
 
-#### Variante B: Text- und Setlist-Einstieg
+### OQ-006: Offlinebearbeitung
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
-  Zusammenarbeit `FR-008` bis `FR-009`, Songverwaltung `FR-011` bis `FR-014`,
-  Text- und Akkordfunktionen `FR-021` bis `FR-027`, Setlists `FR-028` bis
-  `FR-032` sowie lesender Offlinebetrieb mit Status und kontrollierter lokaler
-  Entfernung `FR-033`, `FR-034` und `FR-037`.
-- **Bewusst nicht enthalten:** zusätzlicher Authentifizierungsfaktor `FR-010`,
-  PDF-Funktionen `FR-015` bis `FR-020`, Offline-Änderungswarteschlange und
-  Konfliktbehandlung `FR-035` bis `FR-036` sowie spätere Erweiterungen
-  `FR-038` bis `FR-046`.
-- **Abhängigkeiten:** `OQ-001`, `OQ-002`, `OQ-004`, `OQ-006` bis `OQ-008`,
-  `OQ-010` bis `OQ-013`, `OQ-015` und `OQ-021`; insbesondere müssen
-  Änderungsrechte, ein zunächst lesender Offlineumfang und die Zuordnung von
-  Band und Arbeitsbereich geklärt werden.
-- **Produktiver Nutzen:** Songs, Text- und Akkordblätter sowie Setlists können
-  gemeinsam gepflegt und bei Probe oder Auftritt mit Transposition und
-  Autoscroll genutzt werden; vorbereitete Inhalte bleiben lesend offline
-  verfügbar.
-- **Fachliche Hauptrisiken:** uneinheitliche Akkordschreibweisen, offene
-  Bearbeitungsrechte und geringerer Nutzen für Bands, deren Repertoire
-  überwiegend als PDF vorliegt.
-- **Technische Hauptrisiken:** zuverlässige Akkorderkennung und Transposition,
-  kontrollierter Import, vorhersehbares Autoscroll und konsistente Darstellung
-  auf den später unterstützten Geräten.
-- **Testumfang und Lieferreihenfolge:** zuerst Zusammenarbeit und Songs, danach
-  Text-/Akkordstruktur, Transposition und Autoscroll, anschließend Setlist und
-  lesender Offlinebetrieb. Der Schwerpunkt liegt auf musikalischer Korrektheit,
-  Importgrenzen, Rollen, Bedienung und Offlinevollständigkeit.
+**Status:** Entschieden.
 
-#### Variante C: Integrierter Grundumfang
+Im MVP dürfen eigene, nur durch einen Benutzer beschreibbare Inhalte, Overlays
+und Setlists sowie persönliche Setlisteinstellungen offline bearbeitet werden.
+Offline angelegte Inhalte gehören dem Benutzer und bleiben ohne Freigaben.
+Offline auswählbar sind nur bereits lokal bekannte sichtbare Songs; unsichtbare
+Songs sind kein lokaler Katalog- oder Vorschlagsbestand und freie Eingaben
+bleiben bis zur Serversynchronisation unaufgelöst. Dort werden Pflichtfelder und
+Songzuordnung gegen alle Songs geprüft, ohne unsichtbare Beziehungen
+offenzulegen. Wird ein vorbereitetes privates Objekt serverseitig gemeinsam
+bearbeitbar, ist Synchronisation ohne
+Check-out abzulehnen; wurde es endgültig gelöscht, darf seine technische
+Identität nicht wiederbelebt werden. Zulässige lokale Stände können bewusst als
+neues privates Objekt gerettet werden. Neue Rechte laden nichts automatisch.
 
-- **Eingeschlossen:** verbindliche Basis `FR-001` bis `FR-007`, grundlegende
-  Zusammenarbeit `FR-008` bis `FR-009` sowie Song-, PDF-, Text-/Akkord-,
-  Setlist- und Offline-/Synchronisationsfunktionen `FR-011` bis `FR-037`.
-  Gemeinsame und Offlinebearbeitung bleiben auf die später ausdrücklich
-  freigegebenen Änderungstypen begrenzt.
-- **Bewusst nicht enthalten:** zusätzlicher Authentifizierungsfaktor `FR-010`
-  und sämtliche späteren Erweiterungen `FR-038` bis `FR-046`. Weitergehende
-  gemeinsame oder Offlinebearbeitung ist ohne Entscheidungen zu `OQ-004` und
-  `OQ-006` nicht enthalten.
-- **Abhängigkeiten:** `OQ-001` bis `OQ-004`, `OQ-006` bis `OQ-008`, `OQ-010` bis
-  `OQ-013`, `OQ-015` und `OQ-021`; diese Variante benötigt vor allem klare
-  Grenzen für gemeinsame Änderungen, Offlineänderungen und Konfliktbehandlung.
-- **Produktiver Nutzen:** Eine Band oder ein Ensemble erhält einen durchgängigen
-  Grundumfang für PDF-, Text-/Akkord- und Setlistnutzung einschließlich gezielt
-  begrenzter Offlineänderungen und sichtbarer Synchronisationskonflikte.
-- **Fachliche Hauptrisiken:** Der breite Funktionsschnitt kann Bedienkonzepte,
-  Rollenabgrenzung und fachliche Konfliktregeln zugleich überlasten.
-- **Technische Hauptrisiken:** größter Integrations- und Testaufwand durch
-  Dokumentverarbeitung, musikalische Bearbeitung und kontrollierte
-  Synchronisation mehrerer Inhaltstypen; eine konkrete Umsetzung bleibt offen.
-- **Testumfang und Lieferreihenfolge:** zunächst gemeinsame Basis und Songs,
-  dann lesende PDF- und Textpfade, danach Setlists, Bearbeitung und zuletzt die
-  begrenzten Offlineänderungs- und Konfliktfälle. Diese Variante benötigt die
-  breiteste Rechte-, Geräte-, Fehler-, Offline- und Regressionsmatrix.
+Das Zielmodell nach dem MVP erlaubt gemeinsame Offlinebearbeitung nur nach
+bewusstem Online-Check-out mit technischer Revisionskennung und fester
+Offline-Lease. Gemeinsame Inhalte, dynamisch gekoppelte Overlays und gemeinsame
+Setlists sind damit erfasst. Automatisches Merge und stilles Überschreiben
+bleiben ausgeschlossen.
 
-**Entscheidungsstatus:** Offen. Der Projekteigentümer wählt, verwirft oder
-verändert eine Variante in einem separaten freigegebenen
-Produktentscheidungsarbeitspaket.
+### OQ-007: Dauer einer Offlinesitzung und Leases
 
-### OQ-006: Offline zulässige Änderungen im MVP
+**Status:** Entschieden mit später technisch zu belegenden Konfigurationswerten.
 
-**Frage:** Welche fachlichen Änderungen dürfen ohne Netzwerk entstehen?
+Maximale Offlinesitzung, Online-Inaktivitätsfrist und Offline-Lease sind global
+konfigurierbar. Online- und Offline-Frist sind getrennt. Nach Ablauf der
+maximalen Offlinesitzung sind geschützte lokale Basisinhalte und Overlays bis
+zur erneuten Onlineanmeldung beziehungsweise Rechteprüfung gesperrt. Minimale
+Setlistinformationen und klar getrennte eigene Entwürfe dürfen bleiben; sie
+werden nicht automatisch synchronisiert und verlängern keine Berechtigung.
 
-**Optionen:** nur persönliche Annotationen; zusätzlich Text-, Akkord- und
-Setliständerungen; Offlinebetrieb zunächst ausschließlich lesend.
+Eine Offline-Lease darf die maximale Offlinesitzung nicht überschreiten und
+kann offline nicht verlängert werden. Nach Lease-Ablauf darf ein lokaler
+Entwurf fortgeführt werden, besitzt aber keine Serverreservierung.
+Plattformadministratoren dürfen eine Gerätesitzung serverseitig widerrufen; der
+Widerruf wird beim nächsten Kontakt wirksam. Ein dauerhaft getrenntes Gerät
+erkennt ihn nicht, weshalb spätestens die maximale Offlinesitzung das
+Restrisiko begrenzt. Konkrete Werte und das technische Widerrufsverfahren werden
+erst mit Architektur und Risikobewertung festgelegt.
 
-**Auswirkungen:** Konfliktbehandlung, Warteschlange, Bedienbarkeit bei Auftritten
-und Risiko nicht übertragener Änderungen.
+### OQ-008: Lokale Daten nach Rechteentzug und Offlinekonflikte
 
-### OQ-007: Dauer einer offline verwendbaren Sitzung
+**Status:** Entschieden.
 
-**Frage:** Wie lange darf eine bereits bestätigte Sitzung ohne erneute
-Verbindung verwendbar bleiben?
+Vorbereitete geschützte Daten bleiben höchstens bis zur nächsten erfolgreichen
+Rechteprüfung oder zum Ablauf der maximalen Offlinesitzung lesbar. Danach
+werden Basisinhalt und Overlays gesperrt beziehungsweise entfernt; minimale
+Setlistinformationen dürfen verbleiben. Eigene Entwürfe dürfen nur klar
+getrennt erhalten bleiben. Bei einer Abmeldewarnung muss der Benutzer die
+Abmeldung abbrechen oder vor der bewussten Bestätigung synchronisieren können;
+erst die bestätigte Abmeldung entfernt lokale Daten und Sitzungsschlüssel.
+Gerätesitzungswiderruf und abgelehnte Folgeverwendung werden auditiert.
 
-**Optionen:** kurze feste Frist; ereignisabhängige Frist; begrenzte
-Offlineberechtigung je vorbereiteter Veranstaltung.
+Private Offlineobjekte verwenden technische Revisionskennungen. Veraltete
+Änderungen sowie Speichern eines inzwischen gemeinsam bearbeitbaren Objekts
+ohne Check-out werden abgelehnt. Ein endgültig gelöschtes Serverobjekt wird
+lokal entfernt und darf nur unter neuer Identität als privates Objekt gerettet
+werden. Verwerfen, neues privates Objekt und manuelles Übertragen bleiben
+bewusste Wege; automatisches Merge und Überschreiben sind ausgeschlossen. Neue
+Rechte benötigen bewusste Synchronisation oder Offlinevorbereitung. Lokale
+Daten müssen verschlüsselt sein; das Verfahren bleibt Architekturentscheidung.
 
-**Auswirkungen:** Nutzbarkeit ohne Netzwerk, Durchsetzung von Rechteentzug und
-Risiko bei Geräteverlust. Ein konkreter Wert ist noch nicht beschlossen.
+### OQ-009: Erreichbarkeit und Diagnose von TST
 
-### OQ-008: Lokale Daten nach Rechteentzug
+**Status:** Entschieden.
 
-**Frage:** Wann und wie werden lokale Inhalte und ausstehende Änderungen nach
-Rechteentzug behandelt?
+TST darf extern erreichbar sein. Geschützte detaillierte Logs, Traces,
+Statusendpunkte, Backend-API-Zugriff und definierte Test-/Prüfschnittstellen
+sind zulässig, wenn nur benannte technische Identitäten mit eigener
+Authentifizierung und minimalen Rechten zugreifen, kein pauschaler
+Autorisierungs-Bypass besteht, keine Secrets offengelegt werden, Zugriffe
+auditiert sind und widerrufen werden können. Diese Wege müssen in PRD technisch
+fehlen oder nachweislich
+unerreichbar sein. PRD besitzt keine Debugports, -tunnel oder -schnittstellen.
 
-**Optionen:** sofort sperren und kontrolliert entfernen; kurze, nicht
-verlängerbare Übergangsfrist; administrative Klärung ausstehender Änderungen
-ohne weiteren Inhaltszugriff.
+### OQ-010: Unterstützte Geräte und Browser
 
-**Auswirkungen:** Datenschutz, Verlust noch nicht synchronisierter Arbeit,
-Nachweisbarkeit und Verhalten bei länger offline befindlichen Geräten.
+**Status:** Entschieden.
 
-### OQ-009: Erreichbarkeit von TST
+Tablets, Notebooks und Desktoprechner sind vollständig unterstützte
+Primärgeräte. Unterstützt werden aktuelle und vorherige Hauptversion von
+Chrome, Edge, Firefox und Safari einschließlich Safari auf iPadOS/iOS. Endet
+für eine Browser- oder Betriebssystemversion die sicherheitsrelevante
+Herstellerunterstützung, endet der verbindliche SoSeBaMa-Support unabhängig von
+der Zwei-Versionen-Regel. Diese Sicherheitsausnahme darf die übrige
+Supportmatrix nicht still aufweichen. Eingebettete Browser und
+herstellerspezifische WebViews sind nicht verbindlich.
 
-**Frage:** Muss TST ausschließlich in einem privaten Betriebsnetz erreichbar
-bleiben?
+Smartphones unterstützen Anmeldung, Navigation, Suche, Metadaten,
+Berechtigungsanfragen, einfache Administration, lesende Setlists und
+Statusanzeigen. PDF-Annotation, vollständige Setlistbearbeitung,
+Auftrittsansicht und Offlinebearbeitung sind dort nicht verbindlich. Touch,
+Maus, Tastatur und standardisierte Pointer-Events für Stifte werden
+unterstützt; herstellerspezifische Stiftfunktionen werden nicht vorausgesetzt.
 
-**Optionen:** ausschließlich privater Zugang; separat freigegebener gehärteter
-Zugang für benannte Prüfrollen.
+### OQ-011: Reaktions- und Performanceziele
 
-**Auswirkungen:** Netzwerkgrenzen, Testzugänglichkeit und Betriebsaufwand. Die
-Entscheidung benötigt gegebenenfalls ein separates Architektur- und
-Betriebsarbeitspaket.
+**Status:** Entschieden als initialer Basiskorridor.
 
-### OQ-010: Unterstützte Geräte und Browsergenerationen
+- Navigation geladener Ansichten: höchstens 300 ms im 95. Perzentil,
+- Suchergebnis: höchstens 1 s im 95. Perzentil,
+- lokal vorbereiteten Inhalt öffnen: höchstens 1 s,
+- erste Seite eines normalen Online-PDFs: höchstens 2 s,
+- Wechsel geladener PDF-Seiten: höchstens 300 ms,
+- sichtbare Rückmeldung nach Synchronisationsstart: höchstens 1 s,
+- Rückmeldung nach geschützter Aktion: höchstens 500 ms,
+- Stiftdarstellung: Ziel höchstens 50 ms Eingabelatenz.
 
-**Frage:** Welche Geräteklassen und Browsergenerationen werden verbindlich
-unterstützt?
+Langsame Verbindungen und große Dateien benötigen Fortschrittszustände.
+Referenzgerät, Datenbestand, PDF-Größe, Parallelität und Netzbedingungen werden
+später mit dem Ressourcenbudget festgelegt. Bis dahin werden Messwerte
+beobachtet und nicht als abschließende Abnahme dargestellt. Zieländerungen
+müssen dokumentiert und begründet sein.
 
-**Optionen:** enger geprüfter Korridor; breiter Korridor mit abgestuften
-Funktionszusagen.
+### OQ-012: Verhältnis von Song und Inhalt
 
-**Auswirkungen:** Testmatrix, Touch- und Stiftqualität, Offlineverhalten und
-Wartungsaufwand.
+**Status:** Entschieden und durch das aktuelle Modell präzisiert.
 
-### OQ-011: Messbare Reaktions- und Performanceziele
+Ein Song ist das plattformweite normalisierte Metadatenobjekt. Ein Inhalt gehört
+genau zu einem Song und besitzt genau einen aktuellen Basisinhalt. Normale
+Benutzer sehen Songs im Katalog, in Suche und Inhaltsanlage nur über mindestens
+einen lesbaren Inhalt; die minimale Setlistanzeige erweitert diese Sichtbarkeit
+nicht. Songs und Inhalte haben keine auswählbaren Versionen oder Revisionen.
+Songänderungen gelten global; bei Songs existiert nur das nicht editierbare
+Audit, keine fachliche Änderungshistorie. Inhalte und Setlists zeigen aktuelle
+Songmetadaten.
 
-**Frage:** Welche messbaren Zielwerte gelten für Anzeige, Suche, Navigation,
-Autoscroll, Offlineöffnung und Synchronisationsfeedback?
+### OQ-013: Setlistreferenzen und Historie
 
-**Optionen:** Zielwerte je Kernablauf; abgestufte Ziele nach Geräteklasse;
-gemeinsamer Basiskorridor.
+**Status:** Entschieden.
 
-**Auswirkungen:** Abnahmekriterien, Ressourcenbedarf und Gerätekompatibilität.
-Es ist noch kein Zahlenwert beschlossen.
+Setlists referenzieren aktuellen Basisinhalt, aktuelle Songmetadaten und aktuell
+berechtigte Overlays. Sie besitzen genau einen aktuellen Stand; auswählbare
+Versionen, Snapshots oder eingefrorene Auftrittsstände existieren nicht.
+Fachlich relevante gemeinsame Änderungen an Einträgen, Reihenfolge, gemeinsamer
+Overlay-Auswahl und -Reihenfolge, Metadaten, Eigentum und gemeinsamen
+Berechtigungen werden vollständig historisiert; persönliche Einstellungen
+nicht.
 
-### OQ-012: Songfassungen und Revisionen
+Für einen unabhängigen Planungsstand darf eine Setlist bewusst als normale neue
+Objektanlage kopiert werden. Standardmäßig wird der Kopierende Eigentümer; eine
+Band benötigt globales Setlist-Anlagerecht und passendes bandbezogenes
+Vertretungs- oder Anlagerecht, `Öffentlich` ist nur administrativ zulässig.
+Eigentum und anfängliche Rechte entstehen atomar. Die Kopie besitzt eigene
+Berechtigungen und Historie und referenziert dieselben berechtigten Inhalte und
+Overlays, kopiert sie aber nicht. Nach endgültiger Inhaltslöschung wird die
+aktuelle Referenz entfernt und
+innerhalb der vollständigen Historie nur Zeitpunkt, frühere Position, letzter
+Songtitel, letzter Komponist und der nicht anklickbare Hinweis `Inhalt
+endgültig gelöscht` gespeichert; Datei, Basisinhalt, vollständige Metadaten,
+Berechtigungen, früherer Benutzereigentümer und Overlays fehlen.
 
-**Frage:** Werden unterscheidbare Songfassungen, eine Änderungshistorie oder
-beides benötigt?
+### OQ-014: Export
 
-**Optionen:** nur benannte Fassungen; nur nachvollziehbare Revisionen; Fassungen
-mit eigener Revisionierung.
+**Status:** Entschieden.
 
-**Auswirkungen:** Inhaltsmodell, Auswahl in Setlists, Konfliktbehandlung und
-Rückkehr zu früheren Ständen.
+Export gehört nicht zum MVP. Offlinebereitstellung innerhalb der Anwendung ist
+kein Export. Später sind globales und objektbezogenes `Exportieren`
+erforderlich; Anzeigen oder Bearbeiten vermittelt weder Exportrecht noch
+pauschale Weitergabeberechtigung. Der exportierende Benutzer bleibt für
+vorhandene Nutzungsrechte, zulässige Weitergabe und geltende fachliche sowie
+rechtliche Beschränkungen verantwortlich. Formate, Overlayeinbeziehung,
+Setlistpakete und ein technisches DRM-Verfahren werden dadurch nicht
+festgelegt.
 
-### OQ-013: Historisierung oder Versionierung von Setlists
+### OQ-015: Erster produktiver Zielbetrieb
 
-**Frage:** Müssen Setlists historisiert oder ausdrücklich versioniert werden?
+**Status:** Entschieden.
 
-**Optionen:** nur aktueller Stand mit Änderungsnachweis; unveränderliche
-Freigabestände; vollständige Versionierung.
-
-**Auswirkungen:** Nachvollziehbarkeit bei Auftritten, Offlineabgleich,
-Speicherbedarf und Bedienaufwand.
-
-### OQ-014: Export von Dokumenten und Annotationen
-
-**Frage:** Ist Export Bestandteil des MVP und welche Inhalte dürfen exportiert
-werden?
-
-**Optionen:** kein MVP-Export; Export persönlicher Annotationen; kontrollierter
-Export ausdrücklich freigegebener Inhalte.
-
-**Auswirkungen:** Urheberrecht, Datenschutz, Rechteprüfung und sichere
-Dateierzeugung.
-
-### OQ-015: Erster Zielbetrieb
-
-**Frage:** Ist eine Installation für genau eine Band der erste Zielbetrieb?
-
-**Optionen:** zunächst eine Band mit späterer Erweiterbarkeit; von Beginn an
-mehrere Arbeitsbereiche.
-
-**Auswirkungen:** MVP-Zuschnitt, Administration und Testfälle. Die Entscheidung
-ist von `OQ-001`, `OQ-002` und `OQ-021` abhängig.
+Der erste produktive Betrieb umfasst mindestens zwei unabhängige reguläre
+Bands, zusätzlich die Systemband `Öffentlich`, Benutzer mit
+Mehrfachmitgliedschaften und einen nachgewiesenen Test der
+Berechtigungstrennung.
 
 ### OQ-016: Ressourcenbudget auf der Synology
 
-**Frage:** Welche messbaren Obergrenzen gelten für Ressourcenverbrauch und
-Speicherwachstum im vorgesehenen Betrieb?
+**Status:** Offen; einzige verbleibende Produktfrage.
 
-**Optionen:** Budget je aktivem Benutzer; Budget je Arbeitsbereich; gemeinsam
-definierter Betriebskorridor.
+**Frage:** Welche messbaren Obergrenzen gelten für Ressourcenverbrauch,
+Speicherwachstum, Hintergrundaufgaben und Synchronisation auf der vorgesehenen
+Synology?
 
-**Auswirkungen:** Kapazitätsprüfung, Beobachtbarkeit und spätere
-Technologiebewertung. Es ist noch kein Wert beschlossen.
+**Bis zur Entscheidung:** Der Betrieb auf der vorgesehenen Synology bleibt
+Ziel. Ressourcenverbrauch, Speicherwachstum, Hintergrundaufgaben und
+Synchronisation müssen mess- und beobachtbar sein. Ein konkretes Budget wird
+erst nach Festlegung von Referenzhardware und Betriebsdaten beschlossen.
 
-### OQ-017: Zielniveau der Barrierearmut
+### OQ-017: Barrierearmut
 
-**Frage:** An welchem überprüfbaren Zielniveau wird Barrierearmut gemessen?
+**Status:** Entschieden.
 
-**Optionen:** definierter Basiskatalog für Kernabläufe; weitergehender
-Prüfkatalog für alle vorgesehenen Ansichten.
-
-**Auswirkungen:** Akzeptanzkriterien, Gestaltung, Testumfang und unterstützte
-Bedienhilfen.
+Die MVP-Kernabläufe Anmeldung, Navigation, Suche, Inhaltsverwaltung, Setlists,
+Berechtigungsanfragen und Administration orientieren sich verbindlich an WCAG
+2.2 AA. Tastaturbedienung, Fokusdarstellung, Beschriftungen und Kontraste sind
+verbindlich. Jede bekannte Abweichung benötigt dokumentierte Begründung,
+Auswirkung, Ersatzbedienung oder Schutzmaßnahme und einen Prüf- beziehungsweise
+Behebungstermin. Sie darf den Kernablauf für die betroffene Nutzergruppe nicht
+unbenutzbar machen. Freihandannotation darf dokumentierte fachliche Grenzen
+besitzen; ihre Steuerelemente müssen zugänglich sein.
 
 ### OQ-018: Wiederherstellungsziele
 
-**Frage:** Welche messbaren Ziele gelten für tolerierbaren Datenverlust und
-Wiederherstellungsdauer?
+**Status:** Entschieden.
 
-**Optionen:** gemeinsame Ziele für alle fachlichen Daten; strengere Ziele für
-zentrale Inhalte als für erneut erzeugbare lokale Kopien.
+RPO beträgt 4 Stunden, RTO 8 Stunden für den zentralen Datenbestand. Lokale
+Offlinekopien und nicht synchronisierte Entwürfe ersetzen keine zentrale
+Sicherung und dürfen keines der beiden Ziele nachweisen. Das spätere
+Sicherungs- und Wiederherstellungskonzept muss RPO und RTO für den zentralen
+Datenbestand in TST belegen. Die konkrete Auslegung auf der Ziel-Synology
+erfolgt zusammen mit Referenzhardware und `OQ-016`; das technische Verfahren
+bleibt Betriebs- und Architekturentscheidung.
 
-**Auswirkungen:** Betriebs-, Sicherungs- und Verifikationskonzept. Konkrete
-Werte bleiben einem späteren freigegebenen Arbeitspaket vorbehalten.
+### OQ-019: Audit- und Historienaufbewahrung
 
-### OQ-019: Sicherheitsrelevante Nachweisaufbewahrung
+**Status:** Entschieden.
 
-**Frage:** Welche sicherheitsrelevanten Ereignisse werden wie lange für
-berechtigte Prüfungen aufbewahrt?
+- administrative, Eigentums-, Berechtigungs-, Lösch-, Wiederherstellungs- und
+  Check-out-Ereignisse: 365 Tage,
+- abgelehnte Zugriffe, Anmeldung und technische Security-Ereignisse: 90 Tage,
+- fachliche Historie vorhandener Objekte: solange das Objekt besteht,
+- minimale Auditnachweise nach endgültiger Objektlöschung: 90 Tage.
 
-**Optionen:** minimaler Ereignissatz mit kurzer Frist; risikobasierte Fristen je
-Ereignisklasse.
+Jedes Ereignis enthält mindestens Ereignisart, Akteur, serverseitigen
+Zeitpunkt, Gegenstand beziehungsweise technische Objektkennung, Ergebnis und
+soweit zulässig fachlichen Bezug. Song-, Eigentums-, Check-out- und
+Offlineereignisse enthalten die festgelegten Zusatzfelder einschließlich
+unterscheidbarer lokaler Aktions- und serverseitiger Synchronisationszeit sowie
+technischer datensparsamer Gerätekennung. Automatische endgültige Löschung und
+Ausführungsfehler werden auditiert.
 
-**Auswirkungen:** Datenschutz, Aufklärbarkeit, Ressourcenverbrauch und
-Betriebsverantwortung. Inhalte und Fristen sind noch nicht entschieden.
+Audit speichert keine Secrets, Basisinhalte, Dateien, unnötigen Inhalts- oder
+Personendaten und keine auswählbaren alten Stände. Auditexport gehört nicht zum
+MVP.
 
-### OQ-020: Einsatz eines zusätzlichen Authentifizierungsfaktors
+### OQ-020: MFA
 
-**Frage:** Für welche Rollen oder Situationen soll ein optionaler zusätzlicher
-Faktor angeboten oder verlangt werden?
+**Status:** Entschieden.
 
-**Optionen:** freiwillig für alle; verbindlich für privilegierte Rollen;
-risikobasiert nach geschützter Aktion.
+MFA ist für Plattformadministratoren verpflichtend und für andere Benutzer
+optional. Bandadministratoren dürfen MFA eines Plattformadministrators weder
+deaktivieren noch zurücksetzen; Bandmitgliedschaft vermittelt keine
+MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
+Wiederherstellung eines Plattformadministrator-Zugangs darf nur über den
+globalen, auditierten Wiederherstellungsprozess erfolgen und den letzten
+Administrator nicht dauerhaft aussperren. Das konkrete Verfahren bleibt
+Architekturentscheidung.
 
-**Auswirkungen:** Schutzwirkung, Zugänglichkeit, Wiederherstellung und
-Bedienaufwand. Weder Produkt noch Verfahren sind festgelegt.
+### OQ-021: Band und Bandbereich
 
-### OQ-021: Fachliche Zuordnung von Band und Arbeitsbereich
+**Status:** Entschieden.
 
-**Frage:** Entspricht ein Arbeitsbereich genau einer Band oder einem Ensemble,
-kann eine Band mehrere Arbeitsbereiche für getrennte Zwecke besitzen oder kann
-ein Arbeitsbereich mehrere Bands beziehungsweise Ensembles enthalten?
-
-**Optionen:**
-
-1. **Genau eine Band je Arbeitsbereich:** Band und Arbeitsbereich sind fachlich
-   eins zu eins zugeordnet.
-2. **Mehrere Arbeitsbereiche je Band:** Eine Band trennt Zwecke, Repertoire oder
-   Verantwortungsbereiche in eigenständige Arbeitsbereiche.
-3. **Mehrere Bands je Arbeitsbereich:** Ein Arbeitsbereich bündelt mehrere Bands
-   oder Ensembles unter einer gemeinsamen fachlichen Grenze.
-
-**Auswirkungen:**
-
-- **Rollen und Berechtigungen:** bestimmt, ob Rollen immer für genau eine Band
-  gelten oder innerhalb eines Arbeitsbereichs weiter fachlich begrenzt werden
-  müssen.
-- **Navigation:** beeinflusst Auswahl, Wechsel und sichtbare Zuordnung von Band
-  und Arbeitsbereich.
-- **Song- und Setlistzuordnung:** legt fest, ob Inhalte genau einer Band, einem
-  Arbeitsbereich oder mehreren enthaltenen Bands zugeordnet werden müssen.
-- **Offlineauswahl:** bestimmt, nach welcher fachlichen Grenze Inhalte
-  vorbereitet, angezeigt und nach Rechteentzug behandelt werden.
-- **Daten- und Inhaltsgrenzen:** beeinflusst Trennung, Freigabe und Verhinderung
-  unberechtigter Querzugriffe zwischen Bands und Arbeitsbereichen.
-- **Spätere Architekturentscheidungen:** liefert fachliche Kriterien für eine
-  spätere, technologieoffene Bewertung von Trennungs- und Zuordnungsmodellen,
-  ohne ein technisches Modell vorzugeben.
-
-**Entscheidungsstatus:** Offen. Keine Option ist ausgewählt oder empfohlen.
+Jede Band besitzt genau einen Bandbereich; jeder Bandbereich gehört genau einer
+Band. Eine Band ist Eigentums- und Berechtigungsprinzipal und darf Mitglieder
+sowie zusätzliche bandbezogene Gruppen besitzen. Bandbereiche verhindern
+implizite Querzugriffe. Ausdrückliche Objektfreigaben über Bandgrenzen sind
+zulässig, übertragen kein Eigentum und vermitteln keine automatische
+Bandadministration.

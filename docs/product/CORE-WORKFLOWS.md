@@ -2,265 +2,493 @@
 
 ## Bezug und Leseregel
 
-Dieses Dokument konkretisiert GitHub-Issue #3. Jeder Ablauf besitzt eine
-stabile `WF-xxx`-Kennung. Rollenbezeichnungen folgen
-[Benutzer und Rollen](USERS-AND-ROLES.md), Begriffe dem
-[Glossar](GLOSSARY.md). Die Abläufe beschreiben beobachtbares Produktverhalten,
-keine technische Umsetzung oder Oberflächengestaltung.
+Jeder Ablauf besitzt eine stabile `WF-xxx`-Kennung. Bestehende Kennungen
+behalten soweit möglich ihren fachlichen Gegenstand. Die Abläufe beschreiben
+Produktverhalten und keine technische Umsetzung.
+
+Begriffe folgen dem [Glossar](GLOSSARY.md), Berechtigungen
+[Benutzer, Gruppen und Berechtigungen](USERS-AND-ROLES.md) und das Gesamtmodell
+dem
+[Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
 ## WF-001: Benutzer einladen oder Zugriff erteilen
 
-- **Ausgangszustand:** Ein Arbeitsbereich besteht; der vorgesehene Benutzer ist
-  dort noch kein aktives Mitglied.
-- **Beteiligte Rollen:** Arbeitsbereichsadministration und vorgesehener
-  Benutzer.
-- **Normaler Ablauf:** Die Administration startet eine Einladung, ordnet die
-  minimal erforderliche Rolle zu, der Benutzer bestätigt seinen Zugang und die
-  Mitgliedschaft wird aktiv.
-- **Erwartetes Ergebnis:** Der Benutzer sieht ausschließlich die durch Rolle
-  und Inhaltsfreigabe erlaubten Bereiche und Aktionen.
-- **Fehler und Ausnahmen:** Ungültige, abgelaufene oder bereits verwendete
-  Einladungen werden ohne Preisgabe bestehender Mitgliedschaften abgelehnt;
-  doppelte Mitgliedschaften werden nicht unbemerkt erzeugt.
-- **Security und Offline:** Vor bestätigter Mitgliedschaft entsteht keine
-  Offlineberechtigung. Ein zusätzlicher Faktor bleibt gemäß `OQ-020` offen.
-
-## WF-002: Band beziehungsweise Arbeitsbereich verwalten
-
-- **Ausgangszustand:** Eine aktive Administration besitzt die erforderlichen
-  Rechte im Arbeitsbereich.
-- **Beteiligte Rollen:** Arbeitsbereichsadministration; betroffene Mitglieder
-  nur im Rahmen ihrer eigenen Sicht.
-- **Normaler Ablauf:** Die Administration prüft Mitglieder und Rollen, ändert
-  eine zulässige Zuordnung und bestätigt die fachliche Wirkung.
-- **Erwartetes Ergebnis:** Der zentrale Stand zeigt die neue Zuordnung; erlaubte
-  und verbotene Aktionen entsprechen ihr nachvollziehbar.
-- **Fehler und Ausnahmen:** Unzulässige Selbstentziehung der letzten benötigten
-  Administration, Querzugriff und widersprüchliche Änderungen werden
-  kontrolliert abgelehnt oder als Konflikt ausgewiesen.
-- **Security und Offline:** Rechte gelten nur im betroffenen Arbeitsbereich.
-  Auswirkungen auf Offlinegeräte folgen `WF-014` und `WF-015`.
-
-## WF-003: Song mit Metadaten anlegen
-
-- **Ausgangszustand:** Ein berechtigter Inhaltsverantwortlicher befindet sich
-  im richtigen Arbeitsbereich.
-- **Beteiligte Rollen:** Inhaltsverantwortliche; lesende Rollen nach späterer
-  Freigabe.
-- **Normaler Ablauf:** Der Benutzer erfasst Titel und erforderliche Metadaten,
-  prüft den Inhalt und speichert den Song bewusst.
-- **Erwartetes Ergebnis:** Der Song ist zentral eindeutig auffindbar und kann
-  später Fassungen, Dokumente und Setlists zugeordnet werden.
-- **Fehler und Ausnahmen:** Fehlende Pflichtangaben, unzulässige Werte oder ein
-  zwischenzeitlich entzogener Zugriff führen zu einer verständlichen Ablehnung
-  ohne stillen Teilstand.
-- **Security und Offline:** Nur berechtigte Rollen dürfen gemeinsam sichtbare
-  Songs anlegen. Offlineanlage ist von `OQ-006` abhängig.
-
-## WF-004: PDF-Dokument hinzufügen und anzeigen
-
-- **Ausgangszustand:** Ein Song besteht; der Benutzer besitzt Importrechte und
-  ein bewusst ausgewähltes PDF.
-- **Beteiligte Rollen:** Inhaltsverantwortliche für das Hinzufügen; berechtigte
-  Mitglieder für die Anzeige.
-- **Normaler Ablauf:** Der Benutzer wählt die Datei, bestätigt ihre Zuordnung,
-  die Datei wird sicher geprüft und anschließend mit Seitennavigation und Zoom
-  angezeigt.
-- **Erwartetes Ergebnis:** Das zulässige Original ist dem Song eindeutig
-  zugeordnet, unverändert erhalten und nur für berechtigte Benutzer sichtbar.
-- **Fehler und Ausnahmen:** Unzulässiger Typ, beschädigter oder nicht sicher
-  verarbeitbarer Inhalt, fehlende Rechte oder abgebrochene Übertragung erzeugen
-  keinen als erfolgreich dargestellten Teilimport.
-- **Security und Offline:** Der Import ist benutzergesteuert und folgt
-  `SEC-006` und `SEC-007`. Offlinebereitstellung erfolgt getrennt über
-  `WF-010`.
-
-## WF-005: PDF per Touch oder Stift annotieren
-
-- **Ausgangszustand:** Ein berechtigtes PDF ist geöffnet; die wirksame Rolle
-  erlaubt die vorgesehene Annotationsart.
-- **Beteiligte Rollen:** Musiker, reguläre Mitglieder und
-  Inhaltsverantwortliche im jeweils erlaubten Umfang.
-- **Normaler Ablauf:** Der Benutzer wählt private oder erlaubte gemeinsame
-  Sichtbarkeit, erstellt die Annotation per Touch oder Stift, prüft und
-  speichert sie.
-- **Erwartetes Ergebnis:** Die Annotation ist dem Dokument eindeutig zugeordnet
-  und sichtbar, ohne das Original unbemerkt zu verändern.
-- **Fehler und Ausnahmen:** Nicht unterstützte Eingabe, fehlende Rechte,
-  Speicherfehler oder konkurrierende Änderung werden sichtbar; das Original
-  bleibt erhalten.
-- **Security und Offline:** Sichtbarkeit wird bei jedem Zugriff geprüft. Der
-  Standard ist in `OQ-003`, Offlinebearbeitung in `OQ-006` offen.
-
-## WF-006: Text- oder Akkordblatt anlegen oder importieren
-
-- **Ausgangszustand:** Ein Song besteht; der Benutzer besitzt die erforderlichen
-  Inhaltsrechte und hat den einzubringenden Inhalt geprüft.
-- **Beteiligte Rollen:** Inhaltsverantwortliche; reguläre Mitglieder nur nach
-  Entscheidung aus `OQ-004`.
-- **Normaler Ablauf:** Der Benutzer erstellt Inhalt manuell oder fügt ihn
-  bewusst per Copy-and-paste ein, prüft Struktur und Zuordnung und speichert.
-- **Erwartetes Ergebnis:** Ein anbieterunabhängig verwaltbares Text- oder
-  Akkordblatt ist dem Song zugeordnet und gemäß Sichtbarkeit verfügbar.
-- **Fehler und Ausnahmen:** Nicht erkennbare Akkordstruktur, ungültige Eingabe,
-  fehlende Rechte oder Speicherkonflikt werden ohne Verlust des Ausgangsinhalts
-  angezeigt.
-- **Security und Offline:** Kein automatisiertes Scraping oder Umgehen von
-  Schutzmaßnahmen. Herkunft und Nutzungsrecht bleiben beim einbringenden
-  Benutzer; Offlinebearbeitung hängt von `OQ-006` ab.
-
-## WF-007: Akkorde transponieren
-
-- **Ausgangszustand:** Ein berechtigtes Akkordblatt enthält ausreichend
-  strukturierte Akkorde.
-- **Beteiligte Rollen:** Musiker sowie berechtigte Inhaltsverantwortliche.
-- **Normaler Ablauf:** Der Benutzer wählt eine Zieltransposition, prüft die
-  angepasste Darstellung und übernimmt sie nur im erlaubten Umfang.
-- **Erwartetes Ergebnis:** Akkorde werden konsistent dargestellt; Ausgangsinhalt
-  und gewählte Transposition bleiben unterscheidbar.
-- **Fehler und Ausnahmen:** Nicht erkennbare oder mehrdeutige Akkorde werden
-  markiert und nicht still falsch verändert; unzulässiges Speichern wird
+- **Ausgangszustand:** Eine Band besteht; das globale Benutzerkonto ist aktiv,
+  aber seine Mitgliedschaft in dieser Band noch nicht aktiv.
+- **Berechtigungen:** Einladender mit dem globalen Aktionsrecht und dem
+  delegierbaren bandbezogenen Verwaltungsrecht.
+- **Ablauf:** Der Einladende startet die Einladung. Nach Bestätigung wird nur
+  diese Bandmitgliedschaft aktiv und der Benutzer darf bandbezogenen Gruppen
+  zugeordnet werden. Das globale Konto und andere Bandmitgliedschaften bleiben
+  unverändert.
+- **Ergebnis:** Nur positive Rechte werden wirksam. Bandmitgliedschaft allein
+  vermittelt kein Objektrecht; Zugriff entsteht durch eine dem Bandprinzipal
+  ausdrücklich oder standardmäßig zugewiesene Objektberechtigung.
+- **Fehler:** Ungültige oder abgelaufene Einladungen und fremde
+  Bandbereichszuordnungen werden ohne Offenlegung anderer Mitgliedschaften
   abgelehnt.
-- **Security und Offline:** Die Aktion respektiert private und gemeinsame
-  Änderungsrechte. Ob Transposition offline gespeichert werden darf, entscheidet
-  `OQ-006`.
 
-## WF-008: Autoscroll bei Probe oder Auftritt verwenden
+## WF-002: Band, Gruppen und Mitgliedschaften verwalten
 
-- **Ausgangszustand:** Ein berechtigtes Text- oder Akkordblatt ist geöffnet und
-  für die aktuelle Nutzung verfügbar.
-- **Beteiligte Rollen:** Musiker und reguläre Mitglieder.
-- **Normaler Ablauf:** Der Benutzer startet Autoscroll, kontrolliert den Verlauf
-  und kann Geschwindigkeit, Pause, Fortsetzung und Ende bewusst steuern.
-- **Erwartetes Ergebnis:** Der Inhalt bewegt sich vorhersehbar, bleibt lesbar
-  und unter unmittelbarer Kontrolle des Benutzers.
-- **Fehler und Ausnahmen:** Ressourcen- oder Darstellungsfehler stoppen sicher
-  und lassen manuelle Navigation zu; ein Fehler verändert den Inhalt nicht.
-- **Security und Offline:** Autoscroll benötigt keine zusätzlichen Rechte und
-  funktioniert für vorbereitete Offlineinhalte; konkrete Reaktionsziele folgen
-  aus `OQ-011`.
+- **Ausgangszustand:** Die handelnde Person besitzt die erforderlichen Rechte
+  in der eigenen Band.
+- **Berechtigungen:** Berechtigtes Bandmitglied oder Plattformadministrator.
+- **Ablauf:** Bandmitgliedschaften werden eingeladen, aktiviert, deaktiviert
+  oder entfernt; bandbezogene Gruppen und Zuordnungen werden verwaltet und nur
+  delegierbare Rechte vergeben. Plattformadministratoren dürfen zusätzlich
+  globale Benutzerkonten aktivieren, deaktivieren oder löschen sowie Bands
+  anlegen, umbenennen und eine Bandlöschung endgültig bestätigen.
+- **Ergebnis:** Änderungen wirken nur im bezeichneten Bandbereich. Bands und
+  bandbezogene Gruppen tragen ausschließlich bandbezogene Rechte und
+  Objektberechtigungen. Globale Gruppen, ihre global
+  rechtevermittelnden Mitgliedschaften und globale Rechte bleiben der
+  Plattformadministration vorbehalten.
+- **Fehler:** Gruppenverschachtelung, fremde Mitglieder, globale Vergabe durch
+  Bandverwaltung und dauerhafte Aussperrung des letzten aktiven
+  Plattformadministrators werden abgelehnt.
+- **Löschung:** Nach administrativer Bestätigung werden Bandobjekte
+  eigentümerlos; direkte Rechte der Band und ihrer gelöschten Gruppen entfallen,
+  andere Rechte bleiben bestehen.
 
-## WF-009: Setlist anlegen, sortieren und freigeben
+## WF-003: Song anlegen, prüfen oder bereinigen
 
-- **Ausgangszustand:** Berechtigte Songs bestehen; der Benutzer besitzt
-  Setlist-Rechte.
-- **Beteiligte Rollen:** Setlist-Verantwortliche, Inhaltsverantwortliche und
-  berechtigte lesende Mitglieder.
-- **Normaler Ablauf:** Der Verantwortliche legt die Setlist an, ergänzt oder
-  entfernt Songs, ordnet sie und gibt einen geprüften Stand für Probe oder
-  Auftritt frei.
-- **Erwartetes Ergebnis:** Reihenfolge, Freigabe- und Synchronisationszustand
-  sind eindeutig; berechtigte Mitglieder sehen den vorgesehenen Stand.
-- **Fehler und Ausnahmen:** Fehlende Songrechte, entfernte Inhalte,
-  konkurrierende Änderung oder unvollständige Freigabe werden sichtbar und
-  nicht als vollständiger Stand ausgegeben.
-- **Security und Offline:** Freigabe erweitert keine Dokumentrechte. Historie
-  und Versionierung entscheidet `OQ-013`; Offlinevorbereitung folgt `WF-010`.
+- **Ausgangszustand:** Ein Benutzer legt einen Inhalt an oder ein
+  Plattformadministrator verwaltet Songs.
+- **Berechtigungen:** Normale Benutzer dürfen einen Song nur atomar mit Inhalt
+  anlegen; Plattformadministratoren dürfen Songs ohne Inhalt anlegen, prüfen,
+  ändern, zusammenführen, Inhalte umhängen und referenzfreie Songs löschen.
+- **Ablauf:** Der Benutzer wählt einen sichtbaren Song oder gibt Titel,
+  Komponist und Gemeinfreiheitsstatus ein. Titel und Komponist werden für die
+  automatische Zuordnung hinsichtlich Groß-/Kleinschreibung, Unicode sowie
+  äußeren und mehrfachen Leerzeichen normalisiert.
+- **Ergebnis:** Nur bei Übereinstimmung beider Felder wird automatisch
+  zugeordnet; sonst entsteht atomar ein ungeprüfter Song. Ein abweichender
+  Gemeinfreiheitsstatus ändert die Zuordnung und den vorhandenen Songstatus
+  nicht, sondern erzeugt einen administrativen Prüfhinweis. Ähnliche Werte sind
+  nur Prüfhinweise.
+- **Sichtbarkeit und Datenschutz:** Normale Benutzer sehen im Katalog, in der
+  Suche und bei der Anlage nur Songs, zu denen sie mindestens einen Inhalt
+  lesen dürfen; Plattformadministratoren sehen alle. Die serverseitige Prüfung
+  darf unsichtbare Songs berücksichtigen, zeigt aber keine fremden Inhalte,
+  Eigentümer, Bands, Objektberechtigungen, Mitgliedschaften oder Beziehungen.
+  Gleicher Titel allein genügt nicht; Satzzeichen, Namensreihenfolge und
+  sonstige Schreibweise bleiben relevant. Ein referenzierter Song darf nicht
+  gelöscht werden.
+- **Administrative Arbeitsliste:** Plattformadministratoren sehen im MVP
+  gemeinsam mindestens ungeprüfte Songs, offene Songänderungsanträge, mögliche
+  Dubletten und abweichende Gemeinfreiheitsangaben bei exakter Zuordnung. Daraus
+  dürfen sie Songmetadaten korrigieren, den Prüfstatus setzen, Anträge
+  entscheiden, Dubletten atomar zusammenführen, Inhalte atomar umhängen und
+  referenzfreie Songs löschen. Private Basisinhalte müssen dafür weder geöffnet
+  noch angezeigt werden.
+- **Änderung:** Normale Benutzer benötigen das globale Sonderrecht
+  `Songänderung beantragen` und Sichtbarkeit des Songs, aber keine
+  Objektbearbeitungsberechtigung. Plattformadministratoren genehmigen oder
+  lehnen ab. Alle Arbeitslistenentscheidungen und Songereignisse werden mit dem
+  Audit-Mindestdatensatz protokolliert; Songs haben im MVP keinen Check-out und
+  der letzte gespeicherte Stand gilt.
+
+## WF-004: PDF-Inhalt anlegen und anzeigen
+
+- **Ausgangszustand:** Der Benutzer besitzt das globale Anlagerecht und darf
+  Eigentümer des neuen Inhalts werden. Für Bandeigentum benötigt er zusätzlich
+  das bandbezogene Vertretungs- oder Anlagerecht; eine Objektberechtigung kann
+  vor der Anlage noch nicht existieren.
+- **Ablauf:** Er wählt ein PDF, ordnet einen sichtbaren Song zu oder erfasst die
+  Songfelder und bestätigt `Arrangeur/Interpret`. Sein Anzeigename ist nur ein
+  Vorschlag. Optionale Metadaten werden validiert und Genres normalisiert.
+- **Ergebnis:** Inhalt, Eigentum, anfängliche Objektberechtigungen und
+  gegebenenfalls Song entstehen atomar. Ein benutzereigener Inhalt bleibt ohne
+  Freigaben. Bei Bandeigentum erhält der Bandprinzipal standardmäßig
+  `Anzeigen`. Der Inhalt besitzt genau einen Song und Basisinhalt; die
+  PDF-Anzeige bietet Navigation und Zoom.
+- **Offlineanlage:** Basisinhalt und Metadaten bleiben lokal; Songzuordnung und
+  Pflichtfelder werden erst bei Serversynchronisation verbindlich geprüft.
+  Fehler erhalten den lokalen Entwurf.
+- **Fehler:** Unsicheres PDF, fehlende Pflichtfelder, unzulässige Metadaten oder
+  fehlende Rechte erzeugen keinen erfolgreichen Teilimport.
+
+## WF-005: PDF über Overlays annotieren
+
+- **Ausgangszustand:** Der Benutzer kann einen PDF-Inhalt lesen.
+- **Ablauf:** Er legt beliebig viele eigene, zunächst nicht vererbende Overlays
+  an. Mit Schreibrecht am Inhalt darf er alternativ ein dynamisch gekoppeltes
+  Overlay anlegen. Dabei werden atomar der Inhaltseigentümer Eigentümer, die
+  dynamische Leserechtevererbung aktiviert und dem Ersteller ein später
+  entziehbares Bearbeitungsrecht gegeben, sofern er nicht bereits Eigentümer
+  ist. Er nutzt Freihandstift, Radierer, Textnotiz, Textmarker,
+  Auswahl, Verschieben oder Löschen; Strichstärke und begrenzte Farben sind
+  konfigurierbar. Geometrische Formen, Bild- oder Stempelelemente und Ebenen-
+  beziehungsweise Layergruppen gehören nicht zum MVP und sind nicht als
+  Post-MVP-Funktionen eingeplant.
+- **Ergebnis:** Mehrere berechtigte Overlays können gleichzeitig sichtbar sein.
+  Der Basisinhalt bleibt unverändert.
+- **Check-out:** Ein Overlay benötigt einen Check-out, sobald mehr als ein
+  Benutzer potenziell schreiben darf. Ein Einzelbenutzer-Overlay benötigt
+  keinen.
+- **Fehler:** Fehlende Rechte, nicht lesbarer Basisinhalt oder bestehender
+  Check-out verhindern Speichern ohne Änderung anderer Overlays.
+
+## WF-006: Text- oder Chord-Inhalt anlegen oder importieren
+
+- **Liefergrenze:** Dieser vollständige Ablauf folgt nach dem MVP; es gibt
+  keinen reduzierten Texteditor im MVP.
+- **Ablauf:** Der Benutzer legt Text-/Chord-Inhalt manuell oder per
+  Copy-and-paste an, ordnet ihn genau einem Song zu und bestätigt Metadaten.
+- **Ergebnis:** Ein aktueller Basisinhalt ohne auswählbare Version entsteht.
+- **Fehler:** Unklare Struktur, fehlende Pflichtfelder und Konflikte bleiben
+  sichtbar; automatisiertes Scraping ist unzulässig.
+
+## WF-007: Chords anpassen oder transponieren
+
+- **Liefergrenze:** Chorderkennung, Korrektur, Transposition und Vereinfachung
+  folgen vollständig nach dem MVP.
+- **Ablauf:** Ein berechtigter Benutzer ändert erkannte Chords kontrolliert in
+  einem Overlay.
+- **Ergebnis:** Basisinhalt und Anpassung bleiben getrennt. Mehrdeutige Chords
+  werden nicht still verändert.
+
+## WF-008: Autoscroll verwenden
+
+- **Liefergrenze:** Autoscroll für Text-/Chord-Inhalte folgt nach dem MVP.
+- **Ablauf:** Der leseberechtigte Benutzer startet, pausiert, ändert die
+  Geschwindigkeit oder beendet Autoscroll.
+- **Ergebnis:** Die Darstellung bleibt kontrollierbar und verändert weder
+  Inhalt noch Overlay; sie funktioniert auch für vorbereitete Offlineinhalte.
+
+## WF-009: Setlist anlegen, pflegen oder kopieren
+
+- **Ausgangszustand:** Für die Anlage besitzt der Benutzer das globale
+  Anlagerecht; eine Objektberechtigung existiert noch nicht. Bei Bandeigentum
+  benötigt er zusätzlich das bandbezogene Vertretungs- oder Anlagerecht.
+- **Ablauf:** Eine benutzereigene Setlist startet nur für den Ersteller les- und
+  bearbeitbar. Die Eigentumsrechte einer bandeigenen Setlist schlagen nicht
+  auf Mitglieder durch; diese erhalten über den Bandprinzipal standardmäßig
+  Anzeigen. Der Bearbeiter fügt jeden selbst lesbaren Inhalt ein und verwaltet
+  Reihenfolge, gemeinsame Overlay-Auswahl und Overlay-Reihenfolge.
+- **Ergebnis:** Eigentum und anfängliche Objektberechtigungen entstehen atomar.
+  Setlistreferenzen zeigen aktuellen Basisinhalt, aktuelle Songmetadaten und
+  aktuell berechtigte Overlays. Es gibt genau einen aktuellen Stand und keine
+  auswählbaren Versionen oder Snapshots.
+- **Historie:** Hinzufügen und Entfernen von Einträgen, Eintragsreihenfolge,
+  gemeinsame Overlay-Auswahl und -Reihenfolge, Metadaten, Eigentum sowie
+  relevante gemeinsame Berechtigungsänderungen werden vollständig
+  historisiert. Persönliche Einstellungen gehören nicht dazu.
+- **Kopie:** Die Kopie ist eine normale neue Objektanlage. Standardmäßig wird
+  der Kopierende Eigentümer. Eine Band darf nur mit globalem Setlist-Anlagerecht
+  und passendem bandbezogenem Vertretungs- oder Anlagerecht Eigentümer werden;
+  `Öffentlich` nur administrativ. Eigentum und anfängliche Rechte entstehen
+  atomar. Das neue Objekt besitzt eigene Berechtigungen und Historie,
+  referenziert dieselben für den Kopierenden lesbaren Inhalte und berechtigten
+  Overlays, kopiert sie aber nicht.
+- **Persönlich:** Benutzer dürfen Overlays persönlich ein- oder ausblenden,
+  deren Reihenfolge überschreiben und Einträge persönlich ausblenden. Dies
+  benötigt keinen Setlist-Check-out.
+- **Unvollständig:** Fehlende Inhalte oder Overlays werden gezählt und
+  markiert, blockieren Probe, Auftritt oder Offlinevorbereitung aber nicht. Die
+  minimale Setlistanzeige macht einen nicht lesbaren Song weder im allgemeinen
+  Katalog noch in der Suche sichtbar.
 
 ## WF-010: Inhalte für Offlineverwendung vorbereiten
 
-- **Ausgangszustand:** Der Benutzer ist online, berechtigt und hat einzelne
-  Inhalte oder eine Setlist bewusst ausgewählt.
-- **Beteiligte Rollen:** Alle Rollen mit expliziter Offlineberechtigung.
-- **Normaler Ablauf:** SoSeBaMa ermittelt erforderliche Inhalte, zeigt Umfang
-  und Zustand, der Benutzer startet die Vorbereitung und prüft den Abschluss.
-- **Erwartetes Ergebnis:** Vollständige, unvollständige und fehlgeschlagene
-  Offlineinhalte sind unterscheidbar; nur erlaubte Inhalte liegen lokal vor.
-- **Fehler und Ausnahmen:** Fehlender Speicher, Verbindungsabbruch,
-  Rechteänderung oder fehlerhaftes Dokument hinterlässt keinen fälschlich als
-  vollständig markierten Stand.
-- **Security und Offline:** Lokale Inhalte folgen `SEC-008`; Sitzungsgültigkeit
-  und Entfernung richten sich nach `OQ-007` und `OQ-008`.
+- **Ausgangszustand:** Der Benutzer ist online, berechtigt und wählt Inhalte
+  oder eine Setlist bewusst aus.
+- **Ablauf:** Umfang, Leserechte, Löschstatus und verfügbare Overlays werden
+  geprüft. Vollständige, unvollständige und fehlgeschlagene Vorbereitung wird
+  angezeigt.
+- **MVP:** Offlineanzeige und private Offlinebearbeitung werden vorbereitet.
+- **Nach dem MVP:** Gemeinsame Bearbeitung erfordert zuvor `WF-021`.
+- **Fehler:** Fehlender Speicher, Verbindungsabbruch oder Rechteänderung darf
+  keinen vollständigen Status vortäuschen.
 
-## WF-011: Setlist und Dokumente ohne Netzwerk verwenden
+## WF-011: Setlist und Inhalte ohne Netzwerk verwenden
 
-- **Ausgangszustand:** Inhalte wurden erfolgreich vorbereitet; Netzwerk ist
-  nicht verfügbar und die Offlineberechtigung ist noch wirksam.
-- **Beteiligte Rollen:** Musiker und andere offline berechtigte Mitglieder.
-- **Normaler Ablauf:** Der Benutzer öffnet die vorbereitete Setlist, navigiert
-  durch Songs und Dokumente und nutzt erlaubte Anzeige- und Bedienfunktionen.
-- **Erwartetes Ergebnis:** Vorbereitete Inhalte funktionieren im zugesagten
-  Umfang; Offlinezustand und mögliche Einschränkungen sind sichtbar.
-- **Fehler und Ausnahmen:** Nicht vorbereitete, abgelaufene oder entzogene
-  Inhalte werden sicher und verständlich behandelt; es entsteht keine
-  irreführende Onlinebestätigung.
-- **Security und Offline:** Keine Verbindung erzeugt keine zusätzlichen Rechte.
-  Zulässige lokale Änderungen und Sitzungsdauer entscheiden `OQ-006` und
-  `OQ-007`.
+- **Ausgangszustand:** Die Daten wurden vorbereitet. Geschützte Serverinhalte
+  sind nur zugänglich, solange die maximale Offlinesitzung nicht abgelaufen
+  ist.
+- **Ablauf:** Der Benutzer liest Setlist, Basisinhalte und berechtigte Overlays
+  und bearbeitet im MVP nur eigene Einzelbenutzerobjekte und persönliche
+  Setlisteinstellungen. Für eine Offline-Songauswahl erscheinen ausschließlich
+  bereits lokal bekannte, für ihn sichtbare Songs. Unsichtbare Songs dürfen
+  weder Katalog noch Vorschlag sein; freie Angaben bleiben lokal unaufgelöst.
+- **Ergebnis:** Offlinezustand, Einschränkungen und nicht verfügbare Elemente
+  sind sichtbar.
+- **Ablaufwirkung:** Bei Rechteentzug oder Ablauf der maximalen Offlinesitzung
+  wird der Zugriff auf geschützte Basisinhalte und Overlays gesperrt, bis eine
+  Onlineanmeldung beziehungsweise serverseitige Rechteprüfung erfolgreich ist.
+  Minimale Setlistinformationen dürfen verbleiben. Eigene nicht synchronisierte
+  Entwürfe dürfen klar getrennt erhalten bleiben, werden aber nicht automatisch
+  synchronisiert und verlängern keine Offlineberechtigung.
 
-## WF-012: Nach Wiederherstellung der Verbindung synchronisieren
+## WF-012: Private Offlineänderungen synchronisieren
 
-- **Ausgangszustand:** Das Gerät ist wieder verbunden; zulässige lokale
-  Änderungen oder veraltete lokale Inhalte können vorhanden sein.
-- **Beteiligte Rollen:** Betroffener Benutzer; fachlich Verantwortliche bei
-  Konflikten.
-- **Normaler Ablauf:** SoSeBaMa prüft aktuelle Identität und Rechte, gleicht
-  zulässige Zustände kontrolliert ab und zeigt Fortschritt sowie Ergebnis.
-- **Erwartetes Ergebnis:** Erfolgreiche Änderungen sind zentral nachvollziehbar;
-  lokale Inhalte entsprechen dem erlaubten Stand oder bleiben als offen
-  gekennzeichnet.
-- **Fehler und Ausnahmen:** Verbindungsabbruch, Rechteentzug, ungültige lokale
-  Änderung und Konflikt bleiben sichtbar und erneut behandelbar; nichts wird
-  still verworfen.
-- **Security und Offline:** Autorisierung wird vor Übernahme erneut geprüft.
-  Entzogene Rechte blockieren Übertragung und lösen `WF-015` aus.
+- **Ausgangszustand:** Eigene Inhalte, Overlays, Setlists, persönliche
+  Einstellungen oder offline neu angelegte Inhalte wurden geändert.
+- **Ablauf:** Identität, Rechte, Pflichtfelder, Songzuordnung und technische
+  Revisionskennung werden serverseitig geprüft. Der Server auditiert Benutzer,
+  Objekt, lokale Aktionszeit, serverseitige Synchronisationszeit, technische
+  datensparsame Gerätekennung und Ergebnis.
+- **Ergebnis:** Eine unveränderte Ausgangsrevision wird atomar gespeichert. Bei
+  einer Offlineanlage bleiben freie Songangaben bis zu dieser Serverprüfung
+  unaufgelöst. Der Server prüft die normalisierte Übereinstimmung gegen alle
+  Songs, einschließlich für den Benutzer unsichtbarer Songs. Exakter
+  Treffer von Titel und Komponist ordnet den bestehenden Song zu; ohne Treffer
+  entsteht ein neuer ungeprüfter Song. Der Benutzer erfährt nur Zuordnung oder
+  Neuanlage, niemals fremde Beziehungen.
+- **Übergang zu gemeinsamer Bearbeitung:** Wurde das private Serverobjekt
+  inzwischen zusätzlich zum Bearbeiten freigegeben, bleibt die Freigabe
+  wirksam. Die Synchronisation in dasselbe Objekt wird ohne wirksamen Check-out
+  auch bei unverändertem Serverstand abgelehnt und auditiert. Der Benutzer muss
+  den Serverstand neu laden, online auschecken und manuell übertragen oder den
+  Entwurf soweit zulässig als neues privates Objekt retten.
+- **Endgültige Löschung:** Wurde das Serverobjekt gelöscht, wird es lokal
+  entfernt und Setlistreferenzen werden aktualisiert. Dieselbe technische
+  Identität darf nicht wiederhergestellt werden; vorhandene Basisdaten dürfen
+  bei ausreichenden Rechten bewusst als neues privates Objekt gerettet werden.
+- **Fehler:** Veraltete Stände, fehlende Rechte, Check-out-Pflicht und endgültige
+  Löschung werden ohne Merge oder Überschreiben abgelehnt. Der Entwurf bleibt
+  für zulässiges Verwerfen, Retten oder manuelles Übertragen erhalten.
+  Ablehnung und Rettungsweg sowie Revisionskonflikt, Rechteentzug und
+  Sitzungsablauf werden mit unterscheidbarer lokaler und serverseitiger Zeit
+  auditiert, ohne eine fachliche Version zu erzeugen.
 
-## WF-013: Konflikt oder fehlgeschlagene Synchronisation behandeln
+## WF-013: Synchronisationskonflikt behandeln
 
-- **Ausgangszustand:** Eine Synchronisation meldet mindestens einen Fehler oder
-  einen nicht automatisch lösbaren Konflikt.
-- **Beteiligte Rollen:** Ändernder Benutzer und, soweit erforderlich, zuständige
-  Inhalts- oder Setlist-Verantwortliche.
-- **Normaler Ablauf:** SoSeBaMa zeigt betroffenen Inhalt, Fehlerklasse und sichere
-  Optionen; eine berechtigte Person wiederholt, verwirft oder entscheidet den
-  Konflikt bewusst.
-- **Erwartetes Ergebnis:** Der Fall endet in einem eindeutigen zentralen Stand
-  oder bleibt sichtbar offen; Ausgangsstände werden nicht unbemerkt zerstört.
-- **Fehler und Ausnahmen:** Fehlende Entscheidungsrechte, erneuter
-  Verbindungsfehler oder weiterer konkurrierender Stand verhindert die
-  Bestätigung eines falschen Erfolgs.
-- **Security und Offline:** Anzeigen und Optionen sind auf berechtigte Inhalte
-  begrenzt; Fehlermeldungen enthalten keine internen Details gemäß `SEC-015`.
+- **Ausgangszustand:** Revision, Rechte, Löschstatus oder Check-out verhindern
+  die Synchronisation.
+- **Ablauf:** Das Produkt zeigt Objekt, Fehlerklasse und zulässige nächste
+  Aktionen ohne fremde Daten oder interne Details.
+- **Ergebnis:** Der Benutzer verwirft den lokalen Stand, sichert ihn soweit
+  zulässig als neues privates Objekt oder überträgt ihn nach Neuladen und,
+  sofern nun erforderlich, bewusstem Online-Check-out manuell. Ein endgültig
+  gelöschtes Objekt wird lokal entfernt und darf unter derselben technischen
+  Identität nicht wiederbelebt werden. Ablehnungsgrund, Rettungsweg, lokale
+  Aktionszeit, serverseitige Synchronisationszeit, technische datensparsame
+  Gerätekennung und Ergebnis werden serverseitig auditiert.
+- **Grenze:** Es gibt kein automatisches Zusammenführen, kein stilles
+  Überschreiben und kein Last-write-wins für private Offlineobjekte.
 
-## WF-014: Zugriffsrechte ändern oder entziehen
+## WF-014: Berechtigungen ändern oder entziehen
 
-- **Ausgangszustand:** Eine berechtigte Administration verwaltet ein aktives
-  Mitglied oder eine Rolle.
-- **Beteiligte Rollen:** Arbeitsbereichsadministration und betroffener Benutzer.
-- **Normaler Ablauf:** Die Administration wählt die konkrete Änderung, prüft
-  Auswirkungen und bestätigt; der zentrale Berechtigungsstand wird wirksam.
-- **Erwartetes Ergebnis:** Neue geschützte Aktionen entsprechen sofort dem
-  zentralen Stand; der Entzug ist nachvollziehbar.
-- **Fehler und Ausnahmen:** Fehlende Administrationsrechte, widersprüchliche
-  gleichzeitige Änderung oder unzulässige Rollenlage wird abgelehnt.
-- **Security und Offline:** Weitere Synchronisation entzogener Inhalte wird
-  verhindert. Offlinefolgen werden über `WF-015`, `OQ-007` und `OQ-008`
-  behandelt.
+- **Ausgangszustand:** Die handelnde Person besitzt globales Verwaltungsrecht
+  und `Berechtigungen verwalten` am Objekt oder handelt als
+  Plattformadministrator.
+- **Ablauf:** Positive Benutzer-, globale Gruppen-, Band- oder bandbezogene
+  Gruppenrechte werden innerhalb ihrer zulässigen Ebene hinzugefügt oder
+  entfernt. Negative Rechte werden nicht erzeugt. Bands und Bandgruppen dürfen
+  keine globalen Aktionsrechte erhalten.
+- **Ergebnis:** Additive Berechtigungen werden sofort neu ausgewertet. Wird ein
+  aktuell bearbeitetes Objekt dadurch gemeinsam bearbeitbar, erhält eine
+  eindeutig bekannte aktive Online-Sitzung atomar den Check-out; andernfalls
+  darf die Ansicht erst nach Neuladen und erfolgreichem Check-out speichern.
+  Wird es wieder allein bearbeitbar, bleibt die bestehende Sperre bis zum Ende
+  der Sitzung erhalten und entfällt erst für künftige Bearbeitungen.
+- **Check-out:** Fehlt danach ein erforderliches Recht, wird Speichern
+  abgelehnt und der Check-out beendet. Lokale Eingaben dürfen kopiert oder
+  verworfen werden.
+- **Bandgrenze:** Eine Bandverwaltung darf keine globalen Rechte oder fremden
+  Objekte verwalten.
 
-## WF-015: Lokale Daten bei Abmeldung, Geräteverlust oder Rechteentzug behandeln
+## WF-015: Lokale Daten bei Abmeldung oder Rechteentzug behandeln
 
-- **Ausgangszustand:** Ein Gerät enthält Offlineinhalte oder lokale Änderungen;
-  Abmeldung, gemeldeter Geräteverlust oder Rechteentzug tritt ein.
-- **Beteiligte Rollen:** Betroffener Benutzer, Arbeitsbereichsadministration und
-  gegebenenfalls separat berechtigter technischer Betrieb.
-- **Normaler Ablauf:** SoSeBaMa beendet weitere geschützte Nutzung, markiert oder
-  sperrt lokale Inhalte und führt die beschlossene kontrollierte Entfernung
-  beziehungsweise Klärung offener Änderungen aus.
-- **Erwartetes Ergebnis:** Entzogene Inhalte sind nicht weiter nutzbar; lokale
-  Daten und ausstehende Änderungen besitzen einen eindeutigen, prüfbaren
-  Zustand.
-- **Fehler und Ausnahmen:** Ein dauerhaft offline befindliches oder verlorenes
-  Gerät kann die zentrale Bestätigung verzögern; es erhält nach Wiederverbindung
-  keine entzogenen Rechte zurück.
-- **Security und Offline:** Fristen und genaue Behandlung sind in `OQ-007` und
-  `OQ-008` offen. Bis zur Entscheidung darf keine Umsetzung still einen
-  dauerhaften Offlinezugriff annehmen.
+- **Ausgangszustand:** Das Gerät enthält vorbereitete Daten oder nicht
+  synchronisierte Entwürfe.
+- **Abmeldung:** Das Produkt warnt vor Löschung offener Entwürfe und bietet
+  ausdrücklich `Abmeldung abbrechen` oder `vor Abmeldung synchronisieren` an.
+  Erst nach einer bewusst bestätigten Abmeldung werden lokale Inhalte und
+  Sitzungsschlüssel kontrolliert entfernt.
+- **Gerätesitzungswiderruf:** Plattformadministratoren dürfen eine
+  Gerätesitzung serverseitig widerrufen. Beim nächsten Serverkontakt werden
+  weitere geschützte Zugriffe und Synchronisationen dieser Sitzung abgelehnt.
+  Ein dauerhaft getrenntes Gerät erkennt den Widerruf nicht; spätestens die
+  maximale Offlinesitzung begrenzt das Restrisiko. Widerruf und abgelehnte
+  Folgeverwendung werden auditiert, das technische Verfahren bleibt offen.
+- **Rechteentzug oder Sitzungsablauf:** Spätestens mit Ablauf der maximalen
+  Offlinesitzung werden geschützte Basisinhalte und Overlays gesperrt; erneute
+  Onlineanmeldung oder Rechteprüfung ist nötig. Endgültig gelöschte Objekte
+  werden beim nächsten erfolgreichen Abgleich lokal entfernt und
+  Setlistreferenzen aktualisiert. Neu erteilte Rechte lösen keinen automatischen
+  Download aus; Offlinevorbereitung oder Synchronisation muss bewusst
+  aktualisiert werden. Minimale Setlistinformationen und klar getrennte eigene
+  Entwürfe dürfen verbleiben. Entwürfe verlängern keine Rechte und werden nicht
+  automatisch synchronisiert.
+- **Security:** Lokale Daten müssen verschlüsselt gespeichert werden. Das
+  Verfahren bleibt Architekturentscheidung.
+
+## WF-016: Inhalt bearbeiten, freigeben oder breit lesbar machen
+
+- **Ausgangszustand:** Der Benutzer besitzt globales Aktionsrecht und passende
+  Objektberechtigung.
+- **Ablauf:** Er ersetzt Basisinhalt, ändert Inhaltsmetadaten, verwaltet
+  ausdrückliche Benutzer-, Gruppen- oder Bandrechte oder beantragt die Freigabe
+  an `Öffentlich`.
+- **Ergebnis:** Neue Inhalte bleiben zunächst ohne Freigaben. Ausdrückliche
+  Freigaben über Bandgrenzen verändern Eigentum nicht.
+- **Systemband:** Nur ein Plattformadministrator genehmigt, lehnt ab, setzt
+  oder entfernt `Anzeigen` für `Öffentlich`; alles wird auditiert. Es entsteht
+  kein anonymer Zugriff.
+- **Check-out:** Bei mehreren potenziellen Bearbeitern sperrt `WF-018` das
+  gesamte fachlich bearbeitbare Inhaltsobjekt: PDF beziehungsweise Basisinhalt,
+  Arrangeur/Interpret, Tonart, Tempo, Dauer, Niveau, Genre und Beschreibung.
+  Keine andere Sitzung darf diese Bestandteile speichern. Eigenständige private
+  Overlays bleiben ungesperrt. Berechtigungen ändern, Eigentum übertragen,
+  Löschung vormerken und Check-out zurücknehmen bleiben als atomar geprüfte und
+  auditierte administrative Aktionen zulässig; Rechteentzug kann die Sperre
+  ungültig machen, Löschvormerkung beendet sie sofort.
+
+## WF-017: Eigentum übertragen, Eigentümer löschen oder Objekt löschen
+
+- **Eigentumsübertragung:** Ein berechtigter Benutzer wählt aktiven Benutzer
+  oder bestehende, nicht vorgemerkte Band. Annahme ist nicht erforderlich;
+  alle ausdrücklich vergebenen Objektberechtigungen und Sonderrechte bleiben,
+  nur automatische Eigentümerrechte wechseln. Eine neue Eigentümerband erhält
+  bei Inhalt, Setlist oder nicht gekoppeltem Overlay atomar ihr normales
+  `Anzeigen`; gekoppelte Overlays folgen dem Inhalt ohne separates Bandrecht und
+  erben dessen Leserechte. `Öffentlich` ist nur administrativ zulässig.
+- **Deaktivierung:** Ein deaktiviertes Benutzerkonto bleibt Eigentümer; seine
+  Beziehungen werden nach Reaktivierung wieder wirksam. Es kann keine Rechte
+  ausüben und kein neues Übertragungsziel sein.
+- **Benutzerlöschung:** Ausschließlich ein Plattformadministrator löscht ein
+  globales Konto. Vorher werden Anzahl betroffener Eigentumsobjekte,
+  drohende Eigentümerlosigkeit, Fortbestand anderer Rechte, ausschließlich
+  administrative Änderbarkeit danach und die Möglichkeit vorheriger
+  Übertragung angezeigt. Die Folgen müssen ausdrücklich bestätigt werden.
+- **Bandlöschung:** Vor administrativer Bestätigung werden Auswirkungen auf
+  Eigentum und direkte Band- und gelöschte Gruppenrechte angezeigt. Diese
+  entfallen; andere Rechte bleiben.
+- **Löschvormerkung:** Lesen bleibt erlaubt, Bearbeitung, neue Freigabe und neue
+  Setlistreferenz werden gesperrt; ein Check-out endet sofort.
+- **Wiederherstellung und Ablauf:** Plattformadministratoren dürfen vor
+  Fristablauf wiederherstellen oder sofort endgültig löschen. Nach Ablauf wird
+  automatisch endgültig gelöscht. Bis zur Ausführung ist `ausstehende
+  endgültige Löschung` sichtbar; technische Verzögerung verlängert die Frist
+  nicht, Fehler bleiben sichtbar und erneut behandelbar. Die automatische
+  Löschung wird auditiert.
+- **Endgültige Inhaltslöschung:** Vorab werden Overlay- und Referenzanzahl
+  angezeigt. Overlays werden gelöscht und aktuelle Setlistreferenzen atomar
+  entfernt. Die vollständige Setlist-Historie erhält als besondere Minimalform
+  nur Zeitpunkt, frühere Position, letzten Songtitel, letzten Komponisten und
+  `Inhalt endgültig gelöscht`.
+
+## WF-018: Gemeinsam bearbeitbares Objekt online auschecken
+
+- **Ausgangszustand:** Mehr als ein Benutzer besitzt potenziell Schreibrecht;
+  bei Gruppen- oder Bandschreibrecht gilt dies unabhängig von Mitgliederzahl.
+- **Ablauf:** Beim Öffnen des Bearbeitungsmodus wird für die Sitzung ein
+  Check-out vergeben. Er sperrt bei Inhalten PDF beziehungsweise Basisinhalt
+  und alle Inhaltsmetadaten, nicht aber eigenständige Overlays. Check-outs für
+  Inhalt, Overlay und Setlist sind getrennt; ein gemeinsam bearbeitbares Overlay
+  benötigt seine eigene Reservierung. Nur die aktive verbundene Sitzung
+  verlängert die global konfigurierte Lease. Speichern beendet sie nicht.
+  Leser sehen ausschließlich den letzten gespeicherten Serverstand.
+- **Eigene Mehrfachsitzungen:** Eine zweite Sitzung desselben Benutzers darf die
+  Reservierung nicht mitbenutzen. Bewusste Übernahme invalidiert die erste
+  Sitzung; diese darf lokale Eingaben nur kopieren oder verwerfen.
+- **Anzeige:** Schreibberechtigte sehen Anzeigename, Beginn und erwarteten
+  Ablauf, keine E-Mail-Adresse oder weiteren Profildaten. Die aktive Sitzung
+  wird vor Lease-Ablauf verständlich gewarnt.
+- **Ende:** Bewusstes Verlassen, Abbrechen, ausdrückliches Ende,
+  administrative Rücknahme, Rechteentzug, Löschvormerkung oder Lease-Ablauf.
+- **Rücknahme:** Der Inhaber darf den eigenen Check-out bewusst beenden. Ein
+  aktiver persönlicher Objekteigentümer darf einen Check-out seines Objekts als
+  begrenzte Eigentümerbefugnis zurücknehmen. Bei Bandeigentum darf dies nur ein
+  ausdrücklich dafür vertretungsberechtigter aktiver Benutzer oder eine
+  bandbezogene Gruppe; normale Bandmitgliedschaft genügt nicht. Andere
+  bestellte Rücknahmeberechtigte benötigen das globale Aktionsrecht `Check-out
+  zurücknehmen` und die objektspezifische Berechtigung.
+  Plattformadministratoren dürfen zurücknehmen, aber nicht umgehen, sondern
+  müssen danach selbst auschecken. Die frühere Sitzung verliert nur ihre serverseitige
+  Speicherberechtigung; lokale Eingaben bleiben bis zum nächsten Kontakt
+  erhalten. Dann wird der Benutzer informiert und kann kopieren, verwerfen oder
+  bewusst einen neuen Check-out anfordern.
+- **Administrative Aktionen:** Berechtigungsänderung, Eigentumsübertragung,
+  Löschvormerkung und Rücknahme bleiben mit atomarer serverseitiger Prüfung und
+  Audit zulässig. Der Check-out bleibt nach Rechte- oder Eigentumsänderung nur
+  bei fortbestehenden Rechten wirksam; Löschvormerkung beendet ihn sofort.
+- **Dynamischer Übergang:** Wird das Objekt gemeinsam bearbeitbar, erhält die
+  eindeutig bekannte aktive Sitzung atomar die Sperre; sonst muss vor Speichern
+  neu geladen und ausgecheckt werden. Wird es wieder allein bearbeitbar, bleibt
+  die Sperre bis zum Verlassen bestehen und entfällt erst für künftige
+  Bearbeitungen.
+- **Verbindungs- oder Lease-Verlust:** Netzwerkverlust erzeugt keinen
+  Offline-Check-out. Ungespeicherte Eingaben dürfen als lokaler Entwurf bleiben.
+  Bei Wiederverbindung prüft der Server Check-out-Kennung und Sitzung, Lease,
+  Rechte, Revision beziehungsweise Serverstand und Löschstatus. Nach Ablauf darf
+  der alte Client weder still speichern noch still neu reservieren; veraltete
+  oder unberechtigte Versuche werden ohne Merge oder Überschreiben abgelehnt.
+
+## WF-019: Eigenes Overlay zur Übernahme einreichen
+
+- **Ausgangszustand:** Ein Benutzer besitzt ein eigenes Overlay zu einem
+  lesbaren Inhalt, aber kein Schreibrecht am Inhalt.
+- **Ablauf:** Er entfernt persönliche Inhalte und reicht dasselbe Overlay ein.
+  Atomar entsteht ein zweckgebundener temporärer Lesezugriff ausschließlich für
+  zuständige Prüfer. Ein aktiver persönlicher Inhaltseigentümer entscheidet als
+  begrenzte Eigentümerbefugnis. Bei Bandeigentum entscheiden nur ausdrücklich
+  für Overlay-Übernahmen vertretungsberechtigte aktive Benutzer oder
+  bandbezogene Gruppen. Andere bestellte Prüfer benötigen das globale
+  Aktionsrecht `Overlay-Übernahme prüfen` und die objektspezifische
+  Prüfberechtigung; bei Eigentümerlosigkeit entscheiden ausschließlich
+  Plattformadministratoren. Der Zugriff vermittelt kein reguläres Bearbeiten
+  und endet bei Rücknahme oder Ablehnung.
+- **Genehmigung:** Keine Kopie entsteht. Eigentum wechselt zum
+  Inhaltseigentümer, dynamische Leserechtevererbung wird aktiv, der Prüfzugriff
+  wird durch endgültige Rechte ersetzt und das persönliche Schreibrecht des
+  Erstellers entfällt. Anders als bei direkter gekoppelter Anlage muss es bei
+  Bedarf ausdrücklich neu vergeben werden.
+- **Ablehnung oder Rücknahme:** Der Prüfzugriff endet; das Overlay bleibt
+  unverändert privat beim Benutzer.
+- **Kopie:** Ein gekoppeltes Overlay darf als neues, zunächst nur für den
+  kopierenden Benutzer verfügbares Overlay kopiert werden.
+
+## WF-020: Inhaltsberechtigung anfragen
+
+- **Ausgangszustand:** Ein Benutzer kann ein Objekt oder einen Setlistinhalt
+  nicht lesen oder bearbeiten.
+- **Ablauf:** Ohne bestehende Zielberechtigung beantragt er mit dem globalen
+  beziehungsweise systemseitigen Anfragerecht Anzeigen oder Bearbeiten für
+  sich oder zusätzlich mit `Berechtigung für Band anfragen` für eine Band.
+- **Empfänger:** Benutzer mit globalem Verwaltungsrecht und
+  `Berechtigungen verwalten` am Objekt. Fehlen solche Empfänger oder ist das
+  Objekt eigentümerlos, ist die Plattformadministration zuständig.
+- **Offlineentwurf:** Offline lautet der Status `noch nicht gesendet`; es gibt
+  noch keine Serveranfrage oder Benachrichtigung. Beim Versand werden Rechte,
+  Zielobjekt, Empfänger und gegebenenfalls Bandvertretung neu geprüft. Erst
+  danach wird der Status `offen`; Fehler bleiben sichtbar.
+- **MVP-Ergebnis:** In-App-Arbeitsliste sowie Status `offen`, `genehmigt` oder
+  `abgelehnt`; keine E-Mail- oder Push-Pflicht.
+- **Datensparsamkeit:** Bei fehlendem Setlistinhalt erscheinen nur Titel,
+  Komponist, Eigentümer-Anzeigename oder Bandname, `Inhalt nicht verfügbar` und
+  Anfrageaktion. Bei Eigentümerlosigkeit erscheint
+  `Plattformadministration`.
+
+## WF-021: Gemeinsames Objekt für Offlinebearbeitung auschecken
+
+- **Liefergrenze:** Verbindliches Zielmodell nach dem MVP.
+- **Ablauf online:** Benutzer wählt `Für Offline-Bearbeitung auschecken`.
+  Rechte, Löschstatus und konkurrierender Check-out werden geprüft; Objekt und
+  technische Revisionskennung werden lokal vorbereitet und eine feste
+  Offline-Lease vergeben. Ein gewöhnlicher Online-Check-out wird durch
+  Netzwerkverlust niemals in diesen Offline-Check-out umgewandelt.
+- **Offline:** Die Lease kann nicht verlängert werden, darf die maximale
+  Offlinesitzung nicht überschreiten, blockiert andere Bearbeiter und erlaubt
+  weiter Lesen. Nach Lease-Ablauf darf der klar gekennzeichnete lokale Entwurf
+  fortgeführt werden, besitzt aber keine Serverreservierung. Nach Ablauf der
+  maximalen Offlinesitzung sind geschützte Serverinhalte bis zur erneuten
+  Onlineprüfung gesperrt; Entwürfe verlängern die Berechtigung nicht.
+- **Synchronisation:** Wirksame Lease plus unveränderte Revision speichert
+  atomar. Bei abgelaufener Lease und unverändertem freien Objekt darf der
+  Benutzer bewusst einen neuen Check-out anfordern; eine stille Neuerteilung
+  ist unzulässig. Bei Änderung oder anderer Sperre wird abgelehnt.
+- **Ergebnis:** Nach Erfolg endet der Offline-Check-out oder wird in einen
+  Online-Check-out derselben Sitzung überführt. Administrative Rücknahme wird
+  bei Wiederverbindung wirksam. Der Server auditiert lokale Aktionszeit,
+  Synchronisationszeit, technische datensparsame Gerätekennung, Ergebnis und
+  insbesondere Ablehnungen, Konflikte, Rechte- oder Lease-Ablauf sowie
+  administrative Rücknahmen.
 
 ## Abdeckungsregel
 
-Funktionale Anforderungen aus
-[Funktionaler Scope](FUNCTIONAL-SCOPE.md),
-[Qualitätsanforderungen](QUALITY-ATTRIBUTES.md) und
-[Security-Anforderungen](SECURITY-REQUIREMENTS.md) gelten auch dann, wenn ein
-Ablauf sie nicht einzeln wiederholt. Neue Kernabläufe erhalten die nächste
-freie `WF-xxx`-Kennung; bestehende Kennungen werden nicht umgedeutet.
+Die nummerierten funktionalen, qualitativen und Sicherheitsanforderungen gelten
+auch dann, wenn ein Ablauf sie nicht wiederholt. Neue eigenständige Abläufe
+erhalten die nächste freie `WF-xxx`-Kennung.

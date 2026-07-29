@@ -3,59 +3,68 @@
 ## Grundsatz
 
 Jede Verbindung ist zunächst verboten und wird nur für einen dokumentierten
-Zweck mit minimalen Rechten freigegeben. Freigaben gelten stets für genau eine
+Zweck mit minimalen Rechten freigegeben. Freigaben gelten für genau eine
 Umgebung. Gemeinsame Netzwerkreichweite ersetzt keine Zugriffserlaubnis.
 
-## Öffentliche eingehende Erreichbarkeit
+## Externe eingehende Erreichbarkeit
 
-Drei voneinander getrennte Zugänge dürfen öffentlich erreichbar sein. Jeder
-Zugang endet an einem eigenen gehärteten Reverse Proxy:
+Vier voneinander getrennte Zugänge dürfen extern erreichbar sein. Jeder endet
+an einem eigenen gehärteten Zugangspunkt; die konkrete Technik bleibt eine
+spätere Architekturentscheidung.
 
-| Öffentlicher Zugang | Ziel hinter dem Reverse Proxy | Erlaubter Umfang |
-| --- | --- | --- |
-| eigener Portainer-Reverse-Proxy | Portainer | ausschließlich vorgesehene Verwaltungsendpunkte für berechtigte Identitäten |
-| eigener code-server-Reverse-Proxy | code-server | ausschließlich vorgesehene code-server-Endpunkte für berechtigte Identitäten |
-| eigener App-Reverse-Proxy für SoSeBaMa PRD | App-Backend beziehungsweise BFF von PRD | ausschließlich vorgesehene Anwendungsendpunkte |
+| Externer Zugang | Erlaubtes Ziel und Umfang |
+| --- | --- |
+| Portainer-Zugang | ausschließlich vorgesehene Verwaltungsendpunkte für berechtigte technische Identitäten |
+| code-server-Zugang | ausschließlich vorgesehene code-server-Endpunkte für berechtigte Identitäten |
+| SoSeBaMa-TST-Zugang | vorgesehene TST-Anwendungsendpunkte sowie getrennt geschützte Diagnose-, Backend-API-, Test- und Prüfschnittstellen für benannte technische Identitäten |
+| SoSeBaMa-PRD-Zugang | ausschließlich vorgesehene PRD-Anwendungsendpunkte |
 
-Nutzer-Clients erreichen das App-Backend beziehungsweise BFF niemals direkt.
-Sie verwenden ausschließlich den App-Reverse-Proxy. Dieser darf nur die
-vorgesehenen Anwendungsendpunkte des App-Backends beziehungsweise BFF von PRD
-erreichen.
+Nutzer-Clients verwenden ausschließlich den jeweiligen freigegebenen
+App-Zugang und erreichen weder Datenbank noch interne Verwaltungswege direkt.
+Externe Erreichbarkeit erteilt weder Nutzern noch Zugangspunkt Rechte auf
+andere Netze, Umgebungen oder Komponenten.
 
-Die öffentliche Erreichbarkeit eines Reverse Proxys erteilt weder dem Proxy
-noch seinen Nutzern implizite Zugriffsrechte auf andere Netze, Umgebungen oder
-Komponenten. Insbesondere entsteht dadurch kein Zugriff auf Datenbanken,
-interne Verwaltungswege, TST oder weitere PRD-Komponenten.
-
-Die konkrete Härtung der drei öffentlich erreichbaren Reverse-Proxy-Zugänge ist
-eine spätere Architektur- und Betriebsentscheidung. Sie wird vor Inbetriebnahme
-nach dem [ADR-Verfahren](ADR.md) und als separates freigegebenes Arbeitspaket
+Die konkrete Härtung wird vor Inbetriebnahme nach dem
+[ADR-Verfahren](ADR.md) in einem eigenen freigegebenen Arbeitspaket
 dokumentiert.
+
+## TST-Diagnosegrenze
+
+TST darf zur Verifikation detaillierte Logs, Traces, Statusendpunkte,
+Backend-API-Zugriff und definierte Test-/Prüfschnittstellen bereitstellen.
+Jeder Zugriff erfordert:
+
+1. eine benannte technische Identität,
+2. eigene Authentifizierung und minimale Rechte,
+3. reguläre fachliche Autorisierung ohne pauschalen Bypass,
+4. secretfreie Ausgabe,
+5. Audit und Widerrufsmöglichkeit,
+6. technische Abwesenheit oder nachgewiesene Unerreichbarkeit desselben Wegs in
+   PRD.
+
+TST-Erreichbarkeit vermittelt keinen Zugriff auf DEV, PRD oder eine Datenbank.
 
 ## Ausgehender Entwicklungszugriff von code-server
 
-Der öffentliche eingehende Zugang zu code-server und der ausgehende
-Entwicklungszugriff von code-server auf DEV sind zwei getrennte
-Kommunikationsbeziehungen. Die Veröffentlichung von code-server berechtigt
-nicht zum Zugriff auf DEV.
-
-code-server darf ausschließlich über definierte, freigegebene und
-nachvollziehbare SSH-/Debugwege auf DEV zugreifen. Diese Wege verwenden eine
-eigene Identität, minimale Rechte und eine ausdrücklich dokumentierte Quelle,
-Zielrolle und Richtung. Sie erlauben keine Weiterleitung nach TST, PRD oder zur
-Datenbank.
+Der externe Zugang zu code-server und sein ausgehender Entwicklungszugriff auf
+DEV sind getrennte Kommunikationsbeziehungen. code-server darf ausschließlich
+über definierte, freigegebene und nachvollziehbare SSH-/Debugwege auf DEV
+zugreifen. Diese Wege verwenden eine eigene Identität, minimale Rechte und eine
+ausdrücklich dokumentierte Quelle, Zielrolle und Richtung. Sie erlauben keine
+Weiterleitung nach TST, PRD oder zur Datenbank.
 
 ## Interne Anwendungs- und Datengrenzen
 
 | Quelle | Ziel | Erlaubter Zweck |
 | --- | --- | --- |
-| App-Reverse-Proxy von PRD | App-Backend beziehungsweise BFF von PRD | ausschließlich vorgesehene Anwendungsendpunkte |
+| freigegebener App-Zugang einer Umgebung | App-Backend beziehungsweise BFF derselben Umgebung | ausschließlich vorgesehene Anwendungsendpunkte |
+| geschützter TST-Prüfzugang | freigegebene TST-Diagnose-, Backend-API-, Test- oder Prüfschnittstelle | produktionsnahe Verifikation mit benannter technischer Identität |
 | App-Backend einer Umgebung | Datenbank derselben Umgebung | fachlicher Datenzugriff mit eigener minimal berechtigter Identität |
 | freigegebener Betriebszugang | freigegebene Komponente derselben Umgebung | notwendige Administration mit benannter Identität |
 
 Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Die
-Datenbank veröffentlicht keinen öffentlichen Endpunkt. Direkter Zugriff durch
-Nutzer-Clients, Reverse Proxies, code-server oder Administrationswerkzeuge ist
+Datenbank veröffentlicht keinen externen Endpunkt. Direkter Zugriff durch
+Nutzer-Clients, Zugangspunkte, code-server oder Administrationswerkzeuge ist
 unzulässig.
 
 PRD besitzt keine Debugports, Debugtunnel oder Debugschnittstellen. Produktive
@@ -66,16 +75,17 @@ vermeintliche Notfallzugänge umgehen.
 
 Alle nicht ausdrücklich aufgeführten Beziehungen sind verboten. Dazu gehören:
 
-- umgebungsübergreifende Datenbank- oder Secret-Verbindungen,
-- implizite Netzfreigaben aufgrund öffentlicher Erreichbarkeit,
+- umgebungsübergreifende Datenbank-, Secret- oder Diagnoserechte,
+- implizite Freigaben aufgrund externer Erreichbarkeit,
+- ein pauschaler Autorisierungs-Bypass in TST,
 - Weiterleitungen, die eine definierte Grenze umgehen,
-- öffentliche Datenbank-, Debug- oder interne Verwaltungsendpunkte.
+- externe Datenbank-, PRD-Debug- oder interne Verwaltungsendpunkte.
 
 ## Definition und Ablage eines Zugriffswegs
 
 Vor Freigabe werden ohne reale Infrastrukturwerte dokumentiert:
 
-1. Umgebung sowie fachlicher Zweck,
+1. Umgebung und Zweck,
 2. verantwortlicher Eigentümer,
 3. erlaubte Quelle und Zielrolle,
 4. Richtung und benötigtes Protokoll,
@@ -83,7 +93,6 @@ Vor Freigabe werden ohne reale Infrastrukturwerte dokumentiert:
 6. Protokollierung und Überprüfung,
 7. Ablauf oder Widerruf.
 
-Konkrete Domains, IP-Adressen, Hostnamen, Ports, Zugangsdaten und
-Härtungsparameter bleiben außerhalb des öffentlichen Repositorys. Betriebswerte
-und Secrets verbleiben ausschließlich in der freigegebenen Konfiguration auf
-der Synology.
+Domains, IP-Adressen, Hostnamen, Ports, Zugangsdaten und Härtungsparameter
+bleiben außerhalb des öffentlichen Repositorys. Betriebswerte und Secrets
+verbleiben ausschließlich in der freigegebenen Synology-Konfiguration.
