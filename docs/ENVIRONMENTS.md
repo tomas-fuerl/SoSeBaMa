@@ -35,10 +35,10 @@ Portainer und code-server dürfen jeweils über einen eigenen gehärteten Zugang
 extern erreichbar sein. SoSeBaMa PRD wird ausschließlich über einen eigenen
 gehärteten App-Zugang bereitgestellt.
 
-TST darf für Frontendtests über einen davon und von PRD getrennten geschützten
-App-Zugang extern erreichbar sein. Externe Erreichbarkeit vermittelt keine
-fachliche oder technische Berechtigung und keinen Zugriff auf andere
-Umgebungen oder Datenbanken.
+TST darf für Frontendtests über einen eigenen, von Portainer, code-server und
+PRD getrennten geschützten App-Zugang extern erreichbar sein. Externe
+Erreichbarkeit vermittelt keine fachliche oder technische Berechtigung und
+keinen Zugriff auf andere Umgebungen oder Datenbanken.
 
 Die konkrete Härtung, Protokollwahl und technische Ausgestaltung dieser Zugänge
 bleibt einer späteren Architektur- und Betriebsentscheidung vorbehalten.

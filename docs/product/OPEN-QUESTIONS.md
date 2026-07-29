@@ -19,8 +19,11 @@ Umsetzung.
 **Status:** Entschieden.
 
 Benutzer dürfen gleichzeitig Mitglied mehrerer Bands, Bandbereiche und Gruppen
-sein. Bandbezogene Rechte werden je Bandbereich getrennt ausgewertet und
-vermitteln keinen impliziten Querzugriff.
+sein. Globales Benutzerkonto und Bandmitgliedschaften besitzen unabhängige
+Zustände: Nur Plattformadministratoren verwalten Konten; berechtigte
+Bandmitglieder verwalten ausschließlich Mitgliedschaften der eigenen Band.
+Bandbezogene Rechte werden je Bandbereich getrennt ausgewertet und vermitteln
+keinen impliziten Querzugriff.
 
 ### OQ-002: Anzahl Bandbereiche je Installation
 
@@ -65,15 +68,23 @@ Globale Aktionsrechte dürfen nur aktiven Benutzern direkt oder globalen
 Gruppen zugewiesen werden. Bands und bandbezogene Gruppen tragen nur
 bandbezogene Rechte und Objektberechtigungen. Eine Band ist Eigentums- und
 Berechtigungsprinzipal. Ihre automatischen Eigentümerrechte werden nicht an
-Mitglieder vererbt; der Bandprinzipal erhält bei Objektanlage standardmäßig die
-normale Berechtigung Anzeigen. Höhere Aktionen benötigen ausdrückliche
-Objekt-, globale und bandbezogene Vertretungsrechte. Plattformadministratoren
-verwalten globale Rechte und global rechtevermittelnde Gruppenmitgliedschaften.
+Mitglieder vererbt. Wird Inhalt, Setlist oder nicht gekoppeltes Overlay durch
+Anlage oder Übertragung bandeigen, erhält der Bandprinzipal atomar die normale
+Berechtigung Anzeigen; gekoppelte Overlays erben Lesen ausschließlich vom
+Inhalt. Höhere Aktionen benötigen ausdrückliche Objekt-, globale und
+bandbezogene Vertretungsrechte. Plattformadministratoren verwalten globale
+Rechte und global rechtevermittelnde Gruppenmitgliedschaften.
 
 Die geschützte globale Systemgruppe `Alle Benutzer` enthält jeden aktiven
-Benutzer und den verbindlichen Basissatz für sichtbare Objekte, eigene Anlagen,
-Setlistbefüllung und eigene Anfragen; sie ist kein Eigentümer und von der
-objektbezogenen Systemband `Öffentlich` getrennt. Ausdrückliche Freigaben über
+Benutzer. Ihr administrativ nicht reduzierbarer Basissatz umfasst globales
+Anzeigen und Bearbeiten innerhalb wirksamer Objektberechtigungen, eigene
+Inhalts-, Overlay- und Setlistanlagen samt atomarer Songanlage, direkte
+gekoppelte Overlayanlage, Overlay-Einreichung und -Privatkopie, Antrag auf
+`Öffentlich`, Setlistbefüllung und Selbstanfrage. Nicht enthalten sind
+Songänderung, Löschen, Berechtigungsverwaltung, Eigentumsübertragung,
+Bandanfrage, Overlay-Prüfung und Administration. Globale Rechte begrenzen nicht
+auf eigene Objekte; die Objektberechtigung bildet die Objektgrenze. Die Gruppe
+ist kein Eigentümer und von `Öffentlich` getrennt. Ausdrückliche Freigaben über
 Bandgrenzen sind zulässig und verändern Eigentum nicht.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
@@ -104,7 +115,12 @@ nach dem MVP. Es gibt keinen reduzierten Texteditor im MVP.
 Im MVP dürfen eigene, nur durch einen Benutzer beschreibbare Inhalte, Overlays
 und Setlists sowie persönliche Setlisteinstellungen offline bearbeitet werden.
 Offline angelegte Inhalte gehören dem Benutzer, bleiben ohne Freigaben und
-werden samt Pflichtfeldern und Songzuordnung serverseitig erneut geprüft.
+werden samt Pflichtfeldern und Songzuordnung gegen alle Songs serverseitig
+erneut geprüft, ohne unsichtbare Beziehungen offenzulegen. Wird ein vorbereitetes
+privates Objekt serverseitig gemeinsam bearbeitbar, ist Synchronisation ohne
+Check-out abzulehnen; wurde es endgültig gelöscht, darf seine technische
+Identität nicht wiederbelebt werden. Zulässige lokale Stände können bewusst als
+neues privates Objekt gerettet werden. Neue Rechte laden nichts automatisch.
 
 Das Zielmodell nach dem MVP erlaubt gemeinsame Offlinebearbeitung nur nach
 bewusstem Online-Check-out mit technischer Revisionskennung und fester
@@ -140,9 +156,13 @@ getrennt erhalten bleiben. Abmeldung warnt vor Verlust, erlaubt vorherige
 Synchronisation und entfernt lokale Daten sowie Sitzungsschlüssel kontrolliert.
 
 Private Offlineobjekte verwenden technische Revisionskennungen. Veraltete
-Änderungen werden abgelehnt und dürfen verworfen, separat gesichert oder
-manuell übertragen werden. Lokale Daten müssen verschlüsselt sein; das Verfahren
-bleibt Architekturentscheidung.
+Änderungen sowie Speichern eines inzwischen gemeinsam bearbeitbaren Objekts
+ohne Check-out werden abgelehnt. Ein endgültig gelöschtes Serverobjekt wird
+lokal entfernt und darf nur unter neuer Identität als privates Objekt gerettet
+werden. Verwerfen, neues privates Objekt und manuelles Übertragen bleiben
+bewusste Wege; automatisches Merge und Überschreiben sind ausgeschlossen. Neue
+Rechte benötigen bewusste Synchronisation oder Offlinevorbereitung. Lokale
+Daten müssen verschlüsselt sein; das Verfahren bleibt Architekturentscheidung.
 
 ### OQ-009: Erreichbarkeit und Diagnose von TST
 
@@ -217,10 +237,14 @@ Overlay-Auswahl und -Reihenfolge, Metadaten, Eigentum und gemeinsamen
 Berechtigungen werden vollständig historisiert; persönliche Einstellungen
 nicht.
 
-Für einen unabhängigen Planungsstand darf eine Setlist bewusst als neues Objekt
-mit eigenem Eigentum, eigenen Berechtigungen und neuer Historie kopiert werden.
-Sie referenziert dieselben berechtigten Inhalte und Overlays, kopiert sie aber
-nicht. Nach endgültiger Inhaltslöschung wird die aktuelle Referenz entfernt und
+Für einen unabhängigen Planungsstand darf eine Setlist bewusst als normale neue
+Objektanlage kopiert werden. Standardmäßig wird der Kopierende Eigentümer; eine
+Band benötigt globales Setlist-Anlagerecht und passendes bandbezogenes
+Vertretungs- oder Anlagerecht, `Öffentlich` ist nur administrativ zulässig.
+Eigentum und anfängliche Rechte entstehen atomar. Die Kopie besitzt eigene
+Berechtigungen und Historie und referenziert dieselben berechtigten Inhalte und
+Overlays, kopiert sie aber nicht. Nach endgültiger Inhaltslöschung wird die
+aktuelle Referenz entfernt und
 innerhalb der vollständigen Historie nur Zeitpunkt, frühere Position, letzter
 Songtitel, letzter Komponist und der nicht anklickbare Hinweis `Inhalt
 endgültig gelöscht` gespeichert; Datei, Basisinhalt, vollständige Metadaten,

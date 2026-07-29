@@ -54,12 +54,20 @@ Aktionsrecht nicht.
 
 ## Benutzer und Gruppen
 
-Ein Benutzer ist aktiv, deaktiviert oder gelöscht. Nur ein aktiver Benutzer
-darf regulärer Eigentümer werden und neue geschützte Aktionen beginnen.
+Ein globales Benutzerkonto ist aktiv, deaktiviert oder gelöscht. Nur
+Plattformadministratoren dürfen es global aktivieren, deaktivieren oder
+löschen. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
+keine neuen geschützten Aktionen beginnen und seine Rechte nicht ausüben.
+Eigentums- und Berechtigungsbeziehungen bleiben bestehen und werden nach
+Reaktivierung wieder wirksam. Nur Benutzerlöschung oder ausdrückliche
+administrative Sonderaktion erzeugt Eigentümerlosigkeit. Neuer Eigentümer oder
+Übertragungsziel darf nur ein aktiver Benutzer sein.
 
-Ein Benutzer darf mehreren globalen oder bandbezogenen Gruppen angehören,
-Mitglied mehrerer Bands sein und über eigene und Gruppenrechte additive
-Berechtigungen erhalten.
+Eine Bandmitgliedschaft ist unabhängig vom Benutzerkonto aktiv, deaktiviert
+oder entfernt. Eine Änderung in einer Band verändert weder das Benutzerkonto
+noch Mitgliedschaften und Rechte in anderen Bands. Ein Benutzer darf mehreren
+globalen oder bandbezogenen Gruppen angehören, Mitglied mehrerer Bands sein und
+über eigene und Gruppenrechte additive Berechtigungen erhalten.
 
 Eine Gruppe ist entweder global oder genau einem Bandbereich zugeordnet.
 Gruppen dürfen nicht verschachtelt werden. Bandbezogene Gruppen dürfen nur
@@ -86,19 +94,29 @@ deaktivierte oder gelöschte Benutzer verlieren ihre wirksamen Rechte. Nur
 Plattformadministratoren verwalten die Gruppe und ihren Basissatz. Sie ist kein
 Eigentümer.
 
-Der Basissatz umfasst:
+Der administrativ nicht reduzierbare Basissatz umfasst:
 
-- sichtbare Songs, Inhalte und Overlays sowie berechtigte Setlists anzeigen,
-- eigene Inhalte anlegen,
+- globales `Anzeigen` für Objekte mit wirksamer Objektberechtigung,
+- globales `Bearbeiten` für eigene oder ausdrücklich bearbeitbare Objekte,
+- eigene Inhalte, zunächst nicht vererbende eigene Overlays und eigene Setlists
+  anlegen,
 - atomar mit einem Inhalt einen ungeprüften Song anlegen,
-- eigene Overlays und eigene Setlists anlegen,
+- mit Inhalts-Bearbeitungsrecht ein dynamisch gekoppeltes Overlay anlegen,
+- ein eigenes zunächst nicht vererbendes Overlay zur Übernahme einreichen,
+- ein lesbares gekoppeltes Overlay als neues zunächst nicht vererbendes eigenes
+  Overlay kopieren,
+- bei Eigentum oder passender Inhaltsberechtigung eine Freigabe an `Öffentlich`
+  beantragen,
 - selbst lesbare Inhalte zu bearbeitbaren Setlists hinzufügen,
 - Berechtigung für sich selbst anfragen.
 
-Nicht automatisch enthalten sind `Songänderung beantragen`, fremde Objekte
-bearbeiten oder löschen, Berechtigungen verwalten, Eigentum übertragen,
-Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen sowie globale
-oder bandbezogene Administration.
+Globale Rechte gelten nicht nur für eigene Objekte; die wirksame
+Objektberechtigung begrenzt die konkrete Aktion. Globales `Bearbeiten` erlaubt
+somit keine Bearbeitung ohne `Bearbeiten` am Objekt. Nicht im Basissatz sind
+`Songänderung beantragen`, Löschen, Berechtigungen verwalten, Eigentum
+übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen sowie
+globale oder bandbezogene Administration. Eine Reduktion des Mindestbasissatzes
+benötigt eine neue dokumentierte Produktentscheidung.
 
 `Alle Benutzer` ist von der Systemband `Öffentlich` getrennt: Die Systemgruppe
 vermittelt globale Funktionsrechte, die Systemband ausschließlich
@@ -114,8 +132,9 @@ Berechtigungen wie eine Gruppe und darf Mitglieder sowie zusätzliche
 bandbezogene Gruppen besitzen.
 
 Bandmitgliedschaft allein vermittelt kein Objektrecht. Zugriff entsteht durch
-eine dem Bandprinzipal ausdrücklich oder bei der Anlage eines bandeigenen
-Objekts standardmäßig zugewiesene Objektberechtigung `Anzeigen`. Die
+eine dem Bandprinzipal ausdrücklich oder bei jedem Eigentumserwerb an Inhalt,
+Setlist oder nicht gekoppeltem Overlay standardmäßig zugewiesene
+Objektberechtigung `Anzeigen`. Die
 Bandbereichstrennung verhindert alle anderen impliziten Querzugriffe.
 
 Ausdrückliche Objektfreigaben über Bandgrenzen sind zulässig. Eine Freigabe an
@@ -127,7 +146,7 @@ verwalten.
 
 Berechtigte Bandmitglieder dürfen innerhalb der eigenen Band:
 
-- Mitglieder einladen, deaktivieren oder entfernen,
+- Bandmitgliedschaften einladen, aktivieren, deaktivieren oder entfernen,
 - bandbezogene Gruppen anlegen, ändern oder entfernen,
 - Mitglieder diesen Gruppen zuordnen,
 - ausdrücklich delegierbare bandbezogene Rechte vergeben.
@@ -159,6 +178,7 @@ keine Rolle `Plattform-Redakteur`.
 
 Mitglieder besitzen fachlichen Superuserstatus und dürfen:
 
+- globale Benutzerkonten aktivieren, deaktivieren und löschen,
 - alle Objekte und Bands sehen und administrieren,
 - Bands anlegen und umbenennen,
 - Bandlöschungen endgültig bestätigen,
@@ -208,17 +228,21 @@ Plattformadministratoren übertragen und nur durch diese verwaltet werden.
 ## Eigentum
 
 Regulärer Eigentümer eines Inhalts, einer Setlist oder eines Overlays ist genau
-ein aktiver Benutzer oder genau eine bestehende Band. Normale Gruppen und die
-Plattform selbst sind keine regulären Eigentümer.
+ein nicht gelöschtes Benutzerkonto oder genau eine bestehende Band. Ein
+deaktiviertes Konto darf bestehender Eigentümer bleiben, kann die Rechte aber
+nicht ausüben. Neuer Eigentümer oder Übertragungsziel darf nur ein aktiver
+Benutzer sein. Normale Gruppen und die Plattform selbst sind keine regulären
+Eigentümer.
 
 Der Eigentümer hält automatisch und nicht entziehbar Anzeigen, Bearbeiten,
 Löschen, Berechtigungen verwalten und Eigentum übertragen. Die Ausübung
 erfordert weiterhin das globale Aktionsrecht.
 
 Bei Bandeigentum hält die Band diese automatischen Eigentümerrechte; ihre
-Mitglieder erhalten sie nicht automatisch. Zusätzlich erhält der Bandprinzipal
-bei der Anlage standardmäßig die normale Objektberechtigung `Anzeigen`, die
-Mitgliedern Leserecht vermittelt. Bearbeiten, Löschen,
+Mitglieder erhalten sie nicht automatisch. Bei jedem Eigentumserwerb durch
+Anlage oder Übertragung erhält der Bandprinzipal für Inhalt, Setlist oder nicht
+gekoppeltes Overlay atomar zusätzlich die normale Objektberechtigung `Anzeigen`,
+die aktiven Mitgliedern Leserecht vermittelt. Bearbeiten, Löschen,
 Berechtigungsverwaltung und Übertragung üben nur ausdrücklich berechtigte
 bandbezogene Gruppen oder Benutzer mit passendem globalem und bandbezogenem
 Vertretungsrecht aus. `Öffentlich` ist der nur administrativ verwaltete
@@ -229,9 +253,11 @@ vergebenen Objektberechtigungen und Sonderrechte bleiben unverändert,
 einschließlich Lösch-, Verwaltungs-, Übertragungs-, Overlay-Prüf- und
 -Bearbeitungs- sowie Check-out-Rücknahmerechten. Nur automatische
 Eigentümerrechte entfallen beim bisherigen und entstehen beim neuen
-Eigentümer. Dynamisch gekoppelte Overlays wechseln atomar mit dem Inhalt.
-Zulässige Ziele sind ein aktiver Benutzer oder eine bestehende, nicht zur
-Löschung vorgemerkte Band; die Übertragung an `Öffentlich` ist nur
+Eigentümer. Eine neue Eigentümerband erhält zusätzlich ihr Standard-Anzeigenrecht.
+Dynamisch gekoppelte Overlays wechseln atomar mit dem Inhalt, erhalten aber
+kein direktes Band-Anzeigenrecht; Lesen entsteht ausschließlich durch Vererbung
+vom Inhalt. Zulässige Ziele sind ein aktiver Benutzer oder eine bestehende,
+nicht zur Löschung vorgemerkte Band; die Übertragung an `Öffentlich` ist nur
 administrativ zulässig.
 
 Eigentümerlosigkeit darf nur durch Löschung des Eigentümers oder ausdrückliche
@@ -239,8 +265,10 @@ administrative Sonderaktion entstehen.
 
 ## Eigentümerlose Objekte und Löschung
 
-Vor einer Benutzerlöschung müssen Anzahl und Folgen eigentumsbetroffener
-Objekte angezeigt werden: Sie werden ohne vorherige Übertragung eigentümerlos,
+Eine globale Benutzerlöschung darf ausschließlich ein
+Plattformadministrator ausführen. Vorher müssen Anzahl und Folgen
+eigentumsbetroffener Objekte angezeigt werden: Sie werden ohne vorherige
+Übertragung eigentümerlos,
 andere Rechte bleiben bestehen und nur Plattformadministratoren dürfen danach
 Eigentum oder Berechtigungen ändern. Eine vorherige Übertragung wird angeboten;
 die Folgen müssen ausdrücklich bestätigt werden. Die Löschung bleibt danach
@@ -311,8 +339,11 @@ Schreibrecht des Erstellers entfällt bei Übernahme und wird nicht automatisch
 neu vergeben.
 
 Ein dynamisch gekoppeltes Overlay erbt ausschließlich Leserechte des Inhalts
-und darf nur zusätzliche Bearbeitungsrechte erhalten. Ein zusätzlicher
-Bearbeiter muss den Basisinhalt bereits lesen dürfen.
+und darf kein direktes zusätzliches Leserecht erhalten. Wird der Inhalt
+bandeigen, liegt das Standard-Anzeigenrecht am Inhalt und wirkt am Overlay nur
+über dynamische Vererbung. Ein gekoppeltes Overlay darf ausschließlich
+zusätzliche Bearbeitungsrechte erhalten; ein zusätzlicher Bearbeiter muss den
+Basisinhalt bereits lesen dürfen.
 
 ### Setlists
 
@@ -373,10 +404,15 @@ Objekteigentümer mit erforderlichen Rechten, ausdrücklich berechtigte Benutzer
 oder Gruppen und Plattformadministratoren.
 
 Plattformadministratoren müssen einen fremden Check-out zurücknehmen und
-anschließend selbst auschecken; sie dürfen ihn nicht umgehen. Rechteentzug
-beendet den Check-out und verhindert Speichern. Eine Eigentumsübertragung
-beendet ihn nur, wenn dem Bearbeiter danach eine erforderliche Berechtigung
-fehlt. Eine Löschvormerkung beendet ihn immer.
+anschließend selbst auschecken; sie dürfen ihn nicht umgehen. Nach Rücknahme
+verliert die frühere Sitzung nur die serverseitige Speicherberechtigung; lokale
+Eingaben dürfen bis zur Information beim nächsten Kontakt erhalten bleiben.
+Rechteentzug beendet den Check-out und verhindert Speichern. Eine
+Eigentumsübertragung beendet ihn nur, wenn dem Bearbeiter danach eine
+erforderliche Berechtigung fehlt. Eine Löschvormerkung beendet ihn immer. Nach
+Lease-Ablauf darf kein stilles Speichern oder Wiedererwerben erfolgen; ein
+Online-Check-out wird bei Netzwerkverlust nie automatisch zum
+Offline-Check-out.
 
 ## Übergreifende Sicherheitsregeln
 

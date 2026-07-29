@@ -10,15 +10,22 @@ zusätzliche Bedeutung ein. Das zusammenhängende Modell steht im
 
 ### Benutzer
 
-Eine identifizierte Person, die nach erfolgreicher Authentifizierung und gemäß
-ihren wirksamen Berechtigungen mit SoSeBaMa interagiert. Ein Benutzer ist aktiv,
-deaktiviert oder gelöscht.
+Eine identifizierte Person mit einem globalen Benutzerkonto im Zustand
+`aktiv`, `deaktiviert` oder `gelöscht`. Nur Plattformadministratoren dürfen
+Konten global aktivieren, deaktivieren oder löschen. Ein deaktivierter Benutzer
+bleibt Eigentümer und behält seine Beziehungen, darf aber keine Rechte ausüben;
+Reaktivierung macht sie wieder wirksam. Erst Löschung oder eine ausdrückliche
+administrative Sonderaktion erzeugt Eigentümerlosigkeit. Neuer Eigentümer oder
+Übertragungsziel darf nur ein aktiver Benutzer sein.
 
-### Mitglied
+### Bandmitgliedschaft
 
-Ein aktiver Benutzer mit Mitgliedschaft in einer Band. Bandmitgliedschaft
-allein vermittelt kein Objektrecht. Zugriff entsteht durch eine dem
-Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
+Von einem globalen Benutzerkonto unabhängige Beziehung zu genau einer Band im
+Zustand `aktiv`, `deaktiviert` oder `entfernt`. Berechtigte Bandmitglieder dürfen
+nur Mitgliedschaften ihrer eigenen Band einladen, aktivieren, deaktivieren oder
+entfernen. Das ändert weder das globale Konto noch Beziehungen in anderen
+Bands. Bandmitgliedschaft allein vermittelt kein Objektrecht; Zugriff entsteht
+durch eine dem Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
 Objektberechtigung.
 
 ### Gruppe
@@ -33,10 +40,18 @@ zugewiesen werden.
 ### Systemgruppe `Alle Benutzer`
 
 Geschützte globale Systemgruppe, der jeder aktive Benutzer automatisch
-angehört. Nur Plattformadministratoren verwalten ihren verbindlichen Basissatz
-globaler Funktionsrechte. Deaktivierte oder gelöschte Benutzer verlieren die
-wirksamen Rechte; die Gruppe ist kein Eigentümer. Sie ist von der Systemband
-`Öffentlich` getrennt.
+angehört. Ihr administrativ nicht reduzierbarer Basissatz umfasst globales
+`Anzeigen` und `Bearbeiten` im Rahmen wirksamer Objektberechtigungen, die Anlage
+eigener Inhalte, zunächst nicht vererbender Overlays und Setlists samt atomarer
+Songanlage, direkte gekoppelte Overlayanlage bei Inhalts-Bearbeitungsrecht,
+Overlay-Einreichung und -Privatkopie, Antrag auf Freigabe an `Öffentlich`,
+Setlistbefüllung mit selbst lesbaren Inhalten sowie Selbstanfragen. Nicht
+enthalten sind Songänderungsantrag, Löschen, Berechtigungsverwaltung,
+Eigentumsübertragung, Bandanfragen, Overlay-Prüfung oder Administration. Nur
+Plattformadministratoren verwalten die Gruppe; eine Reduktion des Basissatzes
+erfordert eine neue Produktentscheidung. Deaktivierte oder gelöschte Benutzer
+verlieren die wirksamen Rechte. Die Gruppe ist kein Eigentümer und von der
+Systemband `Öffentlich` getrennt.
 
 ### Band
 
@@ -140,7 +155,9 @@ Normalisierte Übereinstimmung von Titel und Komponist. Groß- und Kleinschreibu
 wird ignoriert, Unicode normalisiert, äußere Leerzeichen werden entfernt und
 mehrere Leerzeichen zusammengefasst. Satzzeichen, Namensreihenfolge und andere
 Schreibweisen bleiben relevant. Der Gemeinfreiheitsstatus gehört nicht zur
-Identität.
+Identität. Bei der Serversynchronisation einer Offlineanlage wird die exakte
+Übereinstimmung gegen alle vorhandenen Songs geprüft; das Ergebnis darf keine
+für den Benutzer unsichtbaren Inhaltsbeziehungen offenlegen.
 
 ### Änderungsantrag für Songmetadaten
 
@@ -186,8 +203,10 @@ sind ungeprüft.
 
 ### Eigentum
 
-Fachliche Verantwortung genau eines aktiven Benutzers oder genau einer
-bestehenden Band für Inhalt, Setlist oder Overlay. Die Plattform und normale
+Fachliche Verantwortung genau eines nicht gelöschten Benutzers oder genau
+einer bestehenden Band für Inhalt, Setlist oder Overlay. Ein deaktivierter
+Benutzer darf bestehender Eigentümer bleiben, seine Rechte aber nicht ausüben.
+Neuer Eigentümer darf nur ein aktiver Benutzer sein. Die Plattform und normale
 Gruppen sind keine regulären Eigentümer. Die Systemband `Öffentlich` ist ein
 zulässiger administrativer Eigentümer.
 
@@ -196,15 +215,20 @@ zulässiger administrativer Eigentümer.
 Automatische und nicht entziehbare Objektberechtigungen Anzeigen, Bearbeiten,
 Löschen, Berechtigungen verwalten und Eigentum übertragen. Ihre Ausübung
 erfordert weiterhin globale Aktionsrechte. Bei Bandeigentum hält die Band die
-Rechte; Mitglieder erhalten sie nicht automatisch.
+Rechte; Mitglieder erhalten sie nicht automatisch. Wird ein Inhalt, eine
+Setlist oder ein nicht gekoppeltes Overlay durch Anlage oder Übertragung
+bandeigen, erhält die Band atomar zusätzlich die normale Objektberechtigung
+`Anzeigen`, die aktiven Mitgliedern Lesen vermittelt.
 
 ### Eigentumsübertragung
 
 Bewusster Wechsel zu einem aktiven Benutzer oder einer bestehenden, nicht zur
 Löschung vorgemerkten Band. Eine Annahme ist nicht erforderlich. Alle
 ausdrücklich vergebenen Objektberechtigungen und Sonderrechte bleiben
-unverändert; nur die automatischen Eigentümerrechte wechseln. Gekoppelte
-Overlays folgen einem Inhalt atomar. Nur Plattformadministratoren dürfen an
+unverändert; nur die automatischen Eigentümerrechte wechseln. Eine neue
+Eigentümerband erhält atomar ihr Standard-Anzeigenrecht. Gekoppelte Overlays
+folgen einem Inhalt atomar und erhalten kein separates Band-Anzeigenrecht; sie
+erben Lesen dynamisch vom Inhalt. Nur Plattformadministratoren dürfen an
 `Öffentlich` übertragen.
 
 ### Eigentümerlos
@@ -297,10 +321,13 @@ nicht; relevante gemeinsame Änderungen werden vollständig historisiert.
 
 ### Setlistkopie
 
-Bewusst angelegtes neues Setlistobjekt für einen unabhängigen Planungsstand mit
-eigenem Eigentum, eigenen Berechtigungen und neuer Historie. Es übernimmt nur
-Referenzen auf dieselben lesbaren Inhalte und berechtigten Overlays, nicht die
-Inhalte oder Overlays selbst.
+Bewusst angelegtes neues Setlistobjekt für einen unabhängigen Planungsstand.
+Standardmäßig wird der Kopierende Eigentümer; eine Band ist nur mit globalem
+Setlist-Anlagerecht und passendem bandbezogenem Vertretungs- oder Anlagerecht
+zulässig, `Öffentlich` nur administrativ. Eigentum und anfängliche Rechte
+entstehen atomar. Die Kopie besitzt eigene Berechtigungen und neue Historie und
+übernimmt nur Referenzen auf dieselben lesbaren Inhalte und berechtigten
+Overlays, nicht die Inhalte oder Overlays selbst.
 
 ### Setlisteintrag
 
@@ -323,21 +350,27 @@ Mitgliederzahl.
 ### Check-out
 
 Sitzungsgebundene Reservierung eines gemeinsam bearbeitbaren Inhalts, Overlays
-oder einer Setlist. Beim Inhalt umfasst sie Basisinhalt beziehungsweise PDF und
-alle Inhaltsmetadaten, nicht jedoch eigene, nicht vererbende Overlayobjekte oder
-administrative Eigentums-, Berechtigungs-, Lösch- und Rücknahmeaktionen. Eine
-zweite Sitzung desselben Benutzers darf die Reservierung nicht mitbenutzen.
-Wird ein Objekt während der Bearbeitung gemeinsam bearbeitbar, erhält eine
-eindeutig bekannte aktive Sitzung atomar die Reservierung; andernfalls ist vor
-Speichern ein neuer Check-out nötig. Wird es wieder allein bearbeitbar, bleibt
-die bestehende Sperre bis zum Sitzungsende erhalten. Songs benötigen keinen
-Check-out. Speichern beendet den Check-out nicht, solange die
-Bearbeitungssitzung geöffnet bleibt.
+oder einer Setlist. Check-outs sind je Objekt getrennt: Ein Inhalts-Check-out
+umfasst Basisinhalt beziehungsweise PDF und alle Inhaltsmetadaten, blockiert
+aber kein Overlay; ein gemeinsam bearbeitbares Overlay benötigt einen eigenen
+Check-out. Administrative Eigentums-, Berechtigungs-, Lösch- und
+Rücknahmeaktionen bleiben atomar geprüft zulässig. Eine zweite Sitzung desselben
+Benutzers darf die Reservierung nicht mitbenutzen. Wird ein Objekt während der
+Bearbeitung gemeinsam bearbeitbar, erhält eine eindeutig bekannte aktive
+Sitzung atomar die Reservierung; andernfalls ist vor Speichern ein neuer
+Check-out nötig. Wird es wieder allein bearbeitbar, bleibt die Sperre bis zum
+Sitzungsende. Songs benötigen keinen Check-out. Speichern beendet den
+Check-out nicht. Leser sehen nur den letzten gespeicherten Serverstand.
 
 ### Online-Lease
 
 Global konfigurierbare Inaktivitätsfrist eines Online-Check-outs. Nur die
-aktive verbundene Bearbeitungssitzung verlängert sie.
+aktive verbundene Bearbeitungssitzung verlängert sie; vor Ablauf wird gewarnt.
+Nach Ablauf darf die alte Sitzung weder still speichern noch still neu
+reservieren. Netzwerkverlust wandelt den Online-Check-out nicht in einen
+Offline-Check-out um. Lokale Eingaben dürfen als Entwurf bleiben; bei
+Wiederverbindung werden Sitzung und Check-out-Kennung, Lease, Rechte, Revision
+beziehungsweise Serverstand und Löschstatus erneut geprüft.
 
 ### Offline-Check-out
 

@@ -51,18 +51,23 @@ getrennt.
    globale Gruppen tragen. Plattformadministratoren sind fachliche Superuser.
 6. **Bands sind Prinzipale.** Jede Band besitzt genau einen Bandbereich und
    darf Eigentümer sein. Automatische Eigentümerrechte werden nicht an
-   Mitglieder vererbt; der Bandprinzipal erhält bei Anlage standardmäßig Lesen.
-   Ausdrückliche Freigaben über Bandgrenzen sind erlaubt, andere implizite
-   Querzugriffe nicht.
+   Mitglieder vererbt; bei jedem Eigentumserwerb an Inhalt, Setlist oder nicht
+   gekoppeltem Overlay erhält der Bandprinzipal standardmäßig Lesen. Gekoppelte
+   Overlays erben Lesen vom Inhalt. Ausdrückliche Freigaben über Bandgrenzen
+   sind erlaubt, andere implizite Querzugriffe nicht.
 7. **Breite Lesbarkeit bleibt authentifiziert.** Die geschützte Systemband
    `Öffentlich` vermittelt nach administrativ geprüftem Antrag Lesen für alle
    aktiven Benutzer, aber keinen anonymen Zugriff.
-8. **Eigentum bleibt eindeutig.** Regulärer Eigentümer ist ein aktiver Benutzer
-   oder eine bestehende Band. Die Plattform ist kein Eigentümer. Eigentümerlose
-   Objekte und Löschvormerkungen sind getrennte Zustände.
+8. **Eigentum bleibt eindeutig.** Regulärer Eigentümer ist ein nicht gelöschter
+   Benutzer oder eine bestehende Band. Deaktivierte Benutzer bleiben Eigentümer,
+   dürfen Rechte aber nicht ausüben; neue Eigentümer müssen aktiv sein. Die
+   Plattform ist kein Eigentümer. Eigentümerlose Objekte und Löschvormerkungen
+   sind getrennte Zustände.
 9. **Gemeinsame Bearbeitung ist sitzungsgebunden.** Jedes gemeinsam
-   bearbeitbare Objekt außer Songs benötigt einen Check-out. Administration
-   darf ihn zurücknehmen, aber nicht umgehen.
+   bearbeitbare Objekt außer Songs benötigt einen Check-out. Inhalt, Overlay und
+   Setlist bleiben getrennt gesperrt. Lease-Ablauf oder Netzwerkverlust erlaubt
+   kein stilles Speichern oder Wiedererwerben. Administration darf zurücknehmen,
+   aber nicht umgehen.
 10. **Offlinekonflikte und Sitzungsablauf werden nicht versteckt.** Private
     Offlinebearbeitung ist im MVP enthalten. Gemeinsame Offlinebearbeitung
     folgt nach dem MVP über Offline-Check-outs. Abgelaufene Offlineberechtigungen

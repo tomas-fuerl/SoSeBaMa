@@ -135,8 +135,12 @@ Eigentümer, Bands, Bandmitgliedschaften, Berechtigungen oder Beziehungen
 offenlegen.
 
 Bei einer Offlineanlage erfolgt die verbindliche Songzuordnung erst während der
-Serversynchronisation. Der Benutzer erfährt nur, ob ein vorhandener Song
-zugeordnet oder ein neuer ungeprüfter Song angelegt wurde.
+Serversynchronisation. Der Server prüft die normalisierte Übereinstimmung gegen
+alle vorhandenen Songs, auch wenn sie für den Benutzer nicht katalogsichtbar
+sind. Ein exakter Titel-/Komponisten-Treffer ordnet den vorhandenen Song zu;
+ohne Treffer entsteht ein neuer ungeprüfter Song. Der Benutzer erfährt nur
+dieses Ergebnis und keine Inhalte, Eigentümer, Bands, Berechtigungen oder
+Beziehungen.
 
 ## Inhalt und Inhaltsmetadaten
 
@@ -227,25 +231,58 @@ verwalten, Eigentum übertragen und objektspezifische Sonderrechte. Dabei gilt:
 - Eigentum übertragen beinhaltet Anzeigen.
 - Die administrativen Rechte implizieren untereinander keine weiteren Rechte.
 
+### Benutzerkonto und Bandmitgliedschaft
+
+Ein globales Benutzerkonto ist `aktiv`, `deaktiviert` oder `gelöscht`. Nur
+Plattformadministratoren dürfen es global aktivieren, deaktivieren oder
+löschen. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
+keine neuen geschützten Aktionen beginnen und keine Rechte ausüben. Seine
+Eigentums- und Berechtigungsbeziehungen bleiben bestehen und werden nach
+Reaktivierung wieder wirksam. Nur die Löschung des Kontos oder eine
+administrative Sonderaktion macht seine Objekte eigentümerlos. Neuer
+Eigentümer oder Übertragungsziel darf weiterhin nur ein aktiver Benutzer sein.
+
+Eine Bandmitgliedschaft besitzt unabhängig vom globalen Benutzerkonto den
+Zustand `aktiv`, `deaktiviert` oder `entfernt`. Berechtigte Bandmitglieder
+dürfen ausschließlich Mitgliedschaften der eigenen Band einladen, aktivieren,
+deaktivieren oder entfernen. Dies verändert weder das globale Benutzerkonto
+noch Mitgliedschaften und Rechte in anderen Bands.
+
 ### Gruppen, Bands und Bandbereiche
 
 Es gibt genau eine geschützte globale Systemgruppe `Alle Benutzer`. Jeder
 aktive Benutzer ist automatisch Mitglied. Die Mitgliedschaft kann nicht
 manuell verlassen oder durch normale Bandadministration verändert werden;
 deaktivierte oder gelöschte Benutzer verlieren ihre wirksamen Rechte. Nur
-Plattformadministratoren verwalten die Gruppe und ihren Basissatz. Sie darf
-kein Eigentümer sein und ist von der Systemband `Öffentlich` getrennt:
-`Alle Benutzer` vermittelt globale Funktionsrechte, `Öffentlich`
-objektbezogene Lesbarkeit.
+Plattformadministratoren verwalten die Gruppe. Sie darf kein Eigentümer sein
+und ist von der Systemband `Öffentlich` getrennt: `Alle Benutzer` vermittelt
+globale Funktionsrechte, `Öffentlich` objektbezogene Lesbarkeit.
 
-Der verbindliche Basissatz von `Alle Benutzer` umfasst sichtbare Songs,
-Inhalte und Overlays sowie berechtigte Setlists anzeigen; eigene Inhalte,
-Overlays und Setlists anlegen; atomar mit einem Inhalt einen ungeprüften Song
-anlegen; selbst lesbare Inhalte zu bearbeitbaren Setlists hinzufügen; sowie
-Berechtigung für sich selbst anfragen. Nicht enthalten sind insbesondere
-`Songänderung beantragen`, fremde Objekte bearbeiten oder administrieren,
-Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen und globale oder
-bandbezogene Administration.
+Der verbindliche, administrativ nicht reduzierbare Basissatz von `Alle
+Benutzer` umfasst:
+
+- globales `Anzeigen` für Objekte mit wirksamer Objektberechtigung,
+- globales `Bearbeiten` für eigene oder ausdrücklich zur Bearbeitung
+  freigegebene Objekte,
+- eigene Inhalte, zunächst nicht vererbende eigene Overlays und eigene Setlists
+  anlegen,
+- atomar mit einem Inhalt einen ungeprüften Song anlegen,
+- mit Inhalts-Bearbeitungsrecht ein dynamisch gekoppeltes Overlay anlegen,
+- ein eigenes zunächst nicht vererbendes Overlay zur Übernahme einreichen,
+- ein lesbares gekoppeltes Overlay als neues zunächst nicht vererbendes eigenes
+  Overlay kopieren,
+- bei Eigentum oder passender Inhaltsberechtigung eine Freigabe an die
+  Systemband `Öffentlich` beantragen,
+- selbst lesbare Inhalte zu bearbeitbaren Setlists hinzufügen,
+- Berechtigung für sich selbst anfragen.
+
+Globale Rechte begrenzen nicht auf eigene Objekte; die Objektberechtigung setzt
+die konkrete Objektgrenze. Globales `Bearbeiten` erlaubt daher nur die
+Bearbeitung eines Objekts, an dem `Bearbeiten` wirksam ist. Nicht im Basissatz
+enthalten sind `Songänderung beantragen`, Löschen, Berechtigungen verwalten,
+Eigentum übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme
+prüfen sowie globale oder bandbezogene Administration. Eine Reduktion des
+Mindestbasissatzes benötigt eine neue dokumentierte Produktentscheidung.
 
 Ein Benutzer darf mehreren Gruppen angehören. Eine Gruppe ist entweder global
 oder genau einem Bandbereich zugeordnet. Gruppen dürfen nicht verschachtelt
@@ -266,9 +303,10 @@ Plattformadministratoren dürfen Bands anlegen und umbenennen,
 Bandlöschungen endgültig bestätigen, globale Gruppen und Systemgruppen
 verwalten sowie globale Rechte vergeben.
 
-Berechtigte Bandmitglieder dürfen innerhalb der eigenen Band Mitglieder
-einladen, deaktivieren oder entfernen, bandbezogene Gruppen verwalten,
-Mitglieder Gruppen zuordnen und delegierbare bandbezogene Rechte vergeben. Sie
+Berechtigte Bandmitglieder dürfen innerhalb der eigenen Band
+Bandmitgliedschaften einladen, aktivieren, deaktivieren oder entfernen,
+bandbezogene Gruppen verwalten, aktive Bandmitglieder Gruppen zuordnen und
+delegierbare bandbezogene Rechte vergeben. Sie
 dürfen keine globalen Gruppen, globalen Rechte oder fremden Bandbereiche
 verwalten. Nur Plattformadministratoren dürfen globale Rechte sowie
 Mitgliedschaften globaler Gruppen verwalten, soweit diese globale Rechte
@@ -302,21 +340,26 @@ Technischer Betrieb und fachliche Plattformadministration bleiben getrennt.
 ### Zulässige Eigentümer
 
 Regulärer Eigentümer eines Inhalts, einer Setlist oder eines Overlays ist genau
-ein aktiver Benutzer oder eine bestehende Band. Die Plattform und normale
-Gruppen sind keine regulären Eigentümer. Die Systemband `Öffentlich` darf
-Eigentümer sein; nur Plattformadministratoren dürfen Eigentum an sie übertragen
-oder für sie verwalten.
+ein nicht gelöschtes Benutzerkonto oder eine bestehende Band. Ein deaktiviertes
+Konto darf bestehender Eigentümer bleiben, kann seine Rechte aber erst nach
+Reaktivierung wieder ausüben. Neuer Eigentümer oder Übertragungsziel darf nur
+ein aktiver Benutzer sein. Die Plattform und normale Gruppen sind keine
+regulären Eigentümer. Die Systemband `Öffentlich` darf Eigentümer sein; nur
+Plattformadministratoren dürfen Eigentum an sie übertragen oder für sie
+verwalten.
 
 Eigentümer erhalten automatisch und nicht entziehbar Anzeigen, Bearbeiten,
 Löschen, Berechtigungen verwalten und Eigentum übertragen. Die Ausübung setzt
 weiterhin das erforderliche globale Aktionsrecht voraus.
 
 Bei Bandeigentum hält die Band diese automatischen Eigentümerrechte; sie werden
-nicht an Bandmitglieder vererbt. Bei der Anlage erhält der Bandprinzipal
-zusätzlich standardmäßig die normale Objektberechtigung `Anzeigen`, die seinen
-Mitgliedern Leserecht vermittelt. Bandmitgliedschaft allein vermittelt kein
-Objektrecht; Zugriff entsteht durch eine dem Bandprinzipal ausdrücklich oder
-standardmäßig zugewiesene Objektberechtigung. Bearbeiten, Löschen,
+nicht an Bandmitglieder vererbt. Immer wenn ein Inhalt, eine Setlist oder ein
+nicht gekoppeltes Overlay durch Anlage oder Eigentumsübertragung bandeigen
+wird, erhält die neue Eigentümerband atomar zusätzlich die normale
+Objektberechtigung `Anzeigen`, die ihren aktiven Mitgliedern Leserecht
+vermittelt. Bandmitgliedschaft allein vermittelt kein Objektrecht; Zugriff
+entsteht durch eine dem Bandprinzipal ausdrücklich oder standardmäßig
+zugewiesene Objektberechtigung. Bearbeiten, Löschen,
 Berechtigungsverwaltung und Eigentumsübertragung werden nur durch ausdrücklich
 berechtigte bandbezogene Gruppen oder Benutzer ausgeübt. Zusätzlich bleiben
 das globale Aktionsrecht und das passende bandbezogene Vertretungsrecht
@@ -328,8 +371,11 @@ Objektberechtigungen und objektspezifischen Sonderrechte bleiben unverändert,
 beispielsweise Anzeigen, Bearbeiten, Löschen, Berechtigungen verwalten,
 Eigentum übertragen, Overlay-Bearbeitungs- und -Prüfrechte sowie
 Check-out-Rücknahmerechte. Nur die automatischen Eigentümerrechte entfallen
-beim bisherigen Eigentümer und entstehen beim neuen. Dynamisch gekoppelte
-Overlays wechseln atomar mit dem Inhalt den Eigentümer. Zulässige Ziele sind
+beim bisherigen Eigentümer und entstehen beim neuen. Wird ein Objekt bandeigen,
+entsteht zusätzlich das Standard-Anzeigenrecht der neuen Eigentümerband.
+Dynamisch gekoppelte Overlays wechseln atomar mit dem Inhalt den Eigentümer,
+erhalten aber kein direktes Band-Anzeigenrecht: Sie vermitteln Lesen
+ausschließlich durch die dynamische Vererbung vom Inhalt. Zulässige Ziele sind
 ein aktiver Benutzer, eine bestehende und nicht zur Löschung vorgemerkte Band
 oder administrativ die Systemband `Öffentlich`.
 
@@ -468,7 +514,9 @@ Ein dynamisch gekoppeltes Overlay:
 - darf nicht entkoppelt oder separat übertragen werden.
 
 Bei Eigentumsübertragung oder Eigentümerlosigkeit des Inhalts folgen die
-gekoppelten Overlays atomar.
+gekoppelten Overlays atomar. Wird der Inhalt bandeigen, entsteht das
+Standard-Anzeigenrecht nur am Inhalt. Das gekoppelte Overlay erbt dieses Lesen
+dynamisch und darf kein separates direktes Band-Anzeigenrecht erhalten.
 
 Ein Benutzer ohne Schreibrecht am Inhalt darf ein eigenes Overlay zur
 Übernahme einreichen. Vor der Einreichung bleibt es ausschließlich privat. Mit
@@ -513,22 +561,40 @@ Rücknahme, Rechteentzug, Löschvormerkung oder Lease-Ablauf.
 Der Check-out eines gemeinsam bearbeitbaren Inhalts sperrt das gesamte
 fachlich bearbeitbare Inhaltsobjekt: Basisinhalt beziehungsweise PDF-Datei,
 Arrangeur/Interpret, Tonart, Tempo, Dauer, Niveau, Genre und Beschreibung.
-Keine andere Sitzung darf einen dieser Bestandteile speichern. Private
-Overlays bleiben eigenständige Objekte und werden nicht durch den
-Inhalts-Check-out blockiert.
+Keine andere Sitzung darf einen dieser Bestandteile speichern. Check-outs
+bleiben je Inhalt, Overlay und Setlist getrennt. Ein Inhalts-Check-out blockiert
+kein Overlay; jedes gemeinsam bearbeitbare Overlay benötigt seinen eigenen
+Check-out. Eigene, nicht vererbende Overlayobjekte bleiben eigenständig.
 
 Speichern beendet ihn nicht, solange die Sitzung geöffnet bleibt. Die
 Online-Inaktivitätsfrist ist global konfigurierbar. Nur die aktive verbundene
-Bearbeitungssitzung verlängert sie. Schreibberechtigte Benutzer sehen
-Anzeigename, Beginn und erwarteten Ablauf, aber keine E-Mail-Adresse oder
-zusätzlichen Profildaten.
+Bearbeitungssitzung verlängert sie. Vor Lease-Ablauf erhält diese Sitzung eine
+verständliche Warnung. Nach Ablauf darf ein alter Client weder still speichern
+noch still einen neuen Check-out erwerben.
+
+Ein normaler Online-Check-out wird bei Netzwerkverlust niemals automatisch zu
+einem Offline-Check-out. Nicht gespeicherte Eingaben dürfen als klar
+gekennzeichneter lokaler Entwurf erhalten bleiben. Bei Wiederverbindung prüft
+der Server Check-out-Kennung und Sitzung, Lease, aktuelle Rechte, Revision
+beziehungsweise Serverstand und Löschzustand erneut. Veraltete oder nicht mehr
+autorisierte Speicherung wird ohne automatisches Merge oder stilles
+Überschreiben abgelehnt.
+
+Schreibberechtigte Benutzer sehen Anzeigename, Beginn und erwarteten Ablauf,
+aber keine E-Mail-Adresse oder zusätzlichen Profildaten. Leser sehen während
+einer Bearbeitung ausschließlich den letzten erfolgreich gespeicherten
+Serverstand, niemals ungespeicherte Eingaben.
 
 Zur Rücknahme berechtigt sind Inhaber, Objekteigentümer mit erforderlichen
 Rechten, ausdrücklich berechtigte Benutzer oder Gruppen und
 Plattformadministratoren. Bandadministratoren dürfen fremde oder nur lesbar
 freigegebene Objekte nicht aufgrund ihrer Bandfunktion entsperren.
 Plattformadministratoren müssen zurücknehmen und anschließend selbst
-auschecken; sie dürfen einen Check-out nicht umgehen.
+auschecken; sie dürfen einen Check-out nicht umgehen. Nach administrativer
+Rücknahme verliert die frühere Sitzung ausschließlich ihre serverseitige
+Speicherberechtigung. Lokale Eingaben dürfen erhalten bleiben. Beim nächsten
+Kontakt wird der Benutzer informiert und darf sie kopieren, verwerfen oder
+einen neuen Check-out bewusst anfordern.
 
 Berechtigungen ändern, Eigentum übertragen, Löschung vormerken und Check-out
 administrativ zurücknehmen werden durch den fachlichen Bearbeitungs-Check-out
@@ -597,6 +663,26 @@ Private Offlineobjekte tragen eine technische Revisionskennung. Veraltete
 oder manuell übertragen werden. Automatisches Merge und Last-write-wins sind
 unzulässig.
 
+Wird ein privat vorbereitetes Objekt während der Offlinezeit serverseitig
+zusätzlich zum Bearbeiten freigegeben, bleibt diese Freigabe wirksam. Die
+lokale Änderung darf nicht direkt in dasselbe nun gemeinsam bearbeitbare Objekt
+synchronisiert werden. Der Server prüft die neue Check-out-Pflicht, lehnt ohne
+wirksamen Check-out ab und auditiert das Ergebnis. Der Benutzer lädt den
+aktuellen Stand, erwirbt online einen Check-out und überträgt die Änderung
+manuell oder rettet sie, soweit zulässig, als neues eigenes Objekt.
+
+Wurde das Serverobjekt während der Offlinezeit endgültig gelöscht, wird es beim
+nächsten erfolgreichen Abgleich lokal entfernt und lokale Setlistreferenzen
+werden dem aktuellen Serverstand angepasst. Eine lokale Änderung darf dieselbe
+technische Objektidentität nicht wiederherstellen. Sind Basisdaten noch lokal
+vorhanden und die Rechte ausreichend, darf der Benutzer sie bewusst als neues
+privates Objekt retten. Ablehnung und Rettungsweg werden angezeigt und
+auditiert.
+
+Neu erteilte Rechte laden Inhalte oder Overlays nicht automatisch auf ein
+Gerät. Der Benutzer muss erneut synchronisieren beziehungsweise die
+Offlinevorbereitung bewusst aktualisieren.
+
 Bei Rechteentzug bleiben vorbereitete Daten nur bis zur nächsten
 erfolgreichen Rechteprüfung oder bis zum Ablauf der maximalen Offlinesitzung
 zugänglich. Nach Ablauf der maximalen Offlinesitzung wird der Zugriff auf lokal
@@ -664,10 +750,14 @@ Berechtigungsänderungen. Persönliche Setlisteinstellungen gehören nicht zu
 dieser gemeinsamen Historie.
 
 Für einen unabhängigen Planungsstand darf eine Setlist bewusst kopiert werden.
-Die Kopie ist ein neues Setlistobjekt mit eigenem Eigentum, eigenen
-Berechtigungen und neuer eigener Historie. Sie referenziert dieselben Inhalte
-und die für den Kopierenden berechtigten Overlays; Inhalte oder Overlays werden
-nicht kopiert.
+Die Kopie ist eine neue Objektanlage. Standardmäßig wird der kopierende
+Benutzer Eigentümer. Eine Band darf mit globalem Setlist-Anlagerecht und dem
+erforderlichen bandbezogenen Vertretungs- oder Anlagerecht als Eigentümer
+gewählt werden; `Öffentlich` nur durch Plattformadministratoren. Eigentum und
+anfängliche Rechte entstehen atomar. Die Kopie besitzt eigene Berechtigungen
+und eine neue eigene Historie. Sie referenziert dieselben Inhalte und die für
+den Kopierenden berechtigten Overlays; Inhalte oder Overlays werden nicht
+kopiert.
 
 Endgültig gelöschte Inhalte werden aus dem aktuellen Stand entfernt. Innerhalb
 der Setlist-Historie entsteht als besondere Minimalform ein nicht anklickbarer,
@@ -724,7 +814,8 @@ Das Produkt muss insbesondere verhindern:
 4. auswählbare Song-, Inhalts- oder Setlistversion.
 5. Overlay ohne Inhalt oder Änderung des Basisinhalts durch Overlayaktion.
 6. festen Overlay-Typ außerhalb des Berechtigungsmodells.
-7. gekoppeltes Overlay mit abweichendem Eigentümer oder zusätzlichem Leserecht.
+7. gekoppeltes Overlay mit abweichendem Eigentümer oder direktem zusätzlichem
+   Leserecht.
 8. Aktion auf einem bestehenden Objekt ohne beide Autorisierungsebenen oder
    Anlage, die unzutreffend eine noch nicht existente Objektberechtigung
    voraussetzt.
@@ -741,12 +832,15 @@ Das Produkt muss insbesondere verhindern:
    Dublettenprüfung.
 18. Bearbeitung eines gemeinsam bearbeitbaren Objekts ohne
    sitzungsgebundenen Check-out.
-19. Umgehung eines Check-outs durch Administration oder eine zweite Sitzung.
-20. stilles Überschreiben oder automatisches Merge eines Offlinekonflikts;
+19. Umgehung eines Check-outs durch Administration oder eine zweite Sitzung,
+   stilles Speichern beziehungsweise Wiedererwerben nach Lease-Ablauf oder
+   automatische Umwandlung in einen Offline-Check-out.
+20. Wiederbelebung einer endgültig gelöschten technischen Objektidentität.
+21. stilles Überschreiben oder automatisches Merge eines Offlinekonflikts;
    ausgenommen ist ausschließlich das ausdrücklich auditierte
    Last-write-wins-Verhalten für Songs im MVP.
-21. Fortgeltung abgelaufener Offlineberechtigungen durch lokalen Zustand.
-22. auswählbaren Setlist-Snapshot oder Wiederherstellung gelöschter Inhalte aus
+22. Fortgeltung abgelaufener Offlineberechtigungen durch lokalen Zustand.
+23. auswählbaren Setlist-Snapshot oder Wiederherstellung gelöschter Inhalte aus
    Historie.
 
 Die Regeln sind technologieoffen zu verifizieren. Ihre technische Abbildung

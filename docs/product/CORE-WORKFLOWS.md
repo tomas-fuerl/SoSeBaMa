@@ -13,13 +13,14 @@ dem
 
 ## WF-001: Benutzer einladen oder Zugriff erteilen
 
-- **Ausgangszustand:** Eine Band besteht; der vorgesehene Benutzer ist noch
-  kein aktives Mitglied.
+- **Ausgangszustand:** Eine Band besteht; das globale Benutzerkonto ist aktiv,
+  aber seine Mitgliedschaft in dieser Band noch nicht aktiv.
 - **Berechtigungen:** Einladender mit dem globalen Aktionsrecht und dem
   delegierbaren bandbezogenen Verwaltungsrecht.
-- **Ablauf:** Der Einladende startet die Einladung. Nach Bestätigung wird die
-  Mitgliedschaft aktiv und der Benutzer darf bandbezogenen Gruppen zugeordnet
-  werden.
+- **Ablauf:** Der Einladende startet die Einladung. Nach Bestätigung wird nur
+  diese Bandmitgliedschaft aktiv und der Benutzer darf bandbezogenen Gruppen
+  zugeordnet werden. Das globale Konto und andere Bandmitgliedschaften bleiben
+  unverändert.
 - **Ergebnis:** Nur positive Rechte werden wirksam. Bandmitgliedschaft allein
   vermittelt kein Objektrecht; Zugriff entsteht durch eine dem Bandprinzipal
   ausdrücklich oder standardmäßig zugewiesene Objektberechtigung.
@@ -32,10 +33,11 @@ dem
 - **Ausgangszustand:** Die handelnde Person besitzt die erforderlichen Rechte
   in der eigenen Band.
 - **Berechtigungen:** Berechtigtes Bandmitglied oder Plattformadministrator.
-- **Ablauf:** Mitglieder werden eingeladen, deaktiviert oder entfernt;
-  bandbezogene Gruppen und Zuordnungen werden verwaltet und nur delegierbare
-  Rechte vergeben. Plattformadministratoren dürfen Bands anlegen, umbenennen
-  und eine Bandlöschung endgültig bestätigen.
+- **Ablauf:** Bandmitgliedschaften werden eingeladen, aktiviert, deaktiviert
+  oder entfernt; bandbezogene Gruppen und Zuordnungen werden verwaltet und nur
+  delegierbare Rechte vergeben. Plattformadministratoren dürfen zusätzlich
+  globale Benutzerkonten aktivieren, deaktivieren oder löschen sowie Bands
+  anlegen, umbenennen und eine Bandlöschung endgültig bestätigen.
 - **Ergebnis:** Änderungen wirken nur im bezeichneten Bandbereich. Bands und
   bandbezogene Gruppen tragen ausschließlich bandbezogene Rechte und
   Objektberechtigungen. Globale Gruppen, ihre global
@@ -163,10 +165,13 @@ dem
   gemeinsame Overlay-Auswahl und -Reihenfolge, Metadaten, Eigentum sowie
   relevante gemeinsame Berechtigungsänderungen werden vollständig
   historisiert. Persönliche Einstellungen gehören nicht dazu.
-- **Kopie:** Für einen unabhängigen Planungsstand entsteht bewusst ein neues
-  Setlistobjekt mit eigenem Eigentum, eigenen Berechtigungen und neuer eigener
-  Historie. Es referenziert dieselben für den Kopierenden lesbaren Inhalte und
-  berechtigten Overlays, kopiert sie aber nicht.
+- **Kopie:** Die Kopie ist eine normale neue Objektanlage. Standardmäßig wird
+  der Kopierende Eigentümer. Eine Band darf nur mit globalem Setlist-Anlagerecht
+  und passendem bandbezogenem Vertretungs- oder Anlagerecht Eigentümer werden;
+  `Öffentlich` nur administrativ. Eigentum und anfängliche Rechte entstehen
+  atomar. Das neue Objekt besitzt eigene Berechtigungen und Historie,
+  referenziert dieselben für den Kopierenden lesbaren Inhalte und berechtigten
+  Overlays, kopiert sie aber nicht.
 - **Persönlich:** Benutzer dürfen Overlays persönlich ein- oder ausblenden,
   deren Reihenfolge überschreiben und Einträge persönlich ausblenden. Dies
   benötigt keinen Setlist-Check-out.
@@ -212,14 +217,28 @@ dem
   Revisionskennung werden serverseitig geprüft. Der Server auditiert Benutzer,
   Objekt, lokale Aktionszeit, serverseitige Synchronisationszeit, technische
   datensparsame Gerätekennung und Ergebnis.
-- **Ergebnis:** Unveränderte Ausgangsrevision wird atomar gespeichert.
-  Offlineanlage wird einem sichtbaren Song zugeordnet oder erzeugt einen neuen
-  ungeprüften Song; nur dieses Ergebnis wird dem Benutzer mitgeteilt.
-- **Fehler:** Ein veralteter Stand wird abgelehnt. Der Entwurf bleibt erhalten
-  und darf verworfen, separat gesichert oder manuell übertragen werden.
-  Ablehnung, Revisionskonflikt, Rechteentzug und abgelaufene Sitzung werden mit
-  unterscheidbarer lokaler und serverseitiger Zeit auditiert, ohne eine
-  fachliche Version zu erzeugen.
+- **Ergebnis:** Eine unveränderte Ausgangsrevision wird atomar gespeichert. Bei
+  einer Offlineanlage prüft der Server die normalisierte Übereinstimmung gegen
+  alle Songs, einschließlich für den Benutzer unsichtbarer Songs. Exakter
+  Treffer von Titel und Komponist ordnet den bestehenden Song zu; ohne Treffer
+  entsteht ein neuer ungeprüfter Song. Der Benutzer erfährt nur Zuordnung oder
+  Neuanlage, niemals fremde Beziehungen.
+- **Übergang zu gemeinsamer Bearbeitung:** Wurde das private Serverobjekt
+  inzwischen zusätzlich zum Bearbeiten freigegeben, bleibt die Freigabe
+  wirksam. Die Synchronisation in dasselbe Objekt wird ohne wirksamen Check-out
+  auch bei unverändertem Serverstand abgelehnt und auditiert. Der Benutzer muss
+  den Serverstand neu laden, online auschecken und manuell übertragen oder den
+  Entwurf soweit zulässig als neues privates Objekt retten.
+- **Endgültige Löschung:** Wurde das Serverobjekt gelöscht, wird es lokal
+  entfernt und Setlistreferenzen werden aktualisiert. Dieselbe technische
+  Identität darf nicht wiederhergestellt werden; vorhandene Basisdaten dürfen
+  bei ausreichenden Rechten bewusst als neues privates Objekt gerettet werden.
+- **Fehler:** Veraltete Stände, fehlende Rechte, Check-out-Pflicht und endgültige
+  Löschung werden ohne Merge oder Überschreiben abgelehnt. Der Entwurf bleibt
+  für zulässiges Verwerfen, Retten oder manuelles Übertragen erhalten.
+  Ablehnung und Rettungsweg sowie Revisionskonflikt, Rechteentzug und
+  Sitzungsablauf werden mit unterscheidbarer lokaler und serverseitiger Zeit
+  auditiert, ohne eine fachliche Version zu erzeugen.
 
 ## WF-013: Synchronisationskonflikt behandeln
 
@@ -228,9 +247,12 @@ dem
 - **Ablauf:** Das Produkt zeigt Objekt, Fehlerklasse und zulässige nächste
   Aktionen ohne fremde Daten oder interne Details.
 - **Ergebnis:** Der Benutzer verwirft den lokalen Stand, sichert ihn soweit
-  zulässig als eigenes Objekt oder überträgt ihn manuell. Ablehnungsgrund,
-  lokale Aktionszeit, serverseitige Synchronisationszeit, technische
-  datensparsame Gerätekennung und Ergebnis werden serverseitig auditiert.
+  zulässig als neues privates Objekt oder überträgt ihn nach Neuladen und,
+  sofern nun erforderlich, bewusstem Online-Check-out manuell. Ein endgültig
+  gelöschtes Objekt wird lokal entfernt und darf unter derselben technischen
+  Identität nicht wiederbelebt werden. Ablehnungsgrund, Rettungsweg, lokale
+  Aktionszeit, serverseitige Synchronisationszeit, technische datensparsame
+  Gerätekennung und Ergebnis werden serverseitig auditiert.
 - **Grenze:** Es gibt kein automatisches Zusammenführen, kein stilles
   Überschreiben und kein Last-write-wins für private Offlineobjekte.
 
@@ -264,9 +286,13 @@ dem
   kontrolliert entfernt.
 - **Rechteentzug oder Sitzungsablauf:** Spätestens mit Ablauf der maximalen
   Offlinesitzung werden geschützte Basisinhalte und Overlays gesperrt; erneute
-  Onlineanmeldung oder Rechteprüfung ist nötig. Minimale Setlistinformationen
-  und klar getrennte eigene Entwürfe dürfen verbleiben. Entwürfe verlängern
-  keine Rechte und werden nicht automatisch synchronisiert.
+  Onlineanmeldung oder Rechteprüfung ist nötig. Endgültig gelöschte Objekte
+  werden beim nächsten erfolgreichen Abgleich lokal entfernt und
+  Setlistreferenzen aktualisiert. Neu erteilte Rechte lösen keinen automatischen
+  Download aus; Offlinevorbereitung oder Synchronisation muss bewusst
+  aktualisiert werden. Minimale Setlistinformationen und klar getrennte eigene
+  Entwürfe dürfen verbleiben. Entwürfe verlängern keine Rechte und werden nicht
+  automatisch synchronisiert.
 - **Security:** Lokale Daten müssen verschlüsselt gespeichert werden. Das
   Verfahren bleibt Architekturentscheidung.
 
@@ -296,9 +322,15 @@ dem
 - **Eigentumsübertragung:** Ein berechtigter Benutzer wählt aktiven Benutzer
   oder bestehende, nicht vorgemerkte Band. Annahme ist nicht erforderlich;
   alle ausdrücklich vergebenen Objektberechtigungen und Sonderrechte bleiben,
-  nur automatische Eigentümerrechte wechseln. Gekoppelte Overlays folgen dem
-  Inhalt atomar. `Öffentlich` ist nur administrativ zulässig.
-- **Benutzerlöschung:** Vorher werden Anzahl betroffener Eigentumsobjekte,
+  nur automatische Eigentümerrechte wechseln. Eine neue Eigentümerband erhält
+  bei Inhalt, Setlist oder nicht gekoppeltem Overlay atomar ihr normales
+  `Anzeigen`; gekoppelte Overlays folgen dem Inhalt ohne separates Bandrecht und
+  erben dessen Leserechte. `Öffentlich` ist nur administrativ zulässig.
+- **Deaktivierung:** Ein deaktiviertes Benutzerkonto bleibt Eigentümer; seine
+  Beziehungen werden nach Reaktivierung wieder wirksam. Es kann keine Rechte
+  ausüben und kein neues Übertragungsziel sein.
+- **Benutzerlöschung:** Ausschließlich ein Plattformadministrator löscht ein
+  globales Konto. Vorher werden Anzahl betroffener Eigentumsobjekte,
   drohende Eigentümerlosigkeit, Fortbestand anderer Rechte, ausschließlich
   administrative Änderbarkeit danach und die Möglichkeit vorheriger
   Übertragung angezeigt. Die Folgen müssen ausdrücklich bestätigt werden.
@@ -325,19 +357,26 @@ dem
   bei Gruppen- oder Bandschreibrecht gilt dies unabhängig von Mitgliederzahl.
 - **Ablauf:** Beim Öffnen des Bearbeitungsmodus wird für die Sitzung ein
   Check-out vergeben. Er sperrt bei Inhalten PDF beziehungsweise Basisinhalt
-  und alle Inhaltsmetadaten. Nur die aktive verbundene Sitzung verlängert die
-  global konfigurierte Lease. Speichern beendet sie nicht.
+  und alle Inhaltsmetadaten, nicht aber eigenständige Overlays. Check-outs für
+  Inhalt, Overlay und Setlist sind getrennt; ein gemeinsam bearbeitbares Overlay
+  benötigt seine eigene Reservierung. Nur die aktive verbundene Sitzung
+  verlängert die global konfigurierte Lease. Speichern beendet sie nicht.
+  Leser sehen ausschließlich den letzten gespeicherten Serverstand.
 - **Eigene Mehrfachsitzungen:** Eine zweite Sitzung desselben Benutzers darf die
   Reservierung nicht mitbenutzen. Bewusste Übernahme invalidiert die erste
   Sitzung; diese darf lokale Eingaben nur kopieren oder verwerfen.
 - **Anzeige:** Schreibberechtigte sehen Anzeigename, Beginn und erwarteten
-  Ablauf, keine E-Mail-Adresse oder weiteren Profildaten.
+  Ablauf, keine E-Mail-Adresse oder weiteren Profildaten. Die aktive Sitzung
+  wird vor Lease-Ablauf verständlich gewarnt.
 - **Ende:** Bewusstes Verlassen, Abbrechen, ausdrückliches Ende,
   administrative Rücknahme, Rechteentzug, Löschvormerkung oder Lease-Ablauf.
 - **Rücknahme:** Inhaber, Eigentümer mit Rechten, ausdrücklich Berechtigte und
   Plattformadministratoren dürfen zurücknehmen. Bandverwaltung allein genügt
   nicht. Plattformadministratoren dürfen nicht umgehen, sondern müssen danach
-  selbst auschecken.
+  selbst auschecken. Die frühere Sitzung verliert nur ihre serverseitige
+  Speicherberechtigung; lokale Eingaben bleiben bis zum nächsten Kontakt
+  erhalten. Dann wird der Benutzer informiert und kann kopieren, verwerfen oder
+  bewusst einen neuen Check-out anfordern.
 - **Administrative Aktionen:** Berechtigungsänderung, Eigentumsübertragung,
   Löschvormerkung und Rücknahme bleiben mit atomarer serverseitiger Prüfung und
   Audit zulässig. Der Check-out bleibt nach Rechte- oder Eigentumsänderung nur
@@ -347,6 +386,12 @@ dem
   neu geladen und ausgecheckt werden. Wird es wieder allein bearbeitbar, bleibt
   die Sperre bis zum Verlassen bestehen und entfällt erst für künftige
   Bearbeitungen.
+- **Verbindungs- oder Lease-Verlust:** Netzwerkverlust erzeugt keinen
+  Offline-Check-out. Ungespeicherte Eingaben dürfen als lokaler Entwurf bleiben.
+  Bei Wiederverbindung prüft der Server Check-out-Kennung und Sitzung, Lease,
+  Rechte, Revision beziehungsweise Serverstand und Löschstatus. Nach Ablauf darf
+  der alte Client weder still speichern noch still neu reservieren; veraltete
+  oder unberechtigte Versuche werden ohne Merge oder Überschreiben abgelehnt.
 
 ## WF-019: Eigenes Overlay zur Übernahme einreichen
 
@@ -394,7 +439,8 @@ dem
 - **Ablauf online:** Benutzer wählt `Für Offline-Bearbeitung auschecken`.
   Rechte, Löschstatus und konkurrierender Check-out werden geprüft; Objekt und
   technische Revisionskennung werden lokal vorbereitet und eine feste
-  Offline-Lease vergeben.
+  Offline-Lease vergeben. Ein gewöhnlicher Online-Check-out wird durch
+  Netzwerkverlust niemals in diesen Offline-Check-out umgewandelt.
 - **Offline:** Die Lease kann nicht verlängert werden, darf die maximale
   Offlinesitzung nicht überschreiten, blockiert andere Bearbeiter und erlaubt
   weiter Lesen. Nach Lease-Ablauf darf der klar gekennzeichnete lokale Entwurf
@@ -402,8 +448,9 @@ dem
   maximalen Offlinesitzung sind geschützte Serverinhalte bis zur erneuten
   Onlineprüfung gesperrt; Entwürfe verlängern die Berechtigung nicht.
 - **Synchronisation:** Wirksame Lease plus unveränderte Revision speichert
-  atomar. Bei abgelaufener Lease und unverändertem freien Objekt wird ein neuer
-  Check-out angeboten. Bei Änderung oder anderer Sperre wird abgelehnt.
+  atomar. Bei abgelaufener Lease und unverändertem freien Objekt darf der
+  Benutzer bewusst einen neuen Check-out anfordern; eine stille Neuerteilung
+  ist unzulässig. Bei Änderung oder anderer Sperre wird abgelehnt.
 - **Ergebnis:** Nach Erfolg endet der Offline-Check-out oder wird in einen
   Online-Check-out derselben Sitzung überführt. Administrative Rücknahme wird
   bei Wiederverbindung wirksam. Der Server auditiert lokale Aktionszeit,
