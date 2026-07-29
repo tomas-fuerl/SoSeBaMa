@@ -45,10 +45,14 @@ ungeprüfte direkte Standardfreigabe durch normale Benutzer sind ausgeschlossen.
 
 **Status:** Entschieden; das frühere Rollen-/Direktrechtemodell ist ersetzt.
 
-Normale Benutzer benötigen für geschützte Aktionen globales Aktionsrecht und
-Objektberechtigung. Plattformadministratoren sind fachliche Superuser. Rechte
-werden Benutzern oder globalen beziehungsweise bandbezogenen Gruppen positiv
-zugewiesen und additiv ausgewertet; negative Rechte und
+Normale Benutzer benötigen für Aktionen auf bestehenden Objekten globales
+Aktionsrecht und Objektberechtigung. Bei Anlagen existiert noch keine
+Objektberechtigung; globales Anlagerecht, Eigentümerfähigkeit und gegebenenfalls
+Bandvertretung werden geprüft, Eigentum und anfängliche Rechte entstehen
+atomar. Berechtigungsanfragen benötigen keine Zielberechtigung;
+Songänderungsanträge benötigen Sichtbarkeit und das globale Sonderrecht, aber
+kein Song-Bearbeitungsrecht. Plattformadministratoren sind fachliche
+Superuser. Rechte werden positiv und additiv ausgewertet; negative Rechte und
 Gruppenverschachtelung existieren nicht.
 
 Objektberechtigungen sind Anzeigen, Bearbeiten, Löschen, Berechtigungen
@@ -57,11 +61,20 @@ Anzeigen; Löschen beinhaltet global und objektbezogen Bearbeiten und Anzeigen;
 die beiden administrativen Rechte beinhalten jeweils Anzeigen, aber
 untereinander keine weiteren Rechte.
 
-Eine Band ist Eigentums- und Berechtigungsprinzipal. Berechtigte Bandmitglieder
-verwalten Mitglieder, bandbezogene Gruppen und delegierbare Rechte nur in der
-eigenen Band. Plattformadministratoren verwalten globale Gruppen, globale
-Rechte und Systemgruppen. Ausdrückliche Freigaben über Bandgrenzen sind
-zulässig und verändern Eigentum nicht.
+Globale Aktionsrechte dürfen nur aktiven Benutzern direkt oder globalen
+Gruppen zugewiesen werden. Bands und bandbezogene Gruppen tragen nur
+bandbezogene Rechte und Objektberechtigungen. Eine Band ist Eigentums- und
+Berechtigungsprinzipal. Ihre automatischen Eigentümerrechte werden nicht an
+Mitglieder vererbt; der Bandprinzipal erhält bei Objektanlage standardmäßig die
+normale Berechtigung Anzeigen. Höhere Aktionen benötigen ausdrückliche
+Objekt-, globale und bandbezogene Vertretungsrechte. Plattformadministratoren
+verwalten globale Rechte und global rechtevermittelnde Gruppenmitgliedschaften.
+
+Die geschützte globale Systemgruppe `Alle Benutzer` enthält jeden aktiven
+Benutzer und den verbindlichen Basissatz für sichtbare Objekte, eigene Anlagen,
+Setlistbefüllung und eigene Anfragen; sie ist kein Eigentümer und von der
+objektbezogenen Systemband `Öffentlich` getrennt. Ausdrückliche Freigaben über
+Bandgrenzen sind zulässig und verändern Eigentum nicht.
 
 ### OQ-005: Konkreter erster MVP-Zuschnitt
 
@@ -69,7 +82,8 @@ zulässig und verändern Eigentum nicht.
 
 Der MVP ist ein früh nutzbarer PDF-zentrierter Produktstand. Er umfasst:
 
-- Benutzer, Bands, Gruppen und Plattformadministration,
+- Benutzer, Bands, Gruppen, die Systemgruppe `Alle Benutzer` und
+  Plattformadministration,
 - die Systemband `Öffentlich`,
 - globale und objektbezogene Berechtigungen,
 - Eigentum, Eigentümerlosigkeit, Löschung und Wiederherstellung,
@@ -103,20 +117,27 @@ bleiben ausgeschlossen.
 **Status:** Entschieden mit später technisch zu belegenden Konfigurationswerten.
 
 Maximale Offlinesitzung, Online-Inaktivitätsfrist und Offline-Lease sind global
-konfigurierbar. Online- und Offline-Frist sind getrennt. Eine Offline-Lease darf
-die maximale Offlinesitzung nicht überschreiten und kann offline nicht
-verlängert werden. Konkrete Werte werden erst mit Architektur und
-Risikobewertung festgelegt.
+konfigurierbar. Online- und Offline-Frist sind getrennt. Nach Ablauf der
+maximalen Offlinesitzung sind geschützte lokale Basisinhalte und Overlays bis
+zur erneuten Onlineanmeldung beziehungsweise Rechteprüfung gesperrt. Minimale
+Setlistinformationen und klar getrennte eigene Entwürfe dürfen bleiben; sie
+werden nicht automatisch synchronisiert und verlängern keine Berechtigung.
+
+Eine Offline-Lease darf die maximale Offlinesitzung nicht überschreiten und
+kann offline nicht verlängert werden. Nach Lease-Ablauf darf ein lokaler
+Entwurf fortgeführt werden, besitzt aber keine Serverreservierung. Konkrete
+Werte werden erst mit Architektur und Risikobewertung festgelegt.
 
 ### OQ-008: Lokale Daten nach Rechteentzug und Offlinekonflikte
 
 **Status:** Entschieden.
 
-Vorbereitete Daten bleiben bis zur nächsten erfolgreichen Rechteprüfung offline
-lesbar. Danach werden Basisinhalt und Overlays entfernt; minimale
-Setlistinformationen dürfen verbleiben. Abmeldung warnt vor dem Verlust nicht
-synchronisierter Entwürfe, erlaubt vorherige Synchronisation und entfernt
-lokale Daten sowie Sitzungsschlüssel kontrolliert.
+Vorbereitete geschützte Daten bleiben höchstens bis zur nächsten erfolgreichen
+Rechteprüfung oder zum Ablauf der maximalen Offlinesitzung lesbar. Danach
+werden Basisinhalt und Overlays gesperrt beziehungsweise entfernt; minimale
+Setlistinformationen dürfen verbleiben. Eigene Entwürfe dürfen nur klar
+getrennt erhalten bleiben. Abmeldung warnt vor Verlust, erlaubt vorherige
+Synchronisation und entfernt lokale Daten sowie Sitzungsschlüssel kontrolliert.
 
 Private Offlineobjekte verwenden technische Revisionskennungen. Veraltete
 Änderungen werden abgelehnt und dürfen verworfen, separat gesichert oder
@@ -131,8 +152,9 @@ TST darf extern erreichbar sein. Geschützte detaillierte Logs, Traces,
 Statusendpunkte, Backend-API-Zugriff und definierte Test-/Prüfschnittstellen
 sind zulässig, wenn nur benannte technische Identitäten mit eigener
 Authentifizierung und minimalen Rechten zugreifen, kein pauschaler
-Autorisierungs-Bypass besteht, keine Secrets offengelegt werden und Zugriffe
-auditiert sind. Diese Wege müssen in PRD technisch fehlen oder nachweislich
+Autorisierungs-Bypass besteht, keine Secrets offengelegt werden, Zugriffe
+auditiert sind und widerrufen werden können. Diese Wege müssen in PRD technisch
+fehlen oder nachweislich
 unerreichbar sein. PRD besitzt keine Debugports, -tunnel oder -schnittstellen.
 
 ### OQ-010: Unterstützte Geräte und Browser
@@ -175,10 +197,12 @@ müssen dokumentiert und begründet sein.
 **Status:** Entschieden und durch das aktuelle Modell präzisiert.
 
 Ein Song ist das plattformweite normalisierte Metadatenobjekt. Ein Inhalt gehört
-genau zu einem Song und besitzt genau einen aktuellen Basisinhalt. Songs und
-Inhalte haben keine auswählbaren Versionen oder Revisionen. Songänderungen
-gelten global; bei Songs existiert nur das nicht editierbare Audit, keine
-fachliche Änderungshistorie. Inhalte und Setlists zeigen aktuelle
+genau zu einem Song und besitzt genau einen aktuellen Basisinhalt. Normale
+Benutzer sehen Songs im Katalog, in Suche und Inhaltsanlage nur über mindestens
+einen lesbaren Inhalt; die minimale Setlistanzeige erweitert diese Sichtbarkeit
+nicht. Songs und Inhalte haben keine auswählbaren Versionen oder Revisionen.
+Songänderungen gelten global; bei Songs existiert nur das nicht editierbare
+Audit, keine fachliche Änderungshistorie. Inhalte und Setlists zeigen aktuelle
 Songmetadaten.
 
 ### OQ-013: Setlistreferenzen und Historie
@@ -186,11 +210,21 @@ Songmetadaten.
 **Status:** Entschieden.
 
 Setlists referenzieren aktuellen Basisinhalt, aktuelle Songmetadaten und aktuell
-berechtigte Overlays. Es gibt keine Snapshots oder eingefrorenen
-Auftrittsstände. Nach endgültiger Inhaltslöschung wird die aktuelle Referenz
-entfernt und nur Zeitpunkt, frühere Position, letzter Songtitel, letzter
-Komponist und der nicht anklickbare Hinweis `Inhalt endgültig gelöscht`
-gespeichert.
+berechtigte Overlays. Sie besitzen genau einen aktuellen Stand; auswählbare
+Versionen, Snapshots oder eingefrorene Auftrittsstände existieren nicht.
+Fachlich relevante gemeinsame Änderungen an Einträgen, Reihenfolge, gemeinsamer
+Overlay-Auswahl und -Reihenfolge, Metadaten, Eigentum und gemeinsamen
+Berechtigungen werden vollständig historisiert; persönliche Einstellungen
+nicht.
+
+Für einen unabhängigen Planungsstand darf eine Setlist bewusst als neues Objekt
+mit eigenem Eigentum, eigenen Berechtigungen und neuer Historie kopiert werden.
+Sie referenziert dieselben berechtigten Inhalte und Overlays, kopiert sie aber
+nicht. Nach endgültiger Inhaltslöschung wird die aktuelle Referenz entfernt und
+innerhalb der vollständigen Historie nur Zeitpunkt, frühere Position, letzter
+Songtitel, letzter Komponist und der nicht anklickbare Hinweis `Inhalt
+endgültig gelöscht` gespeichert; Datei, Basisinhalt, vollständige Metadaten,
+Berechtigungen, früherer Benutzereigentümer und Overlays fehlen.
 
 ### OQ-014: Export
 
@@ -251,8 +285,17 @@ Architekturentscheidung und muss in TST verifiziert werden.
 - fachliche Historie vorhandener Objekte: solange das Objekt besteht,
 - minimale Auditnachweise nach endgültiger Objektlöschung: 90 Tage.
 
-Security-Audit speichert keine Basisinhalte, Dateien oder unnötigen
-Inhaltsdaten. Auditexport gehört nicht zum MVP.
+Jedes Ereignis enthält mindestens Ereignisart, Akteur, serverseitigen
+Zeitpunkt, Gegenstand beziehungsweise technische Objektkennung, Ergebnis und
+soweit zulässig fachlichen Bezug. Song-, Eigentums-, Check-out- und
+Offlineereignisse enthalten die festgelegten Zusatzfelder einschließlich
+unterscheidbarer lokaler Aktions- und serverseitiger Synchronisationszeit sowie
+technischer datensparsamer Gerätekennung. Automatische endgültige Löschung und
+Ausführungsfehler werden auditiert.
+
+Audit speichert keine Secrets, Basisinhalte, Dateien, unnötigen Inhalts- oder
+Personendaten und keine auswählbaren alten Stände. Auditexport gehört nicht zum
+MVP.
 
 ### OQ-020: MFA
 

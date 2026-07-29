@@ -16,14 +16,27 @@ deaktiviert oder gelöscht.
 
 ### Mitglied
 
-Ein aktiver Benutzer mit Mitgliedschaft in einer Band. Mitgliedschaft allein
-vermittelt keine Objektberechtigung.
+Ein aktiver Benutzer mit Mitgliedschaft in einer Band. Bandmitgliedschaft
+allein vermittelt kein Objektrecht. Zugriff entsteht durch eine dem
+Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
+Objektberechtigung.
 
 ### Gruppe
 
 Ein globaler oder genau einem Bandbereich zugeordneter
 Berechtigungsprinzipal. Gruppen dürfen nicht verschachtelt werden und sind keine
-Eigentümer. Eine bandbezogene Gruppe darf nur Mitglieder ihrer Band enthalten.
+Eigentümer. Eine bandbezogene Gruppe darf nur Mitglieder ihrer Band enthalten
+und ausschließlich bandbezogene Rechte sowie Objektberechtigungen tragen.
+Globale Aktionsrechte dürfen nur aktiven Benutzern direkt oder globalen Gruppen
+zugewiesen werden.
+
+### Systemgruppe `Alle Benutzer`
+
+Geschützte globale Systemgruppe, der jeder aktive Benutzer automatisch
+angehört. Nur Plattformadministratoren verwalten ihren verbindlichen Basissatz
+globaler Funktionsrechte. Deaktivierte oder gelöschte Benutzer verlieren die
+wirksamen Rechte; die Gruppe ist kein Eigentümer. Sie ist von der Systemband
+`Öffentlich` getrennt.
 
 ### Band
 
@@ -53,8 +66,12 @@ Anzeigerecht an einem Inhalt.
 
 ### Globales Aktionsrecht
 
-Die erste notwendige Autorisierungsebene für eine geschützte Aktion. Normale
-Benutzer benötigen zusätzlich eine passende Objektberechtigung.
+Funktionsrecht für eine Aktionsart. Bei Aktionen auf bestehenden Objekten
+benötigen normale Benutzer zusätzlich eine passende Objektberechtigung. Bei
+einer Objektanlage existiert diese noch nicht; Eigentum und anfängliche Rechte
+entstehen atomar. Berechtigungs- und Songänderungsanträge folgen ihren
+festgelegten Sonderregeln. Globale Aktionsrechte dürfen nur direkt aktiven
+Benutzern oder globalen Gruppen zugewiesen werden.
 
 ### Objektberechtigung
 
@@ -75,17 +92,19 @@ existieren nicht.
 
 ### Fachlicher Superuserstatus
 
-Ausnahme von der Regel, dass globales Aktionsrecht und Objektberechtigung
-gemeinsam erforderlich sind. Er gilt ausschließlich für Mitglieder der
-Systemgruppe `Plattformadministratoren`.
+Ausnahme von den für normale Benutzer je Aktionsart geltenden
+Autorisierungsregeln. Er gilt ausschließlich für Mitglieder der Systemgruppe
+`Plattformadministratoren`.
 
 ### Berechtigungsanfrage
 
 In-App-Antrag auf Anzeigen oder Bearbeiten für den Antragsteller selbst oder,
-mit dem erforderlichen bandbezogenen Recht, für eine Band. Bearbeiter benötigen
-globales Verwaltungsrecht und `Berechtigungen verwalten` am Objekt. Fehlt ein
-solcher Empfänger oder ist das Objekt eigentümerlos, ist die
-Plattformadministration zuständig.
+mit `Berechtigung für Band anfragen`, für eine Band. Er setzt keine bestehende
+Zielberechtigung voraus. Bearbeiter benötigen globales Verwaltungsrecht und
+`Berechtigungen verwalten` am Objekt. Fehlt ein solcher Empfänger oder ist das
+Objekt eigentümerlos, ist die Plattformadministration zuständig. Offline darf
+nur ein Entwurf `noch nicht gesendet` entstehen; `offen` wird er erst nach
+erfolgreicher serverseitiger Prüfung und Übermittlung.
 
 ## Songs und Inhalte
 
@@ -93,7 +112,17 @@ Plattformadministration zuständig.
 
 Ein plattformweites normalisiertes Metadatenobjekt eines Musikstücks. Es ist
 weder PDF noch Text- oder Chord-Inhalt. Es besitzt Titel, Komponist,
-Gemeinfreiheitsstatus und Prüfstatus.
+Gemeinfreiheitsstatus und Prüfstatus. Ein normaler Benutzer sieht es im
+allgemeinen Katalog, in der Suche oder Inhaltsanlage nur, wenn er mindestens
+einen zugehörigen Inhalt lesen darf; Plattformadministratoren sehen alle
+Songs.
+
+### Sichtbarer Song
+
+Song, zu dem ein normaler Benutzer mindestens einen Inhalt aufgrund von
+Eigentum, direkter Benutzer-, Gruppen-, Band- oder `Öffentlich`-Berechtigung
+lesen darf. Die minimale Anzeige in einer sichtbaren Setlist macht einen Song
+nicht allgemein sichtbar oder suchbar.
 
 ### Songmetadaten
 
@@ -115,9 +144,11 @@ Identität.
 
 ### Änderungsantrag für Songmetadaten
 
-Antrag eines normalen Benutzers mit dem globalen Recht
-`Songänderung beantragen`. Nur Plattformadministratoren dürfen den Antrag
-genehmigen oder ablehnen und bestehende Songmetadaten ändern.
+Antrag eines normalen Benutzers mit dem globalen Sonderrecht
+`Songänderung beantragen` für einen sichtbaren Song. Eine
+Objektbearbeitungsberechtigung am Song ist nicht erforderlich. Nur
+Plattformadministratoren dürfen den Antrag genehmigen oder ablehnen und
+bestehende Songmetadaten ändern.
 
 ### Inhalt
 
@@ -142,7 +173,9 @@ Inhaltsmetadaten bleiben getrennt.
 ### Gemeinfreiheitsstatus
 
 Songfeld mit den Werten `Unbekannt`, `Gemeinfrei` oder `Nicht gemeinfrei`. Es
-gehört nicht zur automatischen Songidentität.
+gehört nicht zur automatischen Songidentität. Weicht es bei ansonsten exakter
+normalisierter Zuordnung ab, bleibt der bestehende Status unverändert und die
+Abweichung wird als administrativer Prüfhinweis erfasst.
 
 ### Prüfstatus
 
@@ -168,9 +201,11 @@ Rechte; Mitglieder erhalten sie nicht automatisch.
 ### Eigentumsübertragung
 
 Bewusster Wechsel zu einem aktiven Benutzer oder einer bestehenden, nicht zur
-Löschung vorgemerkten Band. Eine Annahme ist nicht erforderlich; bestehende
-Anzeige- und Bearbeitungsberechtigungen bleiben unverändert. Nur
-Plattformadministratoren dürfen an `Öffentlich` übertragen.
+Löschung vorgemerkten Band. Eine Annahme ist nicht erforderlich. Alle
+ausdrücklich vergebenen Objektberechtigungen und Sonderrechte bleiben
+unverändert; nur die automatischen Eigentümerrechte wechseln. Gekoppelte
+Overlays folgen einem Inhalt atomar. Nur Plattformadministratoren dürfen an
+`Öffentlich` übertragen.
 
 ### Eigentümerlos
 
@@ -182,14 +217,23 @@ Plattformadministratoren dürfen Eigentum und Berechtigungen ändern.
 
 Vom Zustand `Eigentümerlos` getrennte Markierung mit global konfigurierbarer
 Wiederherstellungsfrist. Lesen bleibt erlaubt; Bearbeiten, neue Freigaben und
-neue Setlistreferenzen sind gesperrt. Nur Plattformadministratoren dürfen
-wiederherstellen oder endgültig löschen.
+neue Setlistreferenzen sind gesperrt. Plattformadministratoren dürfen vor
+Ablauf wiederherstellen oder sofort endgültig löschen; nach Ablauf beginnt die
+automatische endgültige Löschung.
+
+### Ausstehende endgültige Löschung
+
+Sichtbarer Zustand nach Ablauf der fachlichen Wiederherstellungsfrist, solange
+die automatische technische Entfernung noch nicht abgeschlossen ist. Eine
+Verzögerung verlängert die Wiederherstellbarkeit nicht; Fehler bleiben sichtbar
+und erneut behandelbar.
 
 ### Endgültige Löschung
 
-Nicht wiederherstellbare Entfernung nach administrativer Bestätigung. Bei
-Inhalten werden Overlays gelöscht und aktuelle Setlistreferenzen atomar
-entfernt. Betroffene Anzahlen werden vorher angezeigt.
+Nicht wiederherstellbare automatische Entfernung nach Fristablauf oder sofortige
+administrative Entfernung. Bei Inhalten werden Overlays gelöscht, aktuelle
+Setlistreferenzen atomar entfernt und minimale Historienhinweise erzeugt.
+Betroffene Anzahlen werden vorher angezeigt.
 
 ## Overlays
 
@@ -210,13 +254,24 @@ Overlay mit stets demselben Eigentümer wie sein Inhalt. Es erbt dynamisch alle
 Leseberechtigungen des Inhalts, aber keine Schreib-, Lösch-, Verwaltungs- oder
 Übertragungsrechte. Es darf ausschließlich zusätzliche Bearbeitungsrechte für
 bereits am Basisinhalt Leseberechtigte erhalten und weder entkoppelt noch
-separat übertragen werden.
+separat übertragen werden. Bei direkter gekoppelter Anlage erhält der
+Ersteller atomar ein entziehbares zusätzliches Bearbeitungsrecht, sofern er
+nicht bereits Eigentümer ist.
+
+### Temporärer Overlay-Prüfzugriff
+
+Zweckgebundener Lesezugriff, der atomar mit der Einreichung eines bis dahin
+privaten Overlays ausschließlich für zuständige Prüfer entsteht. Er vermittelt
+kein reguläres Bearbeiten und endet bei Ablehnung oder Rücknahme; bei
+Genehmigung wird er durch die endgültigen Rechte ersetzt.
 
 ### Overlay-Übernahme
 
 Umwandlung desselben eigenen Overlays in ein dynamisch gekoppeltes Overlay nach
 Genehmigung. Das Eigentum geht an den Inhaltseigentümer und das bisherige
-persönliche Schreibrecht entfällt. Bei Ablehnung bleibt das Overlay unverändert.
+persönliche Schreibrecht entfällt. Anders als bei direkter gekoppelter Anlage
+entsteht kein automatisches Ersteller-Schreibrecht. Bei Ablehnung bleibt das
+Overlay privat.
 
 ### Overlay-Auswahl
 
@@ -235,9 +290,17 @@ Verschieben und Löschen.
 ### Setlist
 
 Eigenständiges berechtigtes Planungsobjekt mit Benutzer oder Band als
-Eigentümer. Sie referenziert aktuelle Basisinhalte, aktuelle Songmetadaten und
-aktuell berechtigte Overlays. Snapshots oder eingefrorene Auftrittsstände
-existieren nicht.
+Eigentümer und genau einem aktuellen Stand. Sie referenziert aktuelle
+Basisinhalte, aktuelle Songmetadaten und aktuell berechtigte Overlays.
+Auswählbare Versionen, Snapshots oder eingefrorene Auftrittsstände existieren
+nicht; relevante gemeinsame Änderungen werden vollständig historisiert.
+
+### Setlistkopie
+
+Bewusst angelegtes neues Setlistobjekt für einen unabhängigen Planungsstand mit
+eigenem Eigentum, eigenen Berechtigungen und neuer Historie. Es übernimmt nur
+Referenzen auf dieselben lesbaren Inhalte und berechtigten Overlays, nicht die
+Inhalte oder Overlays selbst.
 
 ### Setlisteintrag
 
@@ -260,8 +323,16 @@ Mitgliederzahl.
 ### Check-out
 
 Sitzungsgebundene Reservierung eines gemeinsam bearbeitbaren Inhalts, Overlays
-oder einer Setlist. Songs benötigen keinen Check-out. Speichern beendet den
-Check-out nicht, solange die Bearbeitungssitzung geöffnet bleibt.
+oder einer Setlist. Beim Inhalt umfasst sie Basisinhalt beziehungsweise PDF und
+alle Inhaltsmetadaten, nicht jedoch eigene, nicht vererbende Overlayobjekte oder
+administrative Eigentums-, Berechtigungs-, Lösch- und Rücknahmeaktionen. Eine
+zweite Sitzung desselben Benutzers darf die Reservierung nicht mitbenutzen.
+Wird ein Objekt während der Bearbeitung gemeinsam bearbeitbar, erhält eine
+eindeutig bekannte aktive Sitzung atomar die Reservierung; andernfalls ist vor
+Speichern ein neuer Check-out nötig. Wird es wieder allein bearbeitbar, bleibt
+die bestehende Sperre bis zum Sitzungsende erhalten. Songs benötigen keinen
+Check-out. Speichern beendet den Check-out nicht, solange die
+Bearbeitungssitzung geöffnet bleibt.
 
 ### Online-Lease
 
@@ -279,11 +350,21 @@ nicht offline verlängerbarer Lease.
 Nicht auswählbare technische Konfliktkennung für Synchronisation. Sie ist keine
 fachliche Version oder Revision.
 
+### Maximale Offlinesitzung
+
+Global begrenzter Zeitraum, nach dessen Ablauf geschützte lokale Basisinhalte
+und Overlays bis zur erneuten Onlineanmeldung beziehungsweise Rechteprüfung
+gesperrt werden. Minimale Setlistinformationen und klar getrennte eigene,
+nicht synchronisierte Entwürfe dürfen verbleiben; lokaler Zustand verlängert
+keine Berechtigung.
+
 ### Nicht synchronisierter Entwurf
 
-Lokale Änderung, die wegen abgelaufener Lease oder Konflikt nicht still
+Klar von leseberechtigten Serverinhalten getrennte lokale Änderung, die wegen
+abgelaufener Sitzung oder Lease beziehungsweise Konflikt nicht automatisch
 übernommen werden darf. Sie kann verworfen, manuell übertragen oder soweit
-zulässig als neues eigenes Objekt gespeichert werden.
+zulässig als neues eigenes Objekt gespeichert werden. Nach Ablauf einer
+Offline-Lease besitzt sie keine Serverreservierung.
 
 ### Offlinebereitstellung
 
@@ -294,9 +375,13 @@ Export.
 
 ### Audit
 
-Nicht editierbarer, datensparsamer Nachweis administrativer und
-sicherheitsrelevanter Ereignisse. Plattformadministratoren erhalten eine
-durchsuchbare Ansicht; normale Benutzer sehen keine globalen Security-Ereignisse.
+Nicht editierbarer, datensparsamer Nachweis mit mindestens Ereignisart, Akteur,
+serverseitigem Zeitpunkt, Gegenstand oder technischer Objektkennung und
+Ergebnis sowie zulässigem fachlichem Bezug. Für Song-, Eigentums-, Check-out-
+und Offlineereignisse gelten die zusätzlichen festgelegten Kontextfelder.
+Plattformadministratoren erhalten eine durchsuchbare Ansicht; normale Benutzer
+sehen keine globalen Security-Ereignisse. Audit erzeugt keine fachliche
+Versionierung.
 
 ### Fachliche Änderungshistorie
 

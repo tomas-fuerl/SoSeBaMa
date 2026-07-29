@@ -9,8 +9,9 @@ Anwendungsimplementierung sind nicht festgelegt.
 
 Der beschlossene erste Produktstand ist PDF-zentriert. Das Fachmodell verwendet
 plattformweite Songs, aktuelle Basisinhalte, normale berechtigte Overlays,
-globale Aktionsrechte und Objektberechtigungen. Breite Lesbarkeit für
-angemeldete Benutzer erfolgt über die geschützte Systemband `Öffentlich`, nicht
+globale Aktionsrechte und Objektberechtigungen. Die globale Systemgruppe `Alle
+Benutzer` vermittelt den Basissatz aktiver Benutzer; breite objektbezogene
+Lesbarkeit erfolgt getrennt über die geschützte Systemband `Öffentlich`, nicht
 über anonymen Zugriff oder einen eigenständigen Sichtbarkeitszustand.
 
 ## Verbindliche Projektgrundlage

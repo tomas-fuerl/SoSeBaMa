@@ -59,7 +59,7 @@ müssen:
 - eine eigene Authentifizierung und minimale Rechte gelten,
 - ein pauschaler Autorisierungs-Bypass ausgeschlossen sein,
 - Secrets verborgen bleiben,
-- Zugriffe auditiert werden,
+- Zugriffe auditiert und widerrufbar sein,
 - dieselben Wege in PRD technisch fehlen oder nachweislich unerreichbar sein.
 
 PRD besitzt keine Debugschnittstelle, keinen Debugport und keinen Debug-Tunnel.

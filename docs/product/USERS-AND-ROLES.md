@@ -16,18 +16,26 @@ Speicherverfahren fest.
 
 ## Autorisierungsregel
 
-Eine geschützte Aktion ist für normale Benutzer nur erlaubt, wenn beide
-notwendigen Ebenen positiv erfüllt sind:
-
-1. globales Aktionsrecht und
-2. Berechtigung am konkreten Objekt.
-
 Plattformadministratoren besitzen fachlichen Superuserstatus und sind die
-ausdrückliche Ausnahme.
+ausdrückliche Ausnahme. Für normale Benutzer hängt die Prüfung von der
+Aktionsart ab:
 
-Rechte dürfen Benutzern oder Gruppen zugewiesen werden. Positive Zuweisungen
-werden additiv ausgewertet; der höchste positive Autorisierungsstatus gilt.
-Negative oder verweigernde Rechte existieren nicht.
+- Auf einem bestehenden Objekt sind das globale Aktionsrecht und die passende
+  Objektberechtigung erforderlich.
+- Bei einer Objektanlage existiert noch keine Objektberechtigung. Erforderlich
+  sind das globale Anlagerecht, bei Bandeigentum das bandbezogene Vertretungs-
+  oder Anlagerecht sowie die Berechtigung, Eigentümer zu werden oder für die
+  Band zu handeln. Eigentum und anfängliche Objektberechtigungen entstehen
+  atomar. Dies gilt für Inhalte, Setlists, Overlays und die Songanlage mit
+  Inhalt; Plattformadministratoren dürfen Songs auch ohne Inhalt anlegen.
+- Eine Berechtigungsanfrage setzt keine bestehende Zielberechtigung voraus.
+  Sie benötigt das globale beziehungsweise systemseitige Anfragerecht und für
+  eine Band zusätzlich `Berechtigung für Band anfragen`.
+- `Songänderung beantragen` ist ein globales Sonderrecht. Ein Benutzer benötigt
+  Sichtbarkeit des Songs, aber keine Objektberechtigung zum Bearbeiten.
+
+Positive Zuweisungen werden additiv ausgewertet; der höchste positive
+Autorisierungsstatus gilt. Negative oder verweigernde Rechte existieren nicht.
 
 | Objektberechtigung | Eingeschlossene Objektberechtigungen |
 | --- | --- |
@@ -55,12 +63,46 @@ Berechtigungen erhalten.
 
 Eine Gruppe ist entweder global oder genau einem Bandbereich zugeordnet.
 Gruppen dürfen nicht verschachtelt werden. Bandbezogene Gruppen dürfen nur
-Mitglieder der zugehörigen Band enthalten. Normale Gruppen dürfen globale
-Rechte und Objektberechtigungen tragen, aber kein Eigentum.
+Mitglieder der zugehörigen Band enthalten.
 
-Plattformadministratoren verwalten globale Gruppen, globale Rechte und
-Systemgruppen. Berechtigte Bandmitglieder verwalten nur bandbezogene Gruppen
-der eigenen Band und nur delegierbare bandbezogene Rechte.
+Globale Aktionsrechte dürfen ausschließlich direkt aktiven Benutzern oder
+globalen Gruppen zugewiesen werden. Bands und bandbezogene Gruppen dürfen keine
+globalen Aktionsrechte tragen; sie dürfen ausschließlich bandbezogene Rechte
+und Objektberechtigungen erhalten. Normale Gruppen dürfen kein Eigentum halten.
+
+Plattformadministratoren verwalten globale Gruppen, globale Rechte und die
+Mitgliedschaften globaler Gruppen, soweit diese globale Rechte vermitteln.
+Berechtigte Bandmitglieder verwalten nur bandbezogene Gruppen der eigenen Band
+und delegierbare bandbezogene Rechte. Durch eine Änderung von
+Bandgruppenmitgliedschaften dürfen sie keine globalen Rechte erteilen oder
+entziehen.
+
+## Systemgruppe `Alle Benutzer`
+
+Es gibt genau eine geschützte globale Systemgruppe `Alle Benutzer`. Jeder
+aktive Benutzer ist automatisch Mitglied. Die Mitgliedschaft kann weder
+manuell verlassen noch durch normale Bandadministration verändert werden;
+deaktivierte oder gelöschte Benutzer verlieren ihre wirksamen Rechte. Nur
+Plattformadministratoren verwalten die Gruppe und ihren Basissatz. Sie ist kein
+Eigentümer.
+
+Der Basissatz umfasst:
+
+- sichtbare Songs, Inhalte und Overlays sowie berechtigte Setlists anzeigen,
+- eigene Inhalte anlegen,
+- atomar mit einem Inhalt einen ungeprüften Song anlegen,
+- eigene Overlays und eigene Setlists anlegen,
+- selbst lesbare Inhalte zu bearbeitbaren Setlists hinzufügen,
+- Berechtigung für sich selbst anfragen.
+
+Nicht automatisch enthalten sind `Songänderung beantragen`, fremde Objekte
+bearbeiten oder löschen, Berechtigungen verwalten, Eigentum übertragen,
+Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen sowie globale
+oder bandbezogene Administration.
+
+`Alle Benutzer` ist von der Systemband `Öffentlich` getrennt: Die Systemgruppe
+vermittelt globale Funktionsrechte, die Systemband ausschließlich
+objektbezogene Lesbarkeit.
 
 ## Band und Bandbereich
 
@@ -71,9 +113,10 @@ Eine Band ist Eigentums- und Berechtigungsprinzipal, verhält sich für
 Berechtigungen wie eine Gruppe und darf Mitglieder sowie zusätzliche
 bandbezogene Gruppen besitzen.
 
-Bandmitgliedschaft vermittelt keine automatische Berechtigung an bandeigenen
-oder für die Band freigegebenen Objekten. Die Bandbereichstrennung verhindert
-implizite Querzugriffe.
+Bandmitgliedschaft allein vermittelt kein Objektrecht. Zugriff entsteht durch
+eine dem Bandprinzipal ausdrücklich oder bei der Anlage eines bandeigenen
+Objekts standardmäßig zugewiesene Objektberechtigung `Anzeigen`. Die
+Bandbereichstrennung verhindert alle anderen impliziten Querzugriffe.
 
 Ausdrückliche Objektfreigaben über Bandgrenzen sind zulässig. Eine Freigabe an
 Band B verändert weder das Eigentum von Band A noch erlaubt sie der
@@ -170,23 +213,43 @@ Plattform selbst sind keine regulären Eigentümer.
 
 Der Eigentümer hält automatisch und nicht entziehbar Anzeigen, Bearbeiten,
 Löschen, Berechtigungen verwalten und Eigentum übertragen. Die Ausübung
-erfordert weiterhin das globale Aktionsrecht. Bei Bandeigentum hält die Band
-diese Rechte; ihre Mitglieder erhalten sie nicht automatisch.
+erfordert weiterhin das globale Aktionsrecht.
 
-Eine Eigentumsübertragung benötigt keine Annahme, lässt vorhandene Anzeige- und
-Bearbeitungsberechtigungen unverändert und darf an einen aktiven Benutzer oder
-eine bestehende, nicht zur Löschung vorgemerkte Band erfolgen. Die Übertragung
-an `Öffentlich` ist nur administrativ zulässig.
+Bei Bandeigentum hält die Band diese automatischen Eigentümerrechte; ihre
+Mitglieder erhalten sie nicht automatisch. Zusätzlich erhält der Bandprinzipal
+bei der Anlage standardmäßig die normale Objektberechtigung `Anzeigen`, die
+Mitgliedern Leserecht vermittelt. Bearbeiten, Löschen,
+Berechtigungsverwaltung und Übertragung üben nur ausdrücklich berechtigte
+bandbezogene Gruppen oder Benutzer mit passendem globalem und bandbezogenem
+Vertretungsrecht aus. `Öffentlich` ist der nur administrativ verwaltete
+Sonderfall.
+
+Eine Eigentumsübertragung benötigt keine Annahme. Sämtliche ausdrücklich
+vergebenen Objektberechtigungen und Sonderrechte bleiben unverändert,
+einschließlich Lösch-, Verwaltungs-, Übertragungs-, Overlay-Prüf- und
+-Bearbeitungs- sowie Check-out-Rücknahmerechten. Nur automatische
+Eigentümerrechte entfallen beim bisherigen und entstehen beim neuen
+Eigentümer. Dynamisch gekoppelte Overlays wechseln atomar mit dem Inhalt.
+Zulässige Ziele sind ein aktiver Benutzer oder eine bestehende, nicht zur
+Löschung vorgemerkte Band; die Übertragung an `Öffentlich` ist nur
+administrativ zulässig.
 
 Eigentümerlosigkeit darf nur durch Löschung des Eigentümers oder ausdrückliche
 administrative Sonderaktion entstehen.
 
 ## Eigentümerlose Objekte und Löschung
 
-Bei Benutzerlöschung werden dessen Objekte eigentümerlos. Bei bestätigter
-Bandlöschung entfallen das Bandeigentum und unmittelbar an die Band oder ihre
-gelöschten Gruppen vergebene Rechte. Andere Benutzer-, Gruppen- und Bandrechte
-bleiben bestehen.
+Vor einer Benutzerlöschung müssen Anzahl und Folgen eigentumsbetroffener
+Objekte angezeigt werden: Sie werden ohne vorherige Übertragung eigentümerlos,
+andere Rechte bleiben bestehen und nur Plattformadministratoren dürfen danach
+Eigentum oder Berechtigungen ändern. Eine vorherige Übertragung wird angeboten;
+die Folgen müssen ausdrücklich bestätigt werden. Die Löschung bleibt danach
+zulässig.
+
+Vor administrativer Bestätigung einer Bandlöschung müssen die Auswirkungen auf
+Eigentum und unmittelbar an die Band oder ihre gelöschten Gruppen vergebene
+Rechte sichtbar sein. Diese Rechte und das Bandeigentum entfallen; andere
+Benutzer-, Gruppen- und Bandrechte bleiben bestehen.
 
 Eigentümerlose Objekte behalten ihre wirksamen Lese- und Schreibrechte. Nur
 Plattformadministratoren dürfen ihr Eigentum oder ihre Berechtigungen ändern.
@@ -195,7 +258,11 @@ Berechtigungsanfragen gehen immer an die Plattformadministration.
 Eigentümerlosigkeit ist keine Löschvormerkung und startet keine
 Wiederherstellungsfrist. Während einer Löschvormerkung bleiben Leserechte
 wirksam; Bearbeitung, neue Freigaben und neue Setlistreferenzen sind gesperrt.
-Nur Plattformadministratoren dürfen wiederherstellen oder endgültig löschen.
+Plattformadministratoren dürfen vor Ablauf wiederherstellen oder sofort
+endgültig löschen. Nach Ablauf wird automatisch endgültig gelöscht. Bis zur
+technischen Ausführung ist `ausstehende endgültige Löschung` sichtbar; eine
+Verzögerung verlängert die fachliche Frist nicht und Fehler müssen sichtbar
+sowie erneut behandelbar sein.
 
 ## Objektbezogene Sonderrechte
 
@@ -234,13 +301,22 @@ Plattformadministratoren vorbehalten.
 - Overlay-Übernahme prüfen,
 - gekoppeltes Overlay für eigene Nutzung kopieren.
 
+Bei direkter gekoppelter Anlage wird atomar der Inhaltseigentümer Eigentümer,
+die dynamische Leserechtevererbung aktiviert und dem Ersteller ein entziehbares
+zusätzliches Bearbeitungsrecht gegeben, sofern er nicht bereits Eigentümer ist.
+Bei Einreichung eines privaten Overlays entsteht dagegen nur ein temporärer,
+zweckgebundener Lesezugriff für zuständige Prüfer. Er endet bei Ablehnung oder
+Rücknahme und wird bei Genehmigung durch endgültige Rechte ersetzt. Das private
+Schreibrecht des Erstellers entfällt bei Übernahme und wird nicht automatisch
+neu vergeben.
+
 Ein dynamisch gekoppeltes Overlay erbt ausschließlich Leserechte des Inhalts
 und darf nur zusätzliche Bearbeitungsrechte erhalten. Ein zusätzlicher
 Bearbeiter muss den Basisinhalt bereits lesen dürfen.
 
 ### Setlists
 
-- Setlist anlegen und bearbeiten,
+- Setlist anlegen, bearbeiten und als neues unabhängiges Objekt kopieren,
 - Inhalt einfügen oder entfernen,
 - gemeinsame Overlay-Auswahl und -Reihenfolge ändern,
 - persönliche Setlisteinstellungen ändern.
@@ -263,14 +339,20 @@ Offlinebereitstellung vermittelt kein Exportrecht.
 
 ## Berechtigungsanfragen
 
-Benutzer dürfen für sich `Anzeigen` oder `Bearbeiten` beantragen. Für eine Band
-dürfen sie dies mit `Berechtigung für Band anfragen`. Empfänger müssen
+Eine Anfrage setzt keine bestehende Zielberechtigung voraus. Benutzer dürfen
+mit dem globalen beziehungsweise systemseitigen Anfragerecht für sich
+`Anzeigen` oder `Bearbeiten` beantragen. Für eine Band dürfen sie dies nur mit
+`Berechtigung für Band anfragen`. Empfänger müssen
 gleichzeitig das globale Verwaltungsrecht und am Objekt
 `Berechtigungen verwalten` besitzen. Fehlt ein solcher Empfänger oder ist das
 Objekt eigentümerlos, geht die Anfrage an die Plattformadministration.
 
-Im MVP erfolgen Anfrage und Bearbeitung in der Anwendung. Die Zustände sind
-`offen`, `genehmigt` und `abgelehnt`; Antragsteller sehen den Status. E-Mail-
+Im MVP erfolgen Anfrage und Bearbeitung in der Anwendung. Die serverseitigen
+Zustände sind `offen`, `genehmigt` und `abgelehnt`; Antragsteller sehen den
+Status. Offline darf nur ein lokaler Entwurf `noch nicht gesendet` entstehen.
+Er erzeugt keine Serveranfrage und keine Benachrichtigung. Erst nach Verbindung
+und erneuter Prüfung von Rechten, Zielobjekt, Empfängern und gegebenenfalls
+Bandvertretung wird er übermittelt und `offen`; Fehler bleiben sichtbar. E-Mail-
 oder Push-Benachrichtigungen sind nicht erforderlich.
 
 Fehlt Zugriff auf einen Setlistinhalt, dürfen nur Songtitel, Komponist,
@@ -300,7 +382,9 @@ fehlt. Eine Löschvormerkung beendet ihn immer.
 
 - Berechtigungen werden serverseitig und aktuell geprüft.
 - Eine ausgeblendete Bedienaktion ersetzt keine Autorisierung.
-- Bandmitgliedschaft vermittelt keinen impliziten Objektzugriff.
+- Bandmitgliedschaft allein vermittelt kein Objektrecht; ein dem Bandprinzipal
+  zugewiesenes Objektrecht wirkt dagegen für seine Mitglieder.
+- Bands und bandbezogene Gruppen tragen keine globalen Aktionsrechte.
 - Ausdrückliche Freigaben über Bandgrenzen sind zulässig; andere Querzugriffe
   bleiben verboten.
 - Eigentum, Freigabe, Ersteller und Berechtigung bleiben getrennt.

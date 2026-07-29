@@ -44,12 +44,16 @@ getrennt.
 4. **Overlays sind normale Objekte.** Es gibt keine festen Reichweitentypen.
    Eigene Overlays können übernommen oder mit dem Inhalt dynamisch gekoppelt
    werden, ohne den Basisinhalt zu verändern.
-5. **Autorisierung hat zwei Ebenen.** Normale Benutzer benötigen globales
-   Aktionsrecht und Objektberechtigung. Gruppenrechte wirken additiv;
-   Plattformadministratoren sind fachliche Superuser.
+5. **Autorisierung folgt der Aktionsart.** Auf bestehenden Objekten benötigen
+   normale Benutzer globales Aktionsrecht und Objektberechtigung; Anlagen und
+   Anfragen berücksichtigen, dass noch keine beziehungsweise gerade keine
+   Zielberechtigung besteht. Globale Rechte dürfen nur aktive Benutzer oder
+   globale Gruppen tragen. Plattformadministratoren sind fachliche Superuser.
 6. **Bands sind Prinzipale.** Jede Band besitzt genau einen Bandbereich und
-   darf Eigentümer sein. Ausdrückliche Freigaben über Bandgrenzen sind erlaubt,
-   implizite Querzugriffe nicht.
+   darf Eigentümer sein. Automatische Eigentümerrechte werden nicht an
+   Mitglieder vererbt; der Bandprinzipal erhält bei Anlage standardmäßig Lesen.
+   Ausdrückliche Freigaben über Bandgrenzen sind erlaubt, andere implizite
+   Querzugriffe nicht.
 7. **Breite Lesbarkeit bleibt authentifiziert.** Die geschützte Systemband
    `Öffentlich` vermittelt nach administrativ geprüftem Antrag Lesen für alle
    aktiven Benutzer, aber keinen anonymen Zugriff.
@@ -59,21 +63,24 @@ getrennt.
 9. **Gemeinsame Bearbeitung ist sitzungsgebunden.** Jedes gemeinsam
    bearbeitbare Objekt außer Songs benötigt einen Check-out. Administration
    darf ihn zurücknehmen, aber nicht umgehen.
-10. **Offlinekonflikte werden nicht versteckt.** Private Offlinebearbeitung ist
-    im MVP enthalten. Gemeinsame Offlinebearbeitung folgt nach dem MVP über
-    Offline-Check-outs. Automatisches Merge und stilles Überschreiben sind
-    ausgeschlossen.
+10. **Offlinekonflikte und Sitzungsablauf werden nicht versteckt.** Private
+    Offlinebearbeitung ist im MVP enthalten. Gemeinsame Offlinebearbeitung
+    folgt nach dem MVP über Offline-Check-outs. Abgelaufene Offlineberechtigungen
+    werden gesperrt; eigene Entwürfe bleiben getrennt. Automatisches Merge und
+    stilles Überschreiben sind ausgeschlossen.
 11. **Setlists zeigen den aktuellen berechtigten Stand.** Es gibt keine
-    Snapshots. Fehlende Inhalte werden datensparsam markiert und können
-    angefragt werden.
+    auswählbaren Versionen oder Snapshots. Gemeinsame Änderungen werden
+    vollständig historisiert; unabhängige Planung erfolgt durch eine neue
+    Setlistkopie. Fehlende Inhalte werden datensparsam markiert.
 12. **Security, Barrierearmut und Performance sind Produkteigenschaften.** MFA
     schützt Plattformadministration; Kernabläufe orientieren sich an WCAG 2.2
     AA und der initiale Performancekorridor ist messbar.
 
 ## MVP und Weiterentwicklung
 
-Der früh nutzbare MVP ist PDF-zentriert. Er umfasst Benutzer, Bands, Gruppen,
-Plattformadministration, `Öffentlich`, Berechtigungen, Eigentum und Löschung,
+Der früh nutzbare MVP ist PDF-zentriert. Er umfasst Benutzer, Bands, Gruppen
+inklusive `Alle Benutzer`, Plattformadministration, `Öffentlich`,
+Berechtigungen, Eigentum und Löschung,
 Songverwaltung, PDF-Inhalte mit Metadaten, PDF-Navigation und -Overlays,
 Setlists, Berechtigungsanfragen, Audit, Suche, Offlineanzeige und private
 Offlinebearbeitung.
