@@ -8,11 +8,11 @@ Umsetzung.
 
 ## Statusübersicht
 
-**Entschieden:** `OQ-001` bis `OQ-015` sowie `OQ-017` bis `OQ-021`.
+**Entschieden:** `OQ-001` bis `OQ-021`.
 
-**Offen:** ausschließlich `OQ-016` Ressourcenbudget.
+**Offen:** keine Produktfrage.
 
-## Entscheidungen und offene Frage
+## Entscheidungen
 
 ### OQ-001: Mitgliedschaft in mehreren Bandbereichen
 
@@ -181,7 +181,8 @@ lokal entfernt und darf nur unter neuer Identität als privates Objekt gerettet
 werden. Verwerfen, neues privates Objekt und manuelles Übertragen bleiben
 bewusste Wege; automatisches Merge und Überschreiben sind ausgeschlossen. Neue
 Rechte benötigen bewusste Synchronisation oder Offlinevorbereitung. Lokale
-Daten müssen verschlüsselt sein; das Verfahren bleibt Architekturentscheidung.
+Daten müssen verschlüsselt sein; das angenommene Verfahren steht in
+[ADR-0006](../architecture/decisions/ADR-0006-lokale-pwa-daten-und-offline-synchronisation.md).
 
 ### OQ-009: Erreichbarkeit und Diagnose von TST
 
@@ -230,10 +231,10 @@ unterstützt; herstellerspezifische Stiftfunktionen werden nicht vorausgesetzt.
 - Stiftdarstellung: Ziel höchstens 50 ms Eingabelatenz.
 
 Langsame Verbindungen und große Dateien benötigen Fortschrittszustände.
-Referenzgerät, Datenbestand, PDF-Größe, Parallelität und Netzbedingungen werden
-später mit dem Ressourcenbudget festgelegt. Bis dahin werden Messwerte
-beobachtet und nicht als abschließende Abnahme dargestellt. Zieländerungen
-müssen dokumentiert und begründet sein.
+Referenzdatenbestand, PDF-Größe, Parallelität und Netzbedingungen stehen im
+[initialen Ressourcenbudget](../architecture/RESOURCE-BUDGET.md). Private
+Hardwaredetails bleiben außerhalb des Repositorys. Zieländerungen benötigen
+Begründung, Messwerte und erneute TST-Verifikation.
 
 ### OQ-012: Verhältnis von Song und Inhalt
 
@@ -297,16 +298,64 @@ Berechtigungstrennung.
 
 ### OQ-016: Ressourcenbudget auf der Synology
 
-**Status:** Offen; einzige verbleibende Produktfrage.
+**Status:** Entschieden – initiales Betriebsbudget; Verifikation auf der
+privaten Referenzhardware vor PRD-Freigabe erforderlich.
 
-**Frage:** Welche messbaren Obergrenzen gelten für Ressourcenverbrauch,
-Speicherwachstum, Hintergrundaufgaben und Synchronisation auf der vorgesehenen
-Synology?
+Die Produktfrage ist geschlossen. Das vollständige normative Budget steht im
+[Ressourcenbudget](../architecture/RESOURCE-BUDGET.md); die technische
+Begründung und Änderungsregel stehen in
+[ADR-0016](../architecture/decisions/ADR-0016-initiales-ressourcenbudget-und-oq-016.md).
 
-**Bis zur Entscheidung:** Der Betrieb auf der vorgesehenen Synology bleibt
-Ziel. Ressourcenverbrauch, Speicherwachstum, Hintergrundaufgaben und
-Synchronisation müssen mess- und beobachtbar sein. Ein konkretes Budget wird
-erst nach Festlegung von Referenzhardware und Betriebsdaten beschlossen.
+Das Referenzprofil umfasst 100 aktive Konten, 20 gleichzeitig angemeldete
+Benutzer, fünf aktive Bearbeitungssitzungen, fünf gleichzeitig
+synchronisierende Geräte, bis zu zehn reguläre Bands, 5.000 Songs, 5.000
+Inhalte beziehungsweise PDFs, 10.000 Overlays, 500 Setlists und eine simultane
+schwere PDF-Prüfung.
+
+PDF-Referenzen sind 10 MiB typisch, 25 MiB groß, 50 MiB maximaler MVP-Upload
+und 300 Seiten maximal. Die normale Referenzverbindung verwendet 25 Mbit/s
+Download, 5 Mbit/s Upload, 50 ms Round-Trip und höchstens 0,5 % Paketverlust.
+Die eingeschränkte Verbindung verwendet 5 Mbit/s Download, 1 Mbit/s Upload,
+150 ms Round-Trip und bis 1 % Paketverlust.
+
+Das PRD-Hostbudget einschließlich Observability verlangt CPU p95 über 15
+Minuten von höchstens 60 %, keine dauerhafte Überschreitung von 85 % über fünf
+Minuten, dauerhaft höchstens 65 % Arbeitsspeicher, kurzfristig höchstens 75 %,
+mindestens 20 % und mindestens 4 GiB freie Hostreserve, mindestens 25 % freie
+Kapazität je Produktdatenvolume und höchstens 10 % I/O-Wait p95. Dauerhaftes
+Swapping, OOM-Beendigung und dauerhaft wachsende Prozesse oder Queues sind
+unzulässig. Bei gleichzeitigem TST und PRD bleiben mindestens 15 %
+Hostreserve. Containerlimits entsprechen nach TST-Messung dem Peak plus 20 %
+technischer Reserve innerhalb des Gesamtbudgets.
+
+Je Umgebung gelten 100 GiB Binärspeicher, 20 GiB PostgreSQL, 5 GiB
+Uploadquarantäne und 5 GiB temporäre Verarbeitung. PRD bewahrt Metriken 30
+Tage, Betriebslogs 14 Tage und Traces 72 Stunden in insgesamt höchstens 25 GiB
+Telemetrievolume auf. TST bewahrt Metriken und Betriebslogs je 14 Tage, Traces
+7 Tage und ebenfalls insgesamt höchstens 25 GiB auf.
+
+Speicherwarnungen erfolgen bei 70 %, kritisch bei 85 %. Neue große Uploads
+werden spätestens bei 90 % kontrolliert abgelehnt; bestehende Inhalte und
+administrative Bereinigung bleiben erreichbar.
+
+Workerparallelität ist eins für PDF-Prüfung, Binärdateiverarbeitung,
+endgültige Löschung sowie Audit- und Retention-Batches und vier für leichte
+allgemeine Jobs. Ein normaler Job und eine Referenz-PDF-Prüfung erreichen p95
+60 Sekunden; überfällige endgültige Löschung beginnt spätestens innerhalb von
+fünf Minuten. API-Latenz hat Vorrang. Backpressure und Jobstau bleiben
+sichtbar.
+
+Je Gerätesitzung läuft eine Synchronisation mit höchstens 100 Befehlen und 10
+MiB strukturierten Nutzdaten pro Paket, 500 Änderungen pro Pull-Seite und einer
+parallelen Dateiübertragung. Das Referenzszenario umfasst zehn Geräte mit je
+100 Befehlen; höchstens fünf synchronisieren gleichzeitig, weitere erhalten
+Backpressure. PDFs liegen nie in strukturierten Befehlspaketen.
+
+AP-01 bis AP-10 dürfen umgesetzt werden. PRD bleibt ohne erfolgreichen
+AP-11-Ressourcennachweis gesperrt. Private Hardwaredetails bleiben außerhalb
+des Repositorys. Ein nicht bestandener Test führt zu Optimierung oder
+Kapazitätsanpassung. Qualitätsziele werden nicht still abgesenkt.
+Budgetänderungen benötigen Begründung, Messwerte und erneute TST-Verifikation.
 
 ### OQ-017: Barrierearmut
 
@@ -329,9 +378,9 @@ RPO beträgt 4 Stunden, RTO 8 Stunden für den zentralen Datenbestand. Lokale
 Offlinekopien und nicht synchronisierte Entwürfe ersetzen keine zentrale
 Sicherung und dürfen keines der beiden Ziele nachweisen. Das spätere
 Sicherungs- und Wiederherstellungskonzept muss RPO und RTO für den zentralen
-Datenbestand in TST belegen. Die konkrete Auslegung auf der Ziel-Synology
-erfolgt zusammen mit Referenzhardware und `OQ-016`; das technische Verfahren
-bleibt Betriebs- und Architekturentscheidung.
+Datenbestand in TST belegen. Die konkrete Auslegung folgt dem entschiedenen
+[Ressourcenbudget](../architecture/RESOURCE-BUDGET.md); das
+Sicherungsverfahren bleibt vor PRD technisch in TST zu verifizieren.
 
 ### OQ-019: Audit- und Historienaufbewahrung
 
@@ -365,8 +414,8 @@ deaktivieren noch zurücksetzen; Bandmitgliedschaft vermittelt keine
 MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
 Wiederherstellung eines Plattformadministrator-Zugangs darf nur über den
 globalen, auditierten Wiederherstellungsprozess erfolgen und den letzten
-Administrator nicht dauerhaft aussperren. Das konkrete Verfahren bleibt
-Architekturentscheidung.
+Administrator nicht dauerhaft aussperren. Das angenommene Verfahren steht in
+[ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 
 ### OQ-021: Band und Bandbereich
 

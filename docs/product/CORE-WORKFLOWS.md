@@ -302,7 +302,9 @@ dem
   weitere geschützte Zugriffe und Synchronisationen dieser Sitzung abgelehnt.
   Ein dauerhaft getrenntes Gerät erkennt den Widerruf nicht; spätestens die
   maximale Offlinesitzung begrenzt das Restrisiko. Widerruf und abgelehnte
-  Folgeverwendung werden auditiert, das technische Verfahren bleibt offen.
+  Folgeverwendung werden auditiert. Das angenommene technische Verfahren steht
+  in
+  [ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 - **Rechteentzug oder Sitzungsablauf:** Spätestens mit Ablauf der maximalen
   Offlinesitzung werden geschützte Basisinhalte und Overlays gesperrt; erneute
   Onlineanmeldung oder Rechteprüfung ist nötig. Endgültig gelöschte Objekte
@@ -313,7 +315,8 @@ dem
   Entwürfe dürfen verbleiben. Entwürfe verlängern keine Rechte und werden nicht
   automatisch synchronisiert.
 - **Security:** Lokale Daten müssen verschlüsselt gespeichert werden. Das
-  Verfahren bleibt Architekturentscheidung.
+  angenommene Verfahren steht in
+  [ADR-0006](../architecture/decisions/ADR-0006-lokale-pwa-daten-und-offline-synchronisation.md).
 
 ## WF-016: Inhalt bearbeiten, freigeben oder breit lesbar machen
 
@@ -486,6 +489,36 @@ dem
   Synchronisationszeit, technische datensparsame Gerätekennung, Ergebnis und
   insbesondere Ablehnungen, Konflikte, Rechte- oder Lease-Ablauf sowie
   administrative Rücknahmen.
+
+## WF-022: Globalen Benutzer einladen und Einladung annehmen
+
+- **Ausgangszustand:** Der Einladende ist aktiv und besitzt das von einem
+  Plattformadministrator direkt oder über eine globale Gruppe vergebene
+  Aktionsrecht `Nutzer einladen`. Es besteht keine offene Einladung für
+  dasselbe Ziel.
+- **Einladung erzeugen:** Der Einladende erfasst die Ziel-E-Mail-Adresse. Das
+  System erzeugt eine einmalige kurz gültige Einladung. Der Einladende darf nur
+  seine eigene offene Einladung ansehen, erneut senden oder widerrufen.
+  Plattformadministratoren dürfen jede offene Einladung widerrufen.
+- **Annahme:** Der Empfänger öffnet die noch gültige Einladung, bestätigt die
+  E-Mail-Adresse und setzt sein eigenes Passwort. Das System prüft Status und
+  Gültigkeit erneut, verbraucht die Einladung einmalig und aktiviert das Konto
+  automatisch als normalen Benutzer.
+- **Ergebnis:** Das neue Konto erhält ausschließlich den Basissatz von `Alle
+  Benutzer`. Optionale MFA darf anschließend eingerichtet werden. Globale
+  Zusatzrechte, Gruppen, Plattformadministratorstatus, Bands,
+  Bandmitgliedschaften und Objektberechtigungen werden niemals aus der
+  Einladung übernommen und nur in getrennten Abläufen vergeben.
+- **Abbruch:** Bricht der Empfänger vor erfolgreichem Abschluss ab, bleibt das
+  Konto inaktiv und die Einladung bis zu Widerruf, Verwendung oder Ablauf offen.
+  Es entsteht keine Teilaktivierung und keine Teilberechtigung.
+- **Ablehnung:** Abgelaufene, widerrufene, bereits verwendete, ersetzte oder
+  serverseitig ungültige Einladungen werden ohne E-Mail-Enumeration abgelehnt.
+  Doppelte offene Einladungen für dasselbe Ziel werden nicht erzeugt.
+- **Berechtigungsgrenze:** Die automatische Systemaktivierung ist keine manuelle
+  Aktivierungsbefugnis des Einladenden. Nur Plattformadministratoren dürfen
+  Konten manuell aktivieren, deaktivieren oder löschen und die globalen
+  Folgerechte verwalten.
 
 ## Abdeckungsregel
 

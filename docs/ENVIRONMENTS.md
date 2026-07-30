@@ -16,11 +16,13 @@ TST, PRD.
 | externer App-Zugang | nicht festgelegt | getrennt und geschützt zulässig | eigener gehärteter App-Zugang |
 | ausgehender code-server-Zugriff | nur über definierte SSH-/Debugwege | kein Zugriff | kein Zugriff |
 | Datenbankzugriff | nur App-Backend der Umgebung | nur App-Backend der Umgebung | nur App-Backend der Umgebung |
+| Anwendungsbundle | identische containerisierte Images | aus DEV promovierte identische Images | aus TST promovierte identische Images |
+| Diagnose | definierte Entwicklerwege | geschützter Pfad für benannte technische Identitäten | technisch keine Diagnose- oder Debugwege |
 
 ## Verbindliche Trennung
 
-- Jede Umgebung hat eigene Konfiguration, Secrets, Datenbestände, Identitäten
-  und Berechtigungen.
+- Jede Umgebung hat eigene Konfiguration, Secrets, Datenbestände, Dateien,
+  Identitäten, Berechtigungen, Netze und Volumes.
 - Secrets werden ausschließlich auf der Synology gespeichert. Repository und
   Artefakte enthalten keine Secret-Werte.
 - Produktive Daten werden weder in DEV noch in TST verwendet.
@@ -28,6 +30,11 @@ TST, PRD.
   Artefakte und ausdrücklich vorgesehene Konfiguration, niemals Daten oder
   Secrets.
 - Nur das App-Backend darf die Datenbank derselben Umgebung erreichen.
+- Dasselbe unveränderliche Imagebundle wird ausschließlich in der Reihenfolge
+  DEV → TST → PRD promoviert. Daten, Secrets und private Konfigurationswerte
+  werden nicht mitpromoviert.
+- Reale Domains, IP-Adressen, Hostnamen, Ports, Pfade und andere private
+  Infrastrukturwerte bleiben außerhalb des Repositorys.
 
 ## Externe Eingänge
 
@@ -40,8 +47,10 @@ PRD getrennten geschützten App-Zugang extern erreichbar sein. Externe
 Erreichbarkeit vermittelt keine fachliche oder technische Berechtigung und
 keinen Zugriff auf andere Umgebungen oder Datenbanken.
 
-Die konkrete Härtung, Protokollwahl und technische Ausgestaltung dieser Zugänge
-bleibt einer späteren Architektur- und Betriebsentscheidung vorbehalten.
+Der angenommene interne Anwendungspfad und die Containergrenzen stehen in
+[ADR-0012](architecture/decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+Private Härtungs- und Konfigurationswerte bleiben in der freigegebenen
+Betriebsumgebung und außerhalb des Repositorys.
 
 ## Entwicklungszugriff und Diagnose
 
@@ -61,6 +70,10 @@ müssen:
 - Secrets verborgen bleiben,
 - Zugriffe auditiert und widerrufbar sein,
 - dieselben Wege in PRD technisch fehlen oder nachweislich unerreichbar sein.
+
+Der technische TST-Diagnosepfad ist `/technical-diagnostics/`. Er ist kein
+öffentlicher Anwendungsweg. Die entsprechende Route, interaktive
+API-Dokumentation, Debugports und Debugprofile fehlen in PRD technisch.
 
 PRD besitzt keine Debugschnittstelle, keinen Debugport und keinen Debug-Tunnel.
 Produktive Diagnose erfolgt ausschließlich über vorgesehene datensparsame

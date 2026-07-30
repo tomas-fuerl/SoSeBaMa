@@ -101,8 +101,10 @@ Vollständig nach dem MVP folgen:
 Später vorgemerkt sind die optimistische Konkurrenzprüfung für Songs, eine
 Check-out-Freigabebenachrichtigung, Export und ein optionales Bewertungssystem.
 MFA-, Verschlüsselungs- und Synchronisationsverfahren sowie konkrete
-Referenzmessbedingungen und Ressourcenbudgets bleiben technischen
-beziehungsweise betrieblichen Entscheidungen vorbehalten.
+Referenzmessbedingungen und Ressourcenbudgets sind in der angenommenen
+[Architekturgrundlage](../architecture/README.md) festgelegt. Sie sind noch
+nicht implementiert; die Ressourceneignung bleibt vor PRD in TST zu
+verifizieren.
 
 Handschrift- und Musikerkennung sind bis auf Weiteres außerhalb des Scopes und
 dürfen frühestens nach Gesamtprodukt-Release als neue Feature Requests bewertet
@@ -116,9 +118,9 @@ Ersatz professioneller Notensatzsoftware. Automatisiertes Scraping, Umgehung
 von Schutzmaßnahmen und unkontrollierte Weitergabe geschützter Inhalte sind
 ausgeschlossen.
 
-Technologie folgt den Anforderungen. Architektur- und Betriebsentscheidungen
-werden erst nach ergebnisoffener Bewertung im dafür freigegebenen Arbeitspaket
-getroffen.
+Technologie folgt den Anforderungen. Die angenommenen Architektur- und
+Betriebsentscheidungen wurden nach ergebnisoffener Bewertung dokumentiert und
+werden erst in den freigegebenen Arbeitspaketen implementiert.
 
 ## Erfolgskriterien
 

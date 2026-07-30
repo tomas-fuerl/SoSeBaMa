@@ -24,6 +24,11 @@ App-Zugang und erreichen weder Datenbank noch interne Verwaltungswege direkt.
 Externe Erreichbarkeit erteilt weder Nutzern noch Zugangspunkt Rechte auf
 andere Netze, Umgebungen oder Komponenten.
 
+Jede SoSeBaMa-Umgebung besitzt genau einen Anwendungseingang. Der angenommene
+interne Pfad ist Infrastruktur-Ingress → Caddy → Web beziehungsweise API. Caddy
+ist der Application Gateway. Nutzer-Clients umgehen ihn nicht und erreichen
+weder API-Prozess, Worker, Migrator, PDF-Prüfer noch Datenbank direkt.
+
 Die konkrete Härtung wird vor Inbetriebnahme nach dem
 [ADR-Verfahren](ADR.md) in einem eigenen freigegebenen Arbeitspaket
 dokumentiert.
@@ -57,9 +62,13 @@ Weiterleitung nach TST, PRD oder zur Datenbank.
 
 | Quelle | Ziel | Erlaubter Zweck |
 | --- | --- | --- |
-| freigegebener App-Zugang einer Umgebung | App-Backend beziehungsweise BFF derselben Umgebung | ausschließlich vorgesehene Anwendungsendpunkte |
+| Infrastruktur-Ingress einer Umgebung | Caddy derselben Umgebung | einziger freigegebener Anwendungseingang |
+| Caddy einer Umgebung | Web und API derselben Umgebung | ausschließlich vorgesehene Anwendungsendpunkte |
 | geschützter TST-Prüfzugang | freigegebene TST-Diagnose-, Backend-API-, Test- oder Prüfschnittstelle | produktionsnahe Verifikation mit benannter technischer Identität |
 | App-Backend einer Umgebung | Datenbank derselben Umgebung | fachlicher Datenzugriff mit eigener minimal berechtigter Identität |
+| API beziehungsweise Worker einer Umgebung | Binärspeicher derselben Umgebung | autorisierte Dateiablage und -verarbeitung mit minimaler Identität |
+| API beziehungsweise Worker einer Umgebung | PDF-Prüfer derselben Umgebung | Übergabe einer Quarantänedatei und Annahme eines sicheren Prüfberichts |
+| freigegebene Anwendungsprozesse | Observability derselben Umgebung | datensparsame Logs, Metriken und Traces |
 | freigegebener Betriebszugang | freigegebene Komponente derselben Umgebung | notwendige Administration mit benannter Identität |
 
 Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Die
@@ -71,6 +80,22 @@ PRD besitzt keine Debugports, Debugtunnel oder Debugschnittstellen. Produktive
 Diagnose darf diese Grenze nicht durch temporäre Weiterleitungen oder
 vermeintliche Notfallzugänge umgehen.
 
+## Interne Netztypen
+
+Jede Umgebung trennt folgende Netze oder gleichwertige Kommunikationsgrenzen:
+
+- `edge` für Infrastruktur-Ingress und Caddy,
+- `application` für Web, API und Workerkommunikation,
+- `data` für backendexklusiven Datenbank- und Binärzugriff,
+- `validation` für die isolierte PDF-Prüfung,
+- `observability` für Telemetrie.
+
+Der PDF-Prüfer besitzt weder Internet- noch Datenbankzugang, keine
+App-Sitzungen und keine Secrets. TST und PRD teilen weder
+Observability-Netzwerk noch Telemetriespeicher oder Identitäten. Die
+vollständige Container- und Netzentscheidung steht in
+[ADR-0012](architecture/decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+
 ## Standardmäßig verbotene Beziehungen
 
 Alle nicht ausdrücklich aufgeführten Beziehungen sind verboten. Dazu gehören:
@@ -79,7 +104,11 @@ Alle nicht ausdrücklich aufgeführten Beziehungen sind verboten. Dazu gehören:
 - implizite Freigaben aufgrund externer Erreichbarkeit,
 - ein pauschaler Autorisierungs-Bypass in TST,
 - Weiterleitungen, die eine definierte Grenze umgehen,
-- externe Datenbank-, PRD-Debug- oder interne Verwaltungsendpunkte.
+- externe Datenbank-, PRD-Debug- oder interne Verwaltungsendpunkte,
+- direkter Clientzugriff auf API-Prozess, Worker, Migrator, PDF-Prüfer oder
+  Binärvolume,
+- Internet- oder Datenbankzugriff des PDF-Prüfers,
+- ein gemeinsamer TST-/PRD-Telemetriepfad.
 
 ## Definition und Ablage eines Zugriffswegs
 
