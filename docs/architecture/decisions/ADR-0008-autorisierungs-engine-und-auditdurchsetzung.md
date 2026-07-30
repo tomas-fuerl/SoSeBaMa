@@ -65,9 +65,22 @@ Positive Rechte werden additiv ausgewertet. Repositoryabfragen sind
 autorisierungsbewusst. Unsichtbare Einzelobjekte ergeben 404. Sichtbarkeit wird
 vor Pagination, Counts und Facetten gefiltert.
 
-Memoisierung bleibt an Anfrage oder Transaktion gebunden. Es gibt im MVP keinen
-Redis-Rechtecache und keine Rechte in JWTs. Durchsetzung erfolgt in Transport,
-Application Service, Domäne sowie Repository und Datenbank.
+Bestands-, Sichtbarkeits-, Count- und Facettenfilter werden innerhalb der
+SQL-Abfrage angewendet. Die Autorisierung erfolgt vor `LIMIT`, Cursorbildung,
+Pagination, Counts, Aggregationen und Facetten. Nachträgliches
+In-Memory-Filtering bereits paginierter, gezählter oder aggregierter Datensätze
+ist unzulässig. Unautorisierte Zeilen dürfen weder geladen noch in
+Gesamtzahlen, Seitengrenzen oder Filterwerten berücksichtigt werden.
+
+Einzelobjektprüfungen und Bestandsabfragen verwenden dieselbe zentrale
+Policysemantik. Die backendseitigen autorisierungsbewussten Repositories
+erzeugen die erforderlichen SQL-Filter. PostgreSQL-RLS wird im MVP weiterhin
+nicht verwendet und bildet keine eigene Autorisierungsentscheidung.
+
+Memoisierung bleibt ausschließlich an Anfrage oder Transaktion gebunden. Es
+gibt im MVP keinen Redis-Rechtecache und keine Rechte in JWTs. Durchsetzung
+erfolgt in Transport, Application Service, Domäne sowie Repository und
+Datenbank.
 
 Auditpflichtige Fachaktion und Audit werden in derselben Transaktion
 geschrieben. Ein fehlender Auditkontext blockiert die Fachaktion. Abgelehnte

@@ -45,11 +45,12 @@ flowchart LR
     W --> A[API]
     A --> P[(PostgreSQL)]
     A --> B[Backendexklusiver Binärspeicher]
-    A --> J[Jobs]
+    A --> J[(Versionierter PostgreSQL-Job)]
     J --> R[Worker]
     R --> P
     R --> B
-    A --> V[Isolierter PDF-Prüfer]
+    R --> V[Isolierter PDF-Prüfer]
+    V -->|Sicherer Prüfbericht| R
 ```
 
 Der Infrastruktur-Ingress stellt öffentliches TLS bereit. Caddy ist der interne
@@ -83,9 +84,14 @@ OpenAPI 3.1 wird reproduzierbar erzeugt. ETag, `If-Match`, Idempotency Keys und
 Problem Details machen Wiederholung und Konflikte explizit. Autorisierung wird
 vor Pagination, Counts und Facetten angewendet.
 
-Der Worker verarbeitet versionierte PostgreSQL-Jobs idempotent. Fachzustand,
-Revision, Audit und Jobanlage entstehen in einer Transaktion. Ein externer
-Broker ist im MVP nicht vorgesehen.
+Die API nimmt Upload und Quarantäne kontrolliert an. Fachzustand, Revision,
+Audit und der versionierte PDF-Prüfjob entstehen in einer Transaktion. Der
+Worker entnimmt den Job aus PostgreSQL und übergibt die Quarantänedatei an den
+isolierten PDF-Prüfer. Der reguläre Prüfpfad ist damit API → PostgreSQL-Job →
+Worker → PDF-Prüfer; die schwere PDF-Prüfung läuft nicht im normalen
+HTTP-Request-Prozess. Allgemeine PostgreSQL-Jobs verarbeitet der Worker
+ebenfalls versioniert und idempotent. Ein externer Broker ist im MVP nicht
+vorgesehen.
 
 Der PDF-Prüfer ist ein zustandsloser isolierter Container ohne Internet,
 Datenbank, App-Sitzungen oder Secrets. Eine versionierte strikte Allowlist mit
@@ -93,7 +99,11 @@ Default-Deny akzeptiert ausschließlich unterstützte und sicher klassifizierte
 PDF-Strukturen. Unbekannte oder nicht sicher klassifizierbare Strukturen werden
 abgelehnt. Der blockierende Eignungsnachweis für qpdf und PDF.js erfolgt vor
 AP-04. Der Prüfer arbeitet unter begrenzten Ressourcen und liefert nur einen
-sicheren Bericht.
+sicheren Bericht. Er schreibt keinen Fachzustand fort. Der Worker verarbeitet
+den Bericht mit den aktuellen Fach- und Autorisierungsregeln und führt die
+autorisierte Statusfortschreibung aus. Die API ruft den Prüfer nicht direkt
+auf. Workerparallelität und Ressourcenbudget bleiben im
+[Ressourcenbudget](RESOURCE-BUDGET.md) unverändert.
 
 ## PostgreSQL, Binärspeicher und Suche
 
@@ -174,7 +184,8 @@ Polling den Fallback.
 ## Jobs, Löschung und Audit
 
 Für versionierte PostgreSQL-Jobs ist `pg-boss` ohne Runtime-DDL vorgesehen.
-Die konkrete Integrationsfähigkeit bleibt vor Implementierung blockierend zu
+Die konkrete Integrationsfähigkeit und das kontrolliert migrierte Queue-Schema
+bleiben vor der ersten jobgestützten PDF-Prüfung in AP-04 blockierend zu
 verifizieren.
 
 Löschung durchläuft explizite Zustände von aktiv über Löschvormerkung und

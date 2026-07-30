@@ -67,9 +67,16 @@ Weiterleitung nach TST, PRD oder zur Datenbank.
 | geschützter TST-Prüfzugang | freigegebene TST-Diagnose-, Backend-API-, Test- oder Prüfschnittstelle | produktionsnahe Verifikation mit benannter technischer Identität |
 | App-Backend einer Umgebung | Datenbank derselben Umgebung | fachlicher Datenzugriff mit eigener minimal berechtigter Identität |
 | API beziehungsweise Worker einer Umgebung | Binärspeicher derselben Umgebung | autorisierte Dateiablage und -verarbeitung mit minimaler Identität |
-| API beziehungsweise Worker einer Umgebung | PDF-Prüfer derselben Umgebung | Übergabe einer Quarantänedatei und Annahme eines sicheren Prüfberichts |
+| Worker einer Umgebung | PDF-Prüfer derselben Umgebung | Übergabe einer Quarantänedatei aus einem versionierten PostgreSQL-Job und Annahme eines sicheren Prüfberichts; keine fachliche Statusfortschreibung durch den PDF-Prüfer |
 | freigegebene Anwendungsprozesse | Observability derselben Umgebung | datensparsame Logs, Metriken und Traces |
 | freigegebener Betriebszugang | freigegebene Komponente derselben Umgebung | notwendige Administration mit benannter Identität |
+
+Die API nimmt Upload und Quarantäne an und legt Fachzustand, Audit und den
+versionierten PDF-Prüfjob transaktional an. Der reguläre Sollpfad ist API →
+PostgreSQL-Job → Worker → PDF-Prüfer. Ausschließlich der Worker ruft den
+PDF-Prüfer auf, verarbeitet dessen sicheren Prüfbericht als Backendrolle und
+führt die autorisierte Statusfortschreibung aus. Der PDF-Prüfer schreibt keinen
+Fachzustand fort.
 
 Nur das App-Backend darf die Datenbank derselben Umgebung erreichen. Die
 Datenbank veröffentlicht keinen externen Endpunkt. Direkter Zugriff durch
@@ -105,6 +112,7 @@ Alle nicht ausdrücklich aufgeführten Beziehungen sind verboten. Dazu gehören:
 - ein pauschaler Autorisierungs-Bypass in TST,
 - Weiterleitungen, die eine definierte Grenze umgehen,
 - externe Datenbank-, PRD-Debug- oder interne Verwaltungsendpunkte,
+- direkter Aufruf des PDF-Prüfers durch die API,
 - direkter Clientzugriff auf API-Prozess, Worker, Migrator, PDF-Prüfer oder
   Binärvolume,
 - Internet- oder Datenbankzugriff des PDF-Prüfers,

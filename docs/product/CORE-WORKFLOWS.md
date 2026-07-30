@@ -11,22 +11,29 @@ Begriffe folgen dem [Glossar](GLOSSARY.md), Berechtigungen
 dem
 [Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
-## WF-001: Benutzer einladen oder Zugriff erteilen
+## WF-001: Aktiven Benutzer zu einer Band einladen oder Bandzugriff erteilen
 
-- **Ausgangszustand:** Eine Band besteht; das globale Benutzerkonto ist aktiv,
-  aber seine Mitgliedschaft in dieser Band noch nicht aktiv.
-- **Berechtigungen:** Einladender mit dem globalen Aktionsrecht und dem
-  delegierbaren bandbezogenen Verwaltungsrecht.
-- **Ablauf:** Der Einladende startet die Einladung. Nach Bestätigung wird nur
-  diese Bandmitgliedschaft aktiv und der Benutzer darf bandbezogenen Gruppen
-  zugeordnet werden. Das globale Konto und andere Bandmitgliedschaften bleiben
-  unverändert.
-- **Ergebnis:** Nur positive Rechte werden wirksam. Bandmitgliedschaft allein
-  vermittelt kein Objektrecht; Zugriff entsteht durch eine dem Bandprinzipal
-  ausdrücklich oder standardmäßig zugewiesene Objektberechtigung.
-- **Fehler:** Ungültige oder abgelaufene Einladungen und fremde
-  Bandbereichszuordnungen werden ohne Offenlegung anderer Mitgliedschaften
-  abgelehnt.
+- **Ausgangszustand:** Eine Band besteht. Das globale Benutzerkonto der
+  bezeichneten Person existiert bereits und ist aktiv; ausschließlich ihre
+  Mitgliedschaft in dieser Band ist noch nicht aktiv.
+- **Berechtigungen:** Erforderlich ist ausschließlich die ausdrücklich
+  dokumentierte bandbezogene Verwaltungsbefugnis innerhalb der eigenen Band.
+  Das globale Aktionsrecht `Nutzer einladen` (`user.invite`) ist für diesen
+  Ablauf nicht erforderlich.
+- **Ablauf:** Der Bandberechtigte lädt ausschließlich die bezeichnete
+  Bandmitgliedschaft ein beziehungsweise aktiviert sie. Der Ablauf erzeugt und
+  aktiviert kein globales Benutzerkonto. Nach Aktivierung darf der Benutzer
+  bandbezogenen Gruppen dieser Band zugeordnet werden.
+- **Ergebnis:** Nur die bezeichnete Bandmitgliedschaft ändert sich. Das globale
+  Konto und andere Bandmitgliedschaften bleiben unverändert. Bandmitgliedschaft
+  allein vermittelt kein Objektrecht; Zugriff entsteht durch eine dem
+  Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
+  Objektberechtigung.
+- **Abgrenzung:** `WF-022` bleibt der getrennte Ablauf für die globale
+  Kontoeinladung und systemgesteuerte Kontoaktivierung.
+- **Fehler:** Ungültige oder abgelaufene Bandmitgliedschaftseinladungen und
+  fremde Bandbereichszuordnungen werden ohne Offenlegung anderer
+  Mitgliedschaften abgelehnt.
 
 ## WF-002: Band, Gruppen und Mitgliedschaften verwalten
 

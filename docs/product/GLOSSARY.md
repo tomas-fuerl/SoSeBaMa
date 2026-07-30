@@ -13,7 +13,7 @@ zusätzliche Bedeutung ein. Das zusammenhängende Modell steht im
 Eine identifizierte Person mit einem globalen Benutzerkonto im Zustand
 `aktiv`, `deaktiviert` oder `gelöscht`. Nur Plattformadministratoren dürfen
 Konten manuell global aktivieren, deaktivieren oder löschen. Nach Annahme einer
-gültigen Einladung darf das System ein Konto gemäß SEC-016 automatisch
+gültigen Kontoeinladung darf das System ein Konto gemäß SEC-016 automatisch
 aktivieren; dies ist kein Aktivierungsrecht der einladenden Person. Ein
 deaktivierter Benutzer
 bleibt Eigentümer und behält seine Beziehungen, darf aber keine Rechte ausüben;
@@ -31,31 +31,43 @@ Bands. Bandmitgliedschaft allein vermittelt kein Objektrecht; Zugriff entsteht
 durch eine dem Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
 Objektberechtigung.
 
-### Einladung
+### Kontoeinladung
 
-Einmalig an eine E-Mail-Adresse gerichteter, kurz gültiger Zugang zum
-systemgesteuerten Anlegen und Aktivieren eines normalen Benutzerkontos. Eine
-Einladung enthält keine globalen Rechte, Gruppen, Bandmitgliedschaften oder
-Objektberechtigungen und ist keine offene Selbstregistrierung.
+Einmalig an eine E-Mail-Adresse gerichteter, kurz gültiger Zugang für ein neues
+normales globales Benutzerkonto. Die Kontoeinladung erfordert das globale
+Aktionsrecht `Nutzer einladen` (`user.invite`) und kann nach erfolgreicher
+Annahme zur systemgesteuerten Kontoaktivierung führen. Sie vermittelt keine
+Bandmitgliedschaft, globalen Zusatzrechte, Gruppen oder Objektberechtigungen
+und ist keine offene Selbstregistrierung. Der verkürzte Begriff `Einladung`
+bezeichnet in Konto-, Identitäts- und Sitzungszusammenhängen ausschließlich
+diese Kontoeinladung.
 
-### Einladender
+### Bandmitgliedschaftseinladung
+
+Einladung eines bereits bestehenden aktiven globalen Benutzerkontos zu genau
+einer Band. Sie verändert ausschließlich die bezeichnete Bandmitgliedschaft,
+erfordert kein `user.invite` und erzeugt oder aktiviert kein globales Konto.
+Die Bandmitgliedschaftseinladung vermittelt allein kein Objektrecht.
+
+### Einladender einer Kontoeinladung
 
 Aktiver Benutzer mit dem globalen Aktionsrecht `Nutzer einladen`, der eine
-Einladung erzeugt hat. Er darf ausschließlich eigene offene Einladungen
-ansehen, erneut senden oder widerrufen. Er besitzt dadurch keine manuelle
-Kontoadministration und keine Rechtevergabebefugnis.
+Kontoeinladung erzeugt hat. Er darf ausschließlich eigene offene
+Kontoeinladungen ansehen, erneut senden oder widerrufen. Er besitzt dadurch
+keine manuelle Kontoadministration und keine Rechtevergabebefugnis.
 
-### Einladungsannahme
+### Annahme einer Kontoeinladung
 
 Workflow, in dem der Empfänger die E-Mail-Adresse bestätigt, das eigene
-Passwort setzt und die serverseitig erneut geprüfte gültige Einladung einmalig
-verwendet. Das System aktiviert danach ein normales Benutzerkonto mit
+Passwort setzt und die serverseitig erneut geprüfte gültige Kontoeinladung
+einmalig verwendet. Das System aktiviert danach ein normales Benutzerkonto mit
 ausschließlich dem Basissatz von `Alle Benutzer`.
 
 ### Normale automatische Kontoaktivierung
 
 Systemgesteuerte Aktivierung eines normalen Benutzerkontos nach gültiger
-Einladungsannahme. Sie ist keine manuelle Aktivierungsbefugnis des Einladenden.
+Annahme einer Kontoeinladung. Sie ist keine manuelle Aktivierungsbefugnis des
+Einladenden einer Kontoeinladung.
 Manuelle Aktivierung, Deaktivierung und Löschung bleiben ausschließlich
 Plattformadministratoren vorbehalten.
 
@@ -64,7 +76,8 @@ Plattformadministratoren vorbehalten.
 Delegierbares globales Aktionsrecht, das nur Plattformadministratoren direkt an
 aktive Benutzer oder über globale Gruppen vergeben dürfen. Es gehört nicht zum
 Basissatz von `Alle Benutzer` und darf nicht über Band, Bandmitgliedschaft oder
-Bandgruppe vermittelt werden.
+Bandgruppe vermittelt werden. Es gilt ausschließlich für Kontoeinladungen und
+ist für Bandmitgliedschaftseinladungen nicht erforderlich.
 
 ### `user.invite`
 

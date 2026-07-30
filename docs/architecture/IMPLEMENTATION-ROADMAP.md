@@ -120,19 +120,28 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
 ### AP-04: Walking Skeleton für private PDF-Inhalte
 
 - **Zweck:** Erste private PDF-Inhaltsstrecke Ende zu Ende nutzbar machen.
-- **Hauptumfang:** Songanlage mit Inhalt, Metadaten, Quarantäne, PDF-Prüfer,
-  Binärspeicher, autorisierte Range-Auslieferung und sichere PDF-Anzeige.
+- **Hauptumfang:** Songanlage mit Inhalt, Metadaten, Quarantäne, kontrolliert
+  migriertes `pg-boss`-Queue-Schema, versionierter minimaler PDF-Prüfjob,
+  transaktionale Jobanlage, Worker, PDF-Prüfer, Binärspeicher, autorisierte
+  Range-Auslieferung und sichere PDF-Anzeige. Der Job wird mit begrenzter
+  Parallelität idempotent verarbeitet; Fehlerzustände bleiben sichtbar.
 - **Voraussetzungen:** AP-03; blockierender PDF.js-/qpdf-Eignungsnachweis für
-  die strikte Allowlist mit Default-Deny und synthetisches Korpus.
+  die strikte Allowlist mit Default-Deny und synthetisches Korpus sowie
+  blockierender Nachweis, dass `pg-boss` mit kontrolliert migriertem
+  Queue-Schema ohne Runtime-DDL betrieben werden kann.
 - **Nicht-Ziele:** Overlaybearbeitung, gemeinsame Rechte, Setlists,
   Check-outs, Offlinefachdaten oder breite Freigabe.
 - **ADRs:** [0003](decisions/ADR-0003-http-api-und-oeffentliche-vertraege.md),
   [0004](decisions/ADR-0004-datenhaltung-orm-binaerspeicher-und-suche.md),
   [0007](decisions/ADR-0007-pdf-verarbeitung-und-annotationen.md),
+  [0010](decisions/ADR-0010-hintergrundaufgaben-loeschung-und-auditaufbewahrung.md),
   [0014](decisions/ADR-0014-modulstruktur-und-walking-skeleton.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G3 bestehen für sicheren Upload,
   Allowlist, Default-Deny unbekannter Strukturen, Ablehnung, Quarantäne, Range,
-  Anzeige und atomaren privaten Fachzustand.
+  Anzeige und atomaren privaten Fachzustand. Die API legt Fachzustand, Audit
+  und Prüfjob transaktional an; der Worker verarbeitet den versionierten Job
+  idempotent mit begrenzter Parallelität, ruft den isolierten PDF-Prüfer auf
+  und schreibt einen autorisierten Status oder sichtbaren Fehlerzustand fort.
 
 ### AP-05: Songverwaltung
 
@@ -212,19 +221,25 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
 
 ### AP-10: Lebenszyklus und Audit
 
-- **Zweck:** Zuverlässige Hintergrundarbeit, Löschung und Retention liefern.
-- **Hauptumfang:** `pg-boss`, versionierte Jobs, Reparaturlauf,
-  Löschzustände, Binärkompensation, append-only Audit und
-  Aufbewahrungsbereinigung.
-- **Voraussetzungen:** AP-09; blockierend belegter `pg-boss`-Betrieb ohne
-  Runtime-DDL.
-- **Nicht-Ziele:** externer Broker, zweite Outbox, kryptografische Audit-
-  Hashkette oder PRD-Debugkonsole.
+- **Zweck:** Die in AP-04 eingeführte minimale Jobstrecke zur allgemeinen
+  Hintergrund-, Lösch- und Retentionarchitektur vervollständigen und härten.
+- **Hauptumfang:** allgemeine versionierte Hintergrundjobs, begrenzte Retries
+  mit Backoff, Dead-Letter-Zustände, Reparaturläufe, kontrolliertes
+  Herunterfahren und Wiederanlaufen, Löschzustände, endgültige Löschung,
+  Binärkompensation, append-only Audit, Audit- und Retention-Bereinigung sowie
+  eine geschützte Betriebsansicht für Job- und Löschfehler.
+- **Voraussetzungen:** AP-09; die minimale jobgestützte PDF-Prüfung und das
+  kontrolliert migrierte Queue-Schema aus AP-04 bestehen.
+- **Nicht-Ziele:** Neueinführung der PDF-Jobstrecke, externer Broker, zweite
+  Outbox, Runtime-DDL, kryptografische Audit-Hashkette oder PRD-Debugkonsole.
 - **ADRs:** [0004](decisions/ADR-0004-datenhaltung-orm-binaerspeicher-und-suche.md),
   [0010](decisions/ADR-0010-hintergrundaufgaben-loeschung-und-auditaufbewahrung.md),
   [0011](decisions/ADR-0011-logging-metriken-tracing-und-diagnose.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G3 beweisen atomare Jobanlage,
-  Idempotenz, Fristrennen, Finalisierung, Retention und sichtbare Fehler.
+  Idempotenz, begrenzte Retries und Backoff, Dead-Letter, Reparatur,
+  kontrollierten Wiederanlauf, Fristrennen, Finalisierung, Binärkompensation,
+  Retention und sichtbare Job- und Löschfehler. Die in AP-04 eingeführte
+  jobgestützte PDF-Prüfung bleibt bestehen und wird nicht neu eingeführt.
 
 ### AP-11: MVP-Härtung und Releasekandidat
 
