@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 
@@ -68,7 +68,12 @@ Das Recht erlaubt dem Einladenden:
 
 - eine Einladung zu erstellen,
 - eine eigene offene Einladung erneut zu senden oder zu widerrufen,
-- den Status eigener Einladungen zu sehen.
+- den Status ausschließlich eigener offener Einladungen zu sehen.
+
+Das Recht vermittelt keine allgemeine Einladungshistorie. Abgeschlossene,
+abgelaufene, verwendete oder ersetzte Einladungen sowie fremde Einladungen sind
+für den Einladenden darüber nicht einsehbar; eine weitergehende Einsicht
+erforderte eine getrennte Administratorbefugnis.
 
 Es erlaubt keine manuelle Aktivierung, Deaktivierung oder Löschung, keine
 Vergabe globaler Rechte, Gruppen, Administratorstatus, Bandmitgliedschaften

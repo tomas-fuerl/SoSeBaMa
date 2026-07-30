@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 
@@ -37,11 +37,13 @@ keine MVP-Ziele.
 
 ## Entscheidung und Begründung
 
-PostgreSQL 18 speichert den fachlichen relationalen Kern. Jede Umgebung besitzt
-eine getrennte Instanz oder einen getrennten Datenbestand und ein eigenes
-Volume. Prisma ORM 7 und Prisma Migrate sind Standardzugriff und
-Migrationsweg. Begründetes rohes SQL ist zulässig. Prisma Studio ist in TST und
-PRD verboten. `db push` ist nur in kurzlebigen lokalen Experimenten zulässig.
+PostgreSQL 18 speichert den fachlichen relationalen Kern. DEV, TST und PRD
+besitzen jeweils einen eigenen PostgreSQL-Dienst beziehungsweise eine eigene
+PostgreSQL-Instanz mit eigenen Datenbankrollen, Daten und Volumes. Sie teilen
+weder PostgreSQL-Instanz noch PostgreSQL-Cluster. Prisma ORM 7 und Prisma
+Migrate sind Standardzugriff und Migrationsweg. Begründetes rohes SQL ist
+zulässig. Prisma Studio ist in TST und PRD verboten. `db push` ist nur in
+kurzlebigen lokalen Experimenten zulässig.
 
 Fachlich-technische IDs sind UUIDv7. Ein Offlineclient darf sie vorab erzeugen.
 Serverzeit bleibt maßgeblich. Jedes veränderliche Objekt besitzt eine monotone
@@ -85,9 +87,11 @@ Reale PostgreSQL-Integration verbessert die Testbarkeit.
 ## Security sowie DEV/TST/PRD
 
 Nur Backendrollen erreichen Datenbank und Binärvolume. Validator und Clients
-besitzen keinen Datenbankzugriff. DEV, TST und PRD verwenden getrennte Daten,
-Rollen, Volumes und Sicherungen. TST darf geschützte Diagnose liefern; PRD hat
-kein Prisma Studio, keine Debugroute und kein Runtime-DDL.
+besitzen keinen Datenbankzugriff. DEV, TST und PRD verwenden getrennte
+PostgreSQL-Dienste beziehungsweise -Instanzen, Cluster, Daten, Rollen, Volumes
+und Sicherungen. Private Host-, Pfad-, Port- oder andere Infrastrukturwerte
+bleiben außerhalb des Repositorys. TST darf geschützte Diagnose liefern; PRD
+hat kein Prisma Studio, keine Debugroute und kein Runtime-DDL.
 
 ## Migration, Verifikation und Rückbau
 

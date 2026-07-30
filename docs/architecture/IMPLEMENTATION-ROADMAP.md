@@ -122,7 +122,8 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
 - **Zweck:** Erste private PDF-Inhaltsstrecke Ende zu Ende nutzbar machen.
 - **Hauptumfang:** Songanlage mit Inhalt, Metadaten, Quarantäne, PDF-Prüfer,
   Binärspeicher, autorisierte Range-Auslieferung und sichere PDF-Anzeige.
-- **Voraussetzungen:** AP-03; PDF.js-/qpdf-Prüfung und synthetisches Korpus.
+- **Voraussetzungen:** AP-03; blockierender PDF.js-/qpdf-Eignungsnachweis für
+  die strikte Allowlist mit Default-Deny und synthetisches Korpus.
 - **Nicht-Ziele:** Overlaybearbeitung, gemeinsame Rechte, Setlists,
   Check-outs, Offlinefachdaten oder breite Freigabe.
 - **ADRs:** [0003](decisions/ADR-0003-http-api-und-oeffentliche-vertraege.md),
@@ -130,7 +131,8 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
   [0007](decisions/ADR-0007-pdf-verarbeitung-und-annotationen.md),
   [0014](decisions/ADR-0014-modulstruktur-und-walking-skeleton.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G3 bestehen für sicheren Upload,
-  Ablehnung, Quarantäne, Range, Anzeige und atomaren privaten Fachzustand.
+  Allowlist, Default-Deny unbekannter Strukturen, Ablehnung, Quarantäne, Range,
+  Anzeige und atomaren privaten Fachzustand.
 
 ### AP-05: Songverwaltung
 

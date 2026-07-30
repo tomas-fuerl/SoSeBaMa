@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 
@@ -55,8 +55,14 @@ Ein Overlay ist fachlich ein Objekt mit einer Gesamtrevision. Eine technische
 Aufteilung nach PDF-Seite in begrenztem JSONB ist zulässig.
 
 Uploads durchlaufen eine mehrstufige Quarantäne. SHA-256 wird während des
-Uploads berechnet. qpdf prüft die Struktur. Reparaturbedürftige oder aktive PDFs
-werden strikt abgelehnt, insbesondere:
+Uploads berechnet. Der PDF-Prüfer verwendet eine versionierte strikte Allowlist
+mit Default-Deny-Regel. Akzeptiert werden ausschließlich ausdrücklich
+unterstützte und sicher klassifizierte PDF-Strukturen und -Merkmale. Unbekannte,
+nicht unterstützte, nicht sicher klassifizierbare, aktive, beschädigte oder
+reparaturbedürftige Strukturen werden abgelehnt. Eine bloße Blocklist oder die
+Formulierung `insbesondere` ersetzt diese Sicherheitsgrenze nicht. qpdf und
+PDF.js liefern die technischen Prüfsignale. Die unveränderten
+Ablehnungsbeispiele sind:
 
 - verschlüsselte oder passwortgeschützte PDFs,
 - JavaScript, Dokument- und Launch-Aktionen,
@@ -111,9 +117,10 @@ Debugroute.
 ## Migration, Verifikation und Rückbau
 
 AP-04 und AP-06 implementieren Upload, Anzeige und Overlays. Das Testkorpus
-prüft alle Ablehnungsarten, Range, Header, Rendering, Speicherfreigabe,
-Geometrie, atomaren Save, Offlineübergabe und inkompatiblen Ersatz.
-Ressourcenlimits werden mit den Referenz-PDFs in TST verifiziert.
+prüft die versionierte Allowlist, Default-Deny für unbekannte Strukturen, alle
+Ablehnungsarten, Range, Header, Rendering, Speicherfreigabe, Geometrie,
+atomaren Save, Offlineübergabe und inkompatiblen Ersatz. Ressourcenlimits
+werden mit den Referenz-PDFs in TST verifiziert.
 
 Eine andere Rendering- oder Prüfkomponente benötigt ein ersetzendes ADR und
 muss denselben Korpus mindestens gleich streng bestehen. Overlaydaten bleiben
@@ -122,6 +129,7 @@ ohne vorhandene Daten still umzuschreiben.
 
 ## Offene Annahmen
 
-qpdf und PDF.js können die festgelegten aktiven Merkmale zuverlässig erkennen
-beziehungsweise deaktivieren. Diese Annahme wird vor MVP-Freigabe technisch
-belegt.
+qpdf und PDF.js können die strikte Allowlist und Default-Deny-Grenze
+einschließlich Erkennung beziehungsweise Deaktivierung der festgelegten aktiven
+Merkmale zuverlässig durchsetzen. Dies bleibt ein blockierender technischer
+Eignungsnachweis vor der Implementierung von AP-04.

@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 

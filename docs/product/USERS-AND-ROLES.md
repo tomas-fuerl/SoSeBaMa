@@ -108,7 +108,12 @@ Das Recht erlaubt:
 - eine Einladung zu erzeugen,
 - ausschließlich die eigene offene Einladung erneut zu senden,
 - ausschließlich die eigene offene Einladung zu widerrufen,
-- den Status ausschließlich der eigenen Einladungen zu sehen.
+- den Status ausschließlich eigener offener Einladungen zu sehen.
+
+Das Recht vermittelt keine allgemeine Einladungshistorie. Abgeschlossene,
+abgelaufene, verwendete oder ersetzte Einladungen sowie fremde Einladungen sind
+für den Einladenden darüber nicht einsehbar; eine weitergehende Einsicht
+erforderte eine getrennte Administratorbefugnis.
 
 Es erlaubt nicht:
 

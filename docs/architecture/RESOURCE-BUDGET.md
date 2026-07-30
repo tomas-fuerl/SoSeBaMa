@@ -53,12 +53,14 @@ Eingeschränkte Verbindung:
 | Ressource | Grenze |
 | --- | ---: |
 | CPU-Auslastung, p95 über 15 Minuten | höchstens 60 % |
-| CPU-Auslastung über fünf Minuten | nicht dauerhaft über 85 % |
 | dauerhaft belegter Arbeitsspeicher | höchstens 65 % des Hosts |
 | kurzfristiger Speicherpeak | höchstens 75 % |
 | freie Hostreserve | mindestens 20 % und mindestens 4 GiB |
 | freie Kapazität je Produktdatenvolume | mindestens 25 % |
 | I/O-Wait, p95 unter Referenzlast | höchstens 10 % |
+
+Die CPU-Auslastung darf 85 Prozent nicht über ein zusammenhängendes
+Zeitfenster von fünf Minuten überschreiten.
 
 Zusätzlich gelten:
 

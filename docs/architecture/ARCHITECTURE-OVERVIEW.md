@@ -88,14 +88,21 @@ Revision, Audit und Jobanlage entstehen in einer Transaktion. Ein externer
 Broker ist im MVP nicht vorgesehen.
 
 Der PDF-Prüfer ist ein zustandsloser isolierter Container ohne Internet,
-Datenbank, App-Sitzungen oder Secrets. Er prüft Quarantänedateien unter
-begrenzten Ressourcen und liefert nur einen sicheren Bericht.
+Datenbank, App-Sitzungen oder Secrets. Eine versionierte strikte Allowlist mit
+Default-Deny akzeptiert ausschließlich unterstützte und sicher klassifizierte
+PDF-Strukturen. Unbekannte oder nicht sicher klassifizierbare Strukturen werden
+abgelehnt. Der blockierende Eignungsnachweis für qpdf und PDF.js erfolgt vor
+AP-04. Der Prüfer arbeitet unter begrenzten Ressourcen und liefert nur einen
+sicheren Bericht.
 
 ## PostgreSQL, Binärspeicher und Suche
 
 PostgreSQL 18 speichert relationalen Fachzustand, monotone `bigint`-Revisionen,
-Audit und Jobs. UUIDv7 ist die fachlich-technische ID. Prisma ORM 7 und Prisma
-Migrate sind Standardzugriff und Migrationsweg.
+Audit und Jobs. DEV, TST und PRD besitzen jeweils einen eigenen
+PostgreSQL-Dienst beziehungsweise eine eigene PostgreSQL-Instanz und teilen
+weder PostgreSQL-Instanz noch PostgreSQL-Cluster. UUIDv7 ist die
+fachlich-technische ID. Prisma ORM 7 und Prisma Migrate sind Standardzugriff
+und Migrationsweg.
 
 PDFs liegen in einem backendexklusiven persistenten Volume hinter einer
 Object-Store-Schnittstelle. PostgreSQL führt Metadaten, Hash und Status.

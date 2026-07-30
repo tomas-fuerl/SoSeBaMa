@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 
@@ -74,12 +74,14 @@ Das PRD-Hostbudget einschließlich Observability ist:
 | Ressource | Grenze |
 | --- | ---: |
 | CPU-Auslastung, p95 über 15 Minuten | höchstens 60 % |
-| CPU-Auslastung über fünf Minuten | nicht dauerhaft über 85 % |
 | dauerhaft belegter Arbeitsspeicher | höchstens 65 % des Hosts |
 | kurzfristiger Speicherpeak | höchstens 75 % |
 | freie Hostreserve | mindestens 20 % und mindestens 4 GiB |
 | freie Kapazität je Produktdatenvolume | mindestens 25 % |
 | I/O-Wait, p95 unter Referenzlast | höchstens 10 % |
+
+Die CPU-Auslastung darf 85 Prozent nicht über ein zusammenhängendes
+Zeitfenster von fünf Minuten überschreiten.
 
 SoSeBaMa darf kein dauerhaftes Swapping, keine OOM-Beendigung und keine
 dauerhaft wachsenden Prozesse oder Queues verursachen. Bei gleichzeitigem TST-

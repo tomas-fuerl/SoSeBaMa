@@ -3,7 +3,7 @@
 - Status: Angenommen
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
-- Bezogenes Issue: Keines – dokumentierte Ownerentscheidung vom 2026-07-30
+- Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
 
 ## Kontext und Problem
 
@@ -52,9 +52,14 @@ Fehlerklassen sind explizit. Wiederholungen sind begrenzt und verwenden Backoff
 mit Jitter. Dauerhafte Fehler erhalten einen Dead-Letter-Status und werden
 nicht automatisch reaktiviert.
 
-Server- und Datenbankzeit bestimmen fachliche Fristen. Ein periodischer
-Reparaturlauf findet überfällige Aufgaben. Technische Verzögerung verlängert
-keine Wiederherstellungsfrist.
+Datenbank- beziehungsweise Serverzeit ist die maßgebliche Zeitquelle für
+fachliche Fristen. Jobtermine und Fälligkeitszeitpunkte sowie Löschfristen und
+Retention-Grenzen werden in UTC gespeichert und ausgewertet. Lokale Zeitzonen
+dienen ausschließlich der Darstellung und verändern keine Frist-, Reihenfolge-
+oder Fälligkeitssemantik. Sommerzeitwechsel dürfen keine Frist verkürzen,
+verlängern oder doppelt auslösen. Ein periodischer Reparaturlauf findet
+überfällige Aufgaben. Technische Verzögerung verlängert keine
+Wiederherstellungsfrist.
 
 Der Löschlebenszyklus verwendet:
 

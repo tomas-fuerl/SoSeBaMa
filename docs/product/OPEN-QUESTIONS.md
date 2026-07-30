@@ -318,38 +318,11 @@ Download, 5 Mbit/s Upload, 50 ms Round-Trip und höchstens 0,5 % Paketverlust.
 Die eingeschränkte Verbindung verwendet 5 Mbit/s Download, 1 Mbit/s Upload,
 150 ms Round-Trip und bis 1 % Paketverlust.
 
-Das PRD-Hostbudget einschließlich Observability verlangt CPU p95 über 15
-Minuten von höchstens 60 %, keine dauerhafte Überschreitung von 85 % über fünf
-Minuten, dauerhaft höchstens 65 % Arbeitsspeicher, kurzfristig höchstens 75 %,
-mindestens 20 % und mindestens 4 GiB freie Hostreserve, mindestens 25 % freie
-Kapazität je Produktdatenvolume und höchstens 10 % I/O-Wait p95. Dauerhaftes
-Swapping, OOM-Beendigung und dauerhaft wachsende Prozesse oder Queues sind
-unzulässig. Bei gleichzeitigem TST und PRD bleiben mindestens 15 %
-Hostreserve. Containerlimits entsprechen nach TST-Messung dem Peak plus 20 %
-technischer Reserve innerhalb des Gesamtbudgets.
-
-Je Umgebung gelten 100 GiB Binärspeicher, 20 GiB PostgreSQL, 5 GiB
-Uploadquarantäne und 5 GiB temporäre Verarbeitung. PRD bewahrt Metriken 30
-Tage, Betriebslogs 14 Tage und Traces 72 Stunden in insgesamt höchstens 25 GiB
-Telemetrievolume auf. TST bewahrt Metriken und Betriebslogs je 14 Tage, Traces
-7 Tage und ebenfalls insgesamt höchstens 25 GiB auf.
-
-Speicherwarnungen erfolgen bei 70 %, kritisch bei 85 %. Neue große Uploads
-werden spätestens bei 90 % kontrolliert abgelehnt; bestehende Inhalte und
-administrative Bereinigung bleiben erreichbar.
-
-Workerparallelität ist eins für PDF-Prüfung, Binärdateiverarbeitung,
-endgültige Löschung sowie Audit- und Retention-Batches und vier für leichte
-allgemeine Jobs. Ein normaler Job und eine Referenz-PDF-Prüfung erreichen p95
-60 Sekunden; überfällige endgültige Löschung beginnt spätestens innerhalb von
-fünf Minuten. API-Latenz hat Vorrang. Backpressure und Jobstau bleiben
-sichtbar.
-
-Je Gerätesitzung läuft eine Synchronisation mit höchstens 100 Befehlen und 10
-MiB strukturierten Nutzdaten pro Paket, 500 Änderungen pro Pull-Seite und einer
-parallelen Dateiübertragung. Das Referenzszenario umfasst zehn Geräte mit je
-100 Befehlen; höchstens fünf synchronisieren gleichzeitig, weitere erhalten
-Backpressure. PDFs liegen nie in strukturierten Befehlspaketen.
+Die CPU-Auslastung, p95 über 15 Minuten, beträgt höchstens 60 Prozent. Die
+CPU-Auslastung darf 85 Prozent nicht über ein zusammenhängendes Zeitfenster von
+fünf Minuten überschreiten. Alle weiteren Host-, Storage-, Telemetrie-,
+Worker- und Synchronisationsgrenzen stehen ausschließlich im normativen
+Ressourcenbudget.
 
 AP-01 bis AP-10 dürfen umgesetzt werden. PRD bleibt ohne erfolgreichen
 AP-11-Ressourcennachweis gesperrt. Private Hardwaredetails bleiben außerhalb
