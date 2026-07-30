@@ -11,22 +11,29 @@ Begriffe folgen dem [Glossar](GLOSSARY.md), Berechtigungen
 dem
 [Inhalts- und Overlaymodell](../architecture/CONTENT-AND-OVERLAY-MODEL.md).
 
-## WF-001: Benutzer einladen oder Zugriff erteilen
+## WF-001: Aktiven Benutzer zu einer Band einladen oder Bandzugriff erteilen
 
-- **Ausgangszustand:** Eine Band besteht; das globale Benutzerkonto ist aktiv,
-  aber seine Mitgliedschaft in dieser Band noch nicht aktiv.
-- **Berechtigungen:** Einladender mit dem globalen Aktionsrecht und dem
-  delegierbaren bandbezogenen Verwaltungsrecht.
-- **Ablauf:** Der Einladende startet die Einladung. Nach Bestätigung wird nur
-  diese Bandmitgliedschaft aktiv und der Benutzer darf bandbezogenen Gruppen
-  zugeordnet werden. Das globale Konto und andere Bandmitgliedschaften bleiben
-  unverändert.
-- **Ergebnis:** Nur positive Rechte werden wirksam. Bandmitgliedschaft allein
-  vermittelt kein Objektrecht; Zugriff entsteht durch eine dem Bandprinzipal
-  ausdrücklich oder standardmäßig zugewiesene Objektberechtigung.
-- **Fehler:** Ungültige oder abgelaufene Einladungen und fremde
-  Bandbereichszuordnungen werden ohne Offenlegung anderer Mitgliedschaften
-  abgelehnt.
+- **Ausgangszustand:** Eine Band besteht. Das globale Benutzerkonto der
+  bezeichneten Person existiert bereits und ist aktiv; ausschließlich ihre
+  Mitgliedschaft in dieser Band ist noch nicht aktiv.
+- **Berechtigungen:** Erforderlich ist ausschließlich die ausdrücklich
+  dokumentierte bandbezogene Verwaltungsbefugnis innerhalb der eigenen Band.
+  Das globale Aktionsrecht `Nutzer einladen` (`user.invite`) ist für diesen
+  Ablauf nicht erforderlich.
+- **Ablauf:** Der Bandberechtigte lädt ausschließlich die bezeichnete
+  Bandmitgliedschaft ein beziehungsweise aktiviert sie. Der Ablauf erzeugt und
+  aktiviert kein globales Benutzerkonto. Nach Aktivierung darf der Benutzer
+  bandbezogenen Gruppen dieser Band zugeordnet werden.
+- **Ergebnis:** Nur die bezeichnete Bandmitgliedschaft ändert sich. Das globale
+  Konto und andere Bandmitgliedschaften bleiben unverändert. Bandmitgliedschaft
+  allein vermittelt kein Objektrecht; Zugriff entsteht durch eine dem
+  Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
+  Objektberechtigung.
+- **Abgrenzung:** `WF-022` bleibt der getrennte Ablauf für die globale
+  Kontoeinladung und systemgesteuerte Kontoaktivierung.
+- **Fehler:** Ungültige oder abgelaufene Bandmitgliedschaftseinladungen und
+  fremde Bandbereichszuordnungen werden ohne Offenlegung anderer
+  Mitgliedschaften abgelehnt.
 
 ## WF-002: Band, Gruppen und Mitgliedschaften verwalten
 
@@ -302,7 +309,9 @@ dem
   weitere geschützte Zugriffe und Synchronisationen dieser Sitzung abgelehnt.
   Ein dauerhaft getrenntes Gerät erkennt den Widerruf nicht; spätestens die
   maximale Offlinesitzung begrenzt das Restrisiko. Widerruf und abgelehnte
-  Folgeverwendung werden auditiert, das technische Verfahren bleibt offen.
+  Folgeverwendung werden auditiert. Das angenommene technische Verfahren steht
+  in
+  [ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 - **Rechteentzug oder Sitzungsablauf:** Spätestens mit Ablauf der maximalen
   Offlinesitzung werden geschützte Basisinhalte und Overlays gesperrt; erneute
   Onlineanmeldung oder Rechteprüfung ist nötig. Endgültig gelöschte Objekte
@@ -313,7 +322,8 @@ dem
   Entwürfe dürfen verbleiben. Entwürfe verlängern keine Rechte und werden nicht
   automatisch synchronisiert.
 - **Security:** Lokale Daten müssen verschlüsselt gespeichert werden. Das
-  Verfahren bleibt Architekturentscheidung.
+  angenommene Verfahren steht in
+  [ADR-0006](../architecture/decisions/ADR-0006-lokale-pwa-daten-und-offline-synchronisation.md).
 
 ## WF-016: Inhalt bearbeiten, freigeben oder breit lesbar machen
 
@@ -486,6 +496,36 @@ dem
   Synchronisationszeit, technische datensparsame Gerätekennung, Ergebnis und
   insbesondere Ablehnungen, Konflikte, Rechte- oder Lease-Ablauf sowie
   administrative Rücknahmen.
+
+## WF-022: Globalen Benutzer einladen und Einladung annehmen
+
+- **Ausgangszustand:** Der Einladende ist aktiv und besitzt das von einem
+  Plattformadministrator direkt oder über eine globale Gruppe vergebene
+  Aktionsrecht `Nutzer einladen`. Es besteht keine offene Einladung für
+  dasselbe Ziel.
+- **Einladung erzeugen:** Der Einladende erfasst die Ziel-E-Mail-Adresse. Das
+  System erzeugt eine einmalige kurz gültige Einladung. Der Einladende darf nur
+  seine eigene offene Einladung ansehen, erneut senden oder widerrufen.
+  Plattformadministratoren dürfen jede offene Einladung widerrufen.
+- **Annahme:** Der Empfänger öffnet die noch gültige Einladung, bestätigt die
+  E-Mail-Adresse und setzt sein eigenes Passwort. Das System prüft Status und
+  Gültigkeit erneut, verbraucht die Einladung einmalig und aktiviert das Konto
+  automatisch als normalen Benutzer.
+- **Ergebnis:** Das neue Konto erhält ausschließlich den Basissatz von `Alle
+  Benutzer`. Optionale MFA darf anschließend eingerichtet werden. Globale
+  Zusatzrechte, Gruppen, Plattformadministratorstatus, Bands,
+  Bandmitgliedschaften und Objektberechtigungen werden niemals aus der
+  Einladung übernommen und nur in getrennten Abläufen vergeben.
+- **Abbruch:** Bricht der Empfänger vor erfolgreichem Abschluss ab, bleibt das
+  Konto inaktiv und die Einladung bis zu Widerruf, Verwendung oder Ablauf offen.
+  Es entsteht keine Teilaktivierung und keine Teilberechtigung.
+- **Ablehnung:** Abgelaufene, widerrufene, bereits verwendete, ersetzte oder
+  serverseitig ungültige Einladungen werden ohne E-Mail-Enumeration abgelehnt.
+  Doppelte offene Einladungen für dasselbe Ziel werden nicht erzeugt.
+- **Berechtigungsgrenze:** Die automatische Systemaktivierung ist keine manuelle
+  Aktivierungsbefugnis des Einladenden. Nur Plattformadministratoren dürfen
+  Konten manuell aktivieren, deaktivieren oder löschen und die globalen
+  Folgerechte verwalten.
 
 ## Abdeckungsregel
 

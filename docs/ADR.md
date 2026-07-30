@@ -48,6 +48,11 @@ Zulässige Status sind `Vorgeschlagen`, `Angenommen`, `Abgelehnt` und
 `Ersetzt`. Angenommene ADRs werden nicht still geändert. Eine neue Entscheidung
 ersetzt das alte ADR und verweist in beide Richtungen.
 
+Einzelne ADRs liegen verbindlich unter
+[`docs/architecture/decisions/`](architecture/decisions/README.md). Der dortige
+Index führt Nummer, Titel und Status jeder Entscheidung. ADR-Nummern werden
+nicht wiederverwendet.
+
 ## Mindeststruktur
 
 ```text

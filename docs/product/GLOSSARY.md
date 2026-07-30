@@ -12,7 +12,10 @@ zusätzliche Bedeutung ein. Das zusammenhängende Modell steht im
 
 Eine identifizierte Person mit einem globalen Benutzerkonto im Zustand
 `aktiv`, `deaktiviert` oder `gelöscht`. Nur Plattformadministratoren dürfen
-Konten global aktivieren, deaktivieren oder löschen. Ein deaktivierter Benutzer
+Konten manuell global aktivieren, deaktivieren oder löschen. Nach Annahme einer
+gültigen Kontoeinladung darf das System ein Konto gemäß SEC-016 automatisch
+aktivieren; dies ist kein Aktivierungsrecht der einladenden Person. Ein
+deaktivierter Benutzer
 bleibt Eigentümer und behält seine Beziehungen, darf aber keine Rechte ausüben;
 Reaktivierung macht sie wieder wirksam. Erst Löschung oder eine ausdrückliche
 administrative Sonderaktion erzeugt Eigentümerlosigkeit. Neuer Eigentümer oder
@@ -27,6 +30,59 @@ entfernen. Das ändert weder das globale Konto noch Beziehungen in anderen
 Bands. Bandmitgliedschaft allein vermittelt kein Objektrecht; Zugriff entsteht
 durch eine dem Bandprinzipal ausdrücklich oder standardmäßig zugewiesene
 Objektberechtigung.
+
+### Kontoeinladung
+
+Einmalig an eine E-Mail-Adresse gerichteter, kurz gültiger Zugang für ein neues
+normales globales Benutzerkonto. Die Kontoeinladung erfordert das globale
+Aktionsrecht `Nutzer einladen` (`user.invite`) und kann nach erfolgreicher
+Annahme zur systemgesteuerten Kontoaktivierung führen. Sie vermittelt keine
+Bandmitgliedschaft, globalen Zusatzrechte, Gruppen oder Objektberechtigungen
+und ist keine offene Selbstregistrierung. Der verkürzte Begriff `Einladung`
+bezeichnet in Konto-, Identitäts- und Sitzungszusammenhängen ausschließlich
+diese Kontoeinladung.
+
+### Bandmitgliedschaftseinladung
+
+Einladung eines bereits bestehenden aktiven globalen Benutzerkontos zu genau
+einer Band. Sie verändert ausschließlich die bezeichnete Bandmitgliedschaft,
+erfordert kein `user.invite` und erzeugt oder aktiviert kein globales Konto.
+Die Bandmitgliedschaftseinladung vermittelt allein kein Objektrecht.
+
+### Einladender einer Kontoeinladung
+
+Aktiver Benutzer mit dem globalen Aktionsrecht `Nutzer einladen`, der eine
+Kontoeinladung erzeugt hat. Er darf ausschließlich eigene offene
+Kontoeinladungen ansehen, erneut senden oder widerrufen. Er besitzt dadurch
+keine manuelle Kontoadministration und keine Rechtevergabebefugnis.
+
+### Annahme einer Kontoeinladung
+
+Workflow, in dem der Empfänger die E-Mail-Adresse bestätigt, das eigene
+Passwort setzt und die serverseitig erneut geprüfte gültige Kontoeinladung
+einmalig verwendet. Das System aktiviert danach ein normales Benutzerkonto mit
+ausschließlich dem Basissatz von `Alle Benutzer`.
+
+### Normale automatische Kontoaktivierung
+
+Systemgesteuerte Aktivierung eines normalen Benutzerkontos nach gültiger
+Annahme einer Kontoeinladung. Sie ist keine manuelle Aktivierungsbefugnis des
+Einladenden einer Kontoeinladung.
+Manuelle Aktivierung, Deaktivierung und Löschung bleiben ausschließlich
+Plattformadministratoren vorbehalten.
+
+### `Nutzer einladen`
+
+Delegierbares globales Aktionsrecht, das nur Plattformadministratoren direkt an
+aktive Benutzer oder über globale Gruppen vergeben dürfen. Es gehört nicht zum
+Basissatz von `Alle Benutzer` und darf nicht über Band, Bandmitgliedschaft oder
+Bandgruppe vermittelt werden. Es gilt ausschließlich für Kontoeinladungen und
+ist für Bandmitgliedschaftseinladungen nicht erforderlich.
+
+### `user.invite`
+
+Stabile englische technische Aktionskennung für das globale Produktrecht
+`Nutzer einladen`.
 
 ### Gruppe
 
@@ -46,7 +102,8 @@ eigener Inhalte, zunächst nicht vererbender Overlays und Setlists samt atomarer
 Songanlage, direkte gekoppelte Overlayanlage bei Inhalts-Bearbeitungsrecht,
 Overlay-Einreichung und -Privatkopie, Antrag auf Freigabe an `Öffentlich`,
 Setlistbefüllung mit selbst lesbaren Inhalten sowie Selbstanfragen. Nicht
-enthalten sind Songänderungsantrag, Löschen, Berechtigungsverwaltung,
+enthalten sind Nutzer einladen, Songänderungsantrag, Löschen,
+Berechtigungsverwaltung,
 Eigentumsübertragung, Bandanfragen, Overlay-Prüfung oder Administration. Nur
 Plattformadministratoren verwalten die Gruppe; eine Reduktion des Basissatzes
 erfordert eine neue Produktentscheidung. Deaktivierte oder gelöschte Benutzer
@@ -437,7 +494,8 @@ Serverseitiger Widerruf durch Plattformadministratoren. Er wird beim nächsten
 Serverkontakt wirksam und verhindert dann weitere geschützte Zugriffe und
 Synchronisationen. Bis dahin begrenzt die maximale Offlinesitzung das Risiko
 eines dauerhaft getrennten Geräts. Widerruf und abgelehnte Folgeverwendung
-werden auditiert; das technische Verfahren bleibt Architekturentscheidung.
+werden auditiert; das angenommene Verfahren steht in
+[ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 
 ### Offlinebereitstellung
 
@@ -459,8 +517,9 @@ Globaler, auditierter Wiederherstellungsprozess für
 Plattformadministrator-Zugänge. Bandadministration und Bandmitgliedschaft
 vermitteln keine Befugnis, MFA anderer Benutzer oder eines
 Plattformadministrators zu deaktivieren oder zurückzusetzen. Der letzte
-Plattformadministrator darf nicht dauerhaft ausgesperrt werden; das konkrete
-MFA-Verfahren bleibt Architekturentscheidung.
+Plattformadministrator darf nicht dauerhaft ausgesperrt werden; das
+angenommene MFA-Verfahren steht in
+[ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 
 ## Nachvollziehbarkeit
 
@@ -506,9 +565,30 @@ Bewertungssystem.
 
 ### Architekturentscheidung
 
-Noch festzulegendes technisches Verfahren, etwa für MFA, lokale
-Verschlüsselung oder Synchronisation. Eine solche Entscheidung ändert die
-fachliche Anforderung nicht.
+Nach dem ADR-Verfahren vorgeschlagene, angenommene, abgelehnte oder ersetzte
+technische Festlegung. Die am 2026-07-30 angenommene Architektur steht im
+[ADR-Index](../architecture/decisions/README.md). Eine Architekturentscheidung
+ändert die fachliche Anforderung nicht.
+
+## Technische Begriffsmappings
+
+Produktdokumentation und Oberfläche verwenden die deutschen Fachbegriffe.
+Quellcode, APIs und technische Kennungen verwenden folgende bestätigte
+englische Namen:
+
+| Deutsch | Technisch |
+| --- | --- |
+| Song | `Song` |
+| Inhalt | `ContentItem` |
+| Basisinhalt | `BaseDocument` |
+| Overlay | `Overlay` |
+| Setlist | `Setlist` |
+| Band | `Band` |
+| Berechtigung | `Permission` |
+| Eigentum | `Ownership` |
+| Check-out | `EditCheckout` |
+| Bearbeitungssitzung | `EditSession` |
+| Löschvormerkung | `DeletionMark` |
 
 ## Ausdrücklich ersetzte Altbegriffe
 

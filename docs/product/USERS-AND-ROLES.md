@@ -64,8 +64,10 @@ Aktionsrecht nicht.
 ## Benutzer und Gruppen
 
 Ein globales Benutzerkonto ist aktiv, deaktiviert oder gelöscht. Nur
-Plattformadministratoren dürfen es global aktivieren, deaktivieren oder
-löschen. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
+Plattformadministratoren dürfen es manuell global aktivieren, deaktivieren oder
+löschen. Nach Annahme einer gültigen Einladung darf das System ein Konto gemäß
+SEC-016 automatisch aktivieren; dies ist kein Aktivierungsrecht der einladenden
+Person. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
 keine neuen geschützten Aktionen beginnen und seine Rechte nicht ausüben.
 Eigentums- und Berechtigungsbeziehungen bleiben bestehen und werden nach
 Reaktivierung wieder wirksam. Nur Benutzerlöschung oder ausdrückliche
@@ -93,6 +95,44 @@ Berechtigte Bandmitglieder verwalten nur bandbezogene Gruppen der eigenen Band
 und delegierbare bandbezogene Rechte. Durch eine Änderung von
 Bandgruppenmitgliedschaften dürfen sie keine globalen Rechte erteilen oder
 entziehen.
+
+## Globales Aktionsrecht `Nutzer einladen`
+
+`Nutzer einladen` ist das delegierbare globale Aktionsrecht mit der technischen
+Aktion `user.invite`. Nur Plattformadministratoren dürfen es direkt an aktive
+Benutzer oder über globale Gruppen vergeben. Band, Bandmitgliedschaft und
+bandbezogene Gruppe dürfen es nicht vermitteln.
+
+Das Recht erlaubt:
+
+- eine Einladung zu erzeugen,
+- ausschließlich die eigene offene Einladung erneut zu senden,
+- ausschließlich die eigene offene Einladung zu widerrufen,
+- den Status ausschließlich eigener offener Einladungen zu sehen.
+
+Das Recht vermittelt keine allgemeine Einladungshistorie. Abgeschlossene,
+abgelaufene, verwendete oder ersetzte Einladungen sowie fremde Einladungen sind
+für den Einladenden darüber nicht einsehbar; eine weitergehende Einsicht
+erforderte eine getrennte Administratorbefugnis.
+
+Es erlaubt nicht:
+
+- Benutzer manuell zu aktivieren, deaktivieren oder löschen,
+- globale Rechte, Gruppen oder Plattformadministratorstatus zu vergeben,
+- MFA anderer Benutzer zurückzusetzen,
+- Einladungen anderer Einladender zu verwalten,
+- Bandmitgliedschaften oder Objektberechtigungen automatisch zu vergeben.
+
+Plattformadministratoren dürfen alle offenen Einladungen widerrufen.
+
+Bei gültiger Annahme bestätigt der Empfänger die E-Mail-Adresse und setzt sein
+eigenes Passwort. Das System aktiviert das Konto automatisch als normalen
+Benutzer und weist ausschließlich den Basissatz von `Alle Benutzer` zu.
+Weitere globale Rechte, Gruppen, Bands und Objektberechtigungen werden
+anschließend getrennt vergeben. Diese automatische Aktivierung ist ein
+systemgesteuerter Produktworkflow. Sie ist keine manuelle
+Aktivierungsbefugnis des Einladenden. Manuelle Aktivierung, Deaktivierung und
+Löschung bleiben ausschließlich Plattformadministratoren vorbehalten.
 
 ## Systemgruppe `Alle Benutzer`
 
@@ -125,9 +165,10 @@ somit keine Bearbeitung ohne `Bearbeiten` am Objekt. Nicht im Basissatz sind
 `Songänderung beantragen`, Löschen, Berechtigungen verwalten, Eigentum
 übertragen, Berechtigung für eine Band anfragen, Overlay-Übernahme prüfen,
 Check-outs anderer Sitzungen zurücknehmen sowie globale oder bandbezogene
-Administration. Die eigentümerspezifischen Sonderbefugnisse sind keine Rechte
-des Basissatzes. Eine Reduktion des Mindestbasissatzes benötigt eine neue
-dokumentierte Produktentscheidung.
+Administration. Auch `Nutzer einladen` gehört nicht zum Basissatz. Die
+eigentümerspezifischen Sonderbefugnisse sind keine Rechte des Basissatzes. Eine
+Reduktion des Mindestbasissatzes benötigt eine neue dokumentierte
+Produktentscheidung.
 
 `Alle Benutzer` ist von der Systemband `Öffentlich` getrennt: Die Systemgruppe
 vermittelt globale Funktionsrechte, die Systemband ausschließlich
@@ -218,7 +259,8 @@ MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
 Wiederherstellung eines Plattformadministrator-Zugangs darf ausschließlich
 über den festgelegten globalen Wiederherstellungsprozess erfolgen, wird
 auditiert und darf den letzten Plattformadministrator nicht dauerhaft
-aussperren. Das konkrete MFA-Verfahren bleibt eine Architekturentscheidung.
+aussperren. Das angenommene MFA-Verfahren steht in
+[ADR-0005](../architecture/decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 
 Technischer Betrieb ist keine fachliche Plattformadministration. Die
 Berechtigungen bleiben getrennt, auch wenn dieselbe reale Person beide

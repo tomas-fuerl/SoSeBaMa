@@ -11,7 +11,9 @@ Implementierungsarchitektur fest.
 Die zugehörigen Anforderungen stehen im
 [funktionalen Scope](../product/FUNCTIONAL-SCOPE.md), verbindliche Begriffe im
 [Glossar](../product/GLOSSARY.md) und der Status der Produktentscheidungen in
-den [Produktfragen](../product/OPEN-QUESTIONS.md).
+den [Produktfragen](../product/OPEN-QUESTIONS.md). Angenommene technische
+Festlegungen stehen im [ADR-Index](decisions/README.md) und werden hier nicht
+dupliziert.
 
 In diesem Dokument bedeuten:
 
@@ -20,8 +22,9 @@ In diesem Dokument bedeuten:
   MVP.
 - **Spätere Anforderung:** vorgemerkt, jedoch noch nicht für den MVP
   einzuplanen.
-- **Architekturentscheidung:** technisches Verfahren, das erst nach dem
-  [ADR-Verfahren](../ADR.md) festgelegt werden darf.
+- **Architekturentscheidung:** technische Festlegung nach dem
+  [ADR-Verfahren](../ADR.md). Die aktuelle Architektur ist angenommen, aber
+  noch nicht implementiert.
 
 ## Songmodell
 
@@ -268,8 +271,10 @@ verwalten, Eigentum übertragen und objektspezifische Sonderrechte. Dabei gilt:
 ### Benutzerkonto und Bandmitgliedschaft
 
 Ein globales Benutzerkonto ist `aktiv`, `deaktiviert` oder `gelöscht`. Nur
-Plattformadministratoren dürfen es global aktivieren, deaktivieren oder
-löschen. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
+Plattformadministratoren dürfen es manuell global aktivieren, deaktivieren oder
+löschen. Nach Annahme einer gültigen Einladung darf das System ein Konto gemäß
+SEC-016 automatisch aktivieren; dies ist kein Aktivierungsrecht der einladenden
+Person. Ein deaktiviertes Konto darf bestehender Eigentümer bleiben, aber
 keine neuen geschützten Aktionen beginnen und keine Rechte ausüben. Seine
 Eigentums- und Berechtigungsbeziehungen bleiben bestehen und werden nach
 Reaktivierung wieder wirksam. Nur die Löschung des Kontos oder eine
@@ -371,9 +376,10 @@ deaktivieren noch zurücksetzen; aus Bandmitgliedschaft entsteht keine
 MFA-Verwaltungsbefugnis für andere Benutzer. Die administrative
 Wiederherstellung eines Plattformadministrator-Zugangs darf ausschließlich über
 den globalen, auditierten Wiederherstellungsprozess erfolgen und den letzten
-Plattformadministrator nicht dauerhaft aussperren. Das konkrete MFA-Verfahren
-bleibt eine Architekturentscheidung. Technischer Betrieb und fachliche
-Plattformadministration bleiben getrennt.
+Plattformadministrator nicht dauerhaft aussperren. Das angenommene Verfahren
+steht in
+[ADR-0005](decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
+Technischer Betrieb und fachliche Plattformadministration bleiben getrennt.
 
 ## Eigentum, Eigentümerlosigkeit und Löschung
 
@@ -783,14 +789,15 @@ Der Widerruf wird beim nächsten Serverkontakt wirksam und verhindert danach
 weitere geschützte Zugriffe und Synchronisationen dieser Sitzung. Ein dauerhaft
 getrenntes Gerät kann den Widerruf nicht erkennen; die maximale Offlinesitzung
 begrenzt dieses Restrisiko. Widerruf und abgelehnte Folgeverwendung werden
-auditiert. Das konkrete Sitzungs- oder Schlüsselverfahren bleibt eine
-Architekturentscheidung.
+auditiert. Das angenommene Sitzungsverfahren steht in
+[ADR-0005](decisions/ADR-0005-identitaet-authentifizierung-und-sitzungen.md).
 
 Bei nicht synchronisierten Entwürfen muss die Abmeldewarnung ausdrücklich
 ermöglichen, die Abmeldung abzubrechen oder vor der bestätigten Abmeldung zu
 synchronisieren. Erst die bewusst bestätigte Abmeldung entfernt lokale Inhalte
 und Sitzungsschlüssel kontrolliert. Lokale Daten müssen verschlüsselt
-gespeichert werden; das Verfahren bleibt Architekturentscheidung.
+gespeichert werden; das angenommene Verfahren steht in
+[ADR-0006](decisions/ADR-0006-lokale-pwa-daten-und-offline-synchronisation.md).
 
 ## Setlists
 
@@ -882,8 +889,9 @@ Lokale Offlinekopien und nicht synchronisierte Entwürfe ersetzen keine zentrale
 Sicherung und dürfen weder als Nachweis für das RPO von 4 Stunden noch das RTO
 von 8 Stunden herangezogen werden. Das spätere Sicherungs- und
 Wiederherstellungskonzept muss diese Ziele für den zentralen Datenbestand in TST
-nachweisen. Die konkrete Auslegung auf der Ziel-Synology erfolgt zusammen mit
-der Referenzhardware und `OQ-016`.
+nachweisen. Die konkrete Auslegung folgt dem entschiedenen
+[Ressourcenbudget](RESOURCE-BUDGET.md); private Hardwaredetails bleiben
+außerhalb des Repositorys.
 
 Export gehört nicht zum MVP; Offlinebereitstellung ist kein Export. Späterer
 Export benötigt global und objektbezogen `Exportieren`. Anzeigen oder
@@ -934,6 +942,6 @@ Das Produkt muss insbesondere verhindern:
 23. auswählbaren Setlist-Snapshot oder Wiederherstellung gelöschter Inhalte aus
    Historie.
 
-Die Regeln sind technologieoffen zu verifizieren. Ihre technische Abbildung
-benötigt eine gesonderte Entscheidung, sobald die Kriterien des
-[ADR-Verfahrens](../ADR.md) erfüllt sind.
+Die Regeln sind technologieoffen zu verifizieren. Ihre angenommene technische
+Abbildung steht im [ADR-Index](decisions/README.md), ist jedoch noch nicht
+implementiert.
