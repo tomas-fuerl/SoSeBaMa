@@ -3,9 +3,9 @@
 **Song-Setlist-Band-Manager**
 
 Dieses öffentliche Repository befindet sich im initialen Projektaufbau. Es
-enthält die verbindliche Projekt- und Produktgrundlage, aber noch keine
-funktionsfähige Anwendung. Technische Architektur und Technologien sind
-angenommen und dokumentiert, aber noch nicht implementiert.
+enthält die verbindliche Projekt- und Produktgrundlage sowie das
+reproduzierbare Monorepo- und Tooling-Grundgerüst. Eine funktionsfähige
+Anwendung oder fachliche Route existiert noch nicht.
 
 Der beschlossene erste Produktstand ist PDF-zentriert. Das Fachmodell verwendet
 plattformweite Songs, aktuelle Basisinhalte, normale berechtigte Overlays,
@@ -31,6 +31,16 @@ Lesbarkeit erfolgt getrennt über die geschützte Systemband `Öffentlich`, nich
 - [Initiales Ressourcenbudget](docs/architecture/RESOURCE-BUDGET.md)
 
 Repository-spezifische Arbeitsregeln stehen in [AGENTS.md](AGENTS.md).
+
+## Entwicklungsgrundlage
+
+- [Lokale Entwicklungsumgebung einrichten und prüfen](docs/development/LOCAL-DEVELOPMENT.md)
+- [Workspace- und Importgrenzen](docs/architecture/MONOREPO-BOUNDARIES.md)
+- [Hauptversions- und Kompatibilitätsnachweis](docs/architecture/AP-01-COMPATIBILITY.md)
+
+Die lokale VS-Code-Konfiguration bleibt durch `.gitignore` vom Repository
+getrennt. Repositoryprüfungen verwenden ausschließlich die fixierten
+Node-, pnpm- und Paketversionen.
 
 ## Produktgrundlage
 

@@ -1,0 +1,16 @@
+{
+  "name": "@sobama/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared ESLint rules for the SoSeBaMa monorepo",
+  "type": "module",
+  "exports": "./index.js",
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "globals": "17.8.0"
+  },
+  "peerDependencies": {
+    "eslint": "10.8.0",
+    "typescript-eslint": "8.65.0"
+  }
+}
