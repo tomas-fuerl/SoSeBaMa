@@ -1,81 +1,52 @@
 ## Ziel
 
-<!-- Welches Issue und welches konkrete Ergebnis deckt dieser PR ab? -->
+<!-- Issue und genau ein beobachtbares Ergebnis nennen. -->
 
-Closes #
-
-> Checklistenregel: Jeden Punkt entweder abhaken oder direkt darunter mit
-> `Nicht anwendbar: <Begründung>` kennzeichnen. Unmarkierte Punkte ohne
-> Begründung sind nicht ausreichend.
+Teil von #
 
 ## Änderungen
 
-<!-- Geänderte Dateien und fachliche Wirkung vollständig, aber knapp nennen. -->
+<!-- Geänderten Teilschnitt und Wirkung knapp und vollständig nennen. -->
 
-## Prüfungen
+## Verifikation
 
-<!-- Ausgeführte Befehle und Ergebnisse eintragen. Nicht ausgeführte Prüfungen begründen. -->
-
-- [ ] `git status --short` geprüft
+- [ ] `git status --short` und vollständigen Diff geprüft
 - [ ] `git diff --check` ohne Befund
-- [ ] Relative Markdown-Links geprüft
-- [ ] Konfliktmarker geprüft
-- [ ] Secrets, reale Domains, IP-Adressen und lokale Infrastrukturwerte geprüft
-- [ ] Passende Lint-, Typ-, Test- und Build-Prüfungen ausgeführt oder als nicht
-      anwendbar begründet
+- [ ] relevante Format-, Lint-, Typ-, Test- und Build-Prüfungen bestanden
+- [ ] Dokumentationslinks geprüft, falls Dokumentation geändert wurde
+- [ ] keine Secrets oder privaten Infrastrukturwerte enthalten
 
-## Nicht ausgeführte Prüfungen
+Ausgeführte Prüfungen und Ergebnisse:
 
-<!-- Prüfung, Grund, Risiko und gegebenenfalls verantwortliche Person sowie -->
-<!-- geplanten Nachholtermin nennen. „Nicht anwendbar“ immer begründen. -->
+<!-- Nicht ausgeführte relevante Prüfungen mit Grund, Risiko und Nachholung -->
+<!-- nennen. Nicht betroffene Prüfarten müssen nicht einzeln aufgezählt werden. -->
 
-## Security und Umgebungen
+## Auswirkungen
 
-- [ ] Keine Secrets oder vertraulichen Infrastrukturwerte enthalten
-- [ ] DEV, TST und PRD bleiben getrennt
-- [ ] PRD besitzt keine Debugports, Debugtunnel oder Debugschnittstellen
-- [ ] Nutzer-Clients erreichen App-Backend beziehungsweise BFF nicht direkt
-- [ ] App-Reverse-Proxy erreicht nur vorgesehene Anwendungsendpunkte des
-      App-Backends beziehungsweise BFF
-- [ ] Nur das App-Backend erreicht die Datenbank derselben Umgebung; die
-      Datenbank hat keinen öffentlichen Endpunkt
-- [ ] Ausgehender code-server-Zugriff bleibt auf definierte SSH-/Debugwege zu
-      DEV begrenzt
-- [ ] Öffentliche Erreichbarkeit erzeugt keine impliziten Zugriffsrechte
+<!-- Je Zeile konkret antworten. "Nicht betroffen" ist mit kurzem Grund -->
+<!-- zulässig. Neue Entscheidungen oder Ausnahmen benötigen ADR bzw. -->
+<!-- dokumentierte Eigentümerentscheidung. -->
 
-## Reuse-first
+- Benutzer und Entwickler:
+- Security und Datenschutz:
+- Daten, Verträge und Migrationen:
+- DEV, TST und PRD:
+- Beobachtbarkeit und Betrieb:
 
-<!-- Welche vorhandenen Lösungen wurden gesucht, wiederverwendet oder erweitert? -->
+## Reuse und Entscheidungen
 
-- [ ] Reuse-first-Prüfung dokumentiert
-- [ ] Neue Skripte oder Automatisierungen sind begründet
-
-## Dokumentation und Entscheidungen
-
-- [ ] Betroffene Dokumentation ist foolproof aktualisiert
-- [ ] Technologieentscheidungen sind technologieoffen bewertet und als ADR
-      dokumentiert
-- [ ] Ausnahmen enthalten eine dokumentierte Eigentümerentscheidung
-
-## Daten- und Migrationsfolgen
-
-<!-- Auswirkungen auf Daten, Datenformate, Migrationen und Rückwärtskompatibilität nennen. -->
-
-- [ ] Datenfolgen sind beschrieben
-- [ ] Erforderliche Migrationen und ihre Verifikation sind beschrieben
+- Wiederverwendete oder erweiterte Lösung:
+- Neue Abhängigkeiten, Skripte oder Automatisierungen:
+- Neue oder geänderte Entscheidungen und Ausnahmen:
 
 ## Rollback
 
-<!-- Sicheren Rückweg, Abbruchkriterien und verantwortliche Person nennen. -->
-
-- [ ] Rollback ist beschrieben und praktisch ausführbar
+<!-- Sicheren Rückweg, Abbruchbedingung und mögliche Datenfolgen nennen. -->
 
 ## Ergebnisprotokoll
 
-- [ ] Lokales, ignoriertes `TASK-RESULT.md` ist aktualisiert und nicht committed
+- [ ] Lokales, ignoriertes `TASK-RESULT.md` aktualisiert und nicht committed
 
-<!-- Pfad, relevante Ergebnisse und verbleibende Abweichungen nennen. -->
+## Verbleibende Risiken
 
-## Annahmen und Risiken
-
-<!-- Offene Annahmen und verbleibende Risiken nennen. -->
+<!-- Offene Annahmen, Blocker und bewusst spätere Nachweise nennen. -->
