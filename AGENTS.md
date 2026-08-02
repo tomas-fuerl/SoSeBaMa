@@ -78,3 +78,34 @@ für eine Aktion besitzt. Ausnahmen sind nur durch die dokumentierte
 Eigentümerentscheidung aus [GOVERNANCE.md](docs/GOVERNANCE.md) möglich; die
 Verbote für Assistenzsysteme, Pull Requests zu mergen oder produktive Secrets
 zu lesen, bleiben bestehen.
+
+## Routing zum lokalen Coding-Agenten
+
+ChatGPT oder Codex darf `tools/local-agent.sh` nur für kleine, klar begrenzte
+und anschließend vollständig reviewbare Änderungen vorschlagen oder aufrufen.
+Geeignet sind beispielsweise lokale Textänderungen, Boilerplate und kleine
+Refactorings in ausdrücklich benannten Dateien. Architektur-, Sicherheits-,
+Infrastruktur- und Produktentscheidungen, Abhängigkeitsänderungen, Deployments,
+GitHub-Aktionen sowie Arbeiten mit Secrets oder produktiven Daten werden nicht
+an das lokale Modell delegiert.
+
+Für jede Delegation gelten zusätzlich:
+
+1. Aufgabe und erlaubte relative Dateien werden ausdrücklich angegeben.
+2. Die Aufgabe enthält keine Secrets, realen Infrastrukturwerte oder privaten
+   Daten. Die lokalen Logs werden genauso behandelt wie der Prompt.
+3. Der lokale Agent arbeitet ausschließlich im erzeugten Git-Worktree. Er darf
+   den Scope nicht selbst erweitern und keine Shell-Befehle vorschlagen.
+4. ChatGPT oder Codex prüft danach den vollständigen Diff gegen den
+   Ausgangsstand sowie alle projektspezifischen Prüfungen. Modelländerungen
+   werden niemals ungeprüft übernommen.
+5. Commits, Cherry-pick, Push und Pull Request bleiben bewusste, separate
+   Schritte und benötigen weiterhin den in diesem Dokument festgelegten
+   Auftrag.
+
+Das Repository enthält derzeit noch keine Anwendung und daher keinen Build-
+oder Testbefehl. Bis ein verbindlicher Einstiegspunkt ergänzt wird, sind für
+lokale Agentenänderungen mindestens `git diff --check`, eine Prüfung relativer
+Markdown-Links, eine Suche nach Konfliktmarkern und die Sichtung des gesamten
+Diffs erforderlich. Bedienung und Exit-Codes stehen in
+[`tools/local-agent.sh`](tools/local-agent.sh) (`--help`).

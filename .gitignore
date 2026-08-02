@@ -30,3 +30,7 @@ Thumbs.db
 *.log
 tmp/
 temp/
+
+# Lokaler Coding-Agent: Aufgaben, Logs und isolierte Worktrees bleiben lokal.
+.local-agent/*
+!.local-agent/.gitkeep
