@@ -37,7 +37,7 @@ Upgradefreigabe. Maßgeblich bleibt jeweils die im Repository fixierte Version.
 
 | Bestandteil | Prüfversion | Veröffentlichte Kompatibilitätsgrenze | Ergebnis |
 | --- | --- | --- | --- |
-| Node.js | 24.18.0 LTS | Linie 24 ist LTS | bestanden |
+| Node.js | 24.18.1 LTS | Linie 24 ist LTS | bestanden |
 | pnpm | 11.18.0 | Node.js `>=22.13` | bestanden |
 | TypeScript | 5.9.3 | Node.js `>=14.17` | bestanden |
 | React und React DOM | 19.2.8 | gleiche React-/React-DOM-Linie | bestanden |
@@ -131,7 +131,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.0-bookworm-slim \
+     node:24.18.1-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm install --lockfile-only --ignore-scripts --strict-peer-dependencies'
    ```
 
@@ -141,7 +141,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.0-bookworm-slim \
+     node:24.18.1-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm install --frozen-lockfile --ignore-scripts --strict-peer-dependencies'
    ```
 
@@ -151,7 +151,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.0-bookworm-slim \
+     node:24.18.1-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm exec tsc --version && node --input-type=module -e "await Promise.all([import(\"react\"), import(\"@nestjs/core\"), import(\"vite\"), import(\"vitest\"), import(\"pino\"), import(\"@opentelemetry/api\"), import(\"testcontainers\")]); console.log(\"esm-imports: ok\")"'
    ```
 
@@ -162,8 +162,8 @@ das Ergebnis nicht.
 ## Ausgeführtes Ergebnis
 
 Die Probe lief mit dem offiziellen Image
-`node:24.18.0-bookworm-slim` und dem beim Abruf gemeldeten Digest
-`sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d`.
+`node:24.18.1-bookworm-slim` und dem beim Abruf gemeldeten Digest
+`sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7`.
 
 - Die strikte Lockfile-Auflösung endete mit Exit-Code `0`.
 - pnpm bestätigte seine Supply-Chain-Prüfung für 458 Lockfileeinträge.

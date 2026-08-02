@@ -1,0 +1,7 @@
+{
+  "name": "@sobama/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-only environment configuration boundary",
+  "type": "module"
+}

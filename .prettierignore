@@ -1,0 +1,9 @@
+.git/
+.local-agent/
+.pnpm-store/
+.worktrees/
+**/*.md
+coverage/
+dist/
+node_modules/
+pnpm-lock.yaml
