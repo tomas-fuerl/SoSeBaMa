@@ -17,7 +17,7 @@ privaten Registrys oder Infrastrukturwerte.
 - ein sauberer Checkout dieses öffentlichen Repositorys,
 - Git,
 - Node.js exakt in der Version aus [`.node-version`](../../.node-version),
-- das mit Node.js bereitgestellte Corepack,
+- Corepack `0.35.0`,
 - öffentlicher Zugriff auf die npm-Registry.
 
 Ein lokaler Versionsmanager darf `.node-version` auswerten. Das Repository legt
@@ -41,7 +41,7 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    node --version
    ```
 
-   Erwartet wird `v24.18.0`. Eine andere Version wird nicht mit `--force`
+   Erwartet wird `v24.18.1`. Eine andere Version wird nicht mit `--force`
    umgangen.
 
 3. Den im Repository fixierten Paketmanager aktivieren:
