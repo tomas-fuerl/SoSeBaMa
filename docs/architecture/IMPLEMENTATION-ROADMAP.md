@@ -70,8 +70,8 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
 - **Hauptumfang:** pnpm-Workspace, TypeScriptkonfiguration, Modulgrenzprüfung,
   minimale Web/API/Worker-Starts, Health, Telemetriegrundlage, Images und
   explizite DEV-Konfiguration.
-- **Voraussetzungen:** AP-00; technische Kompatibilitätsprüfung der
-  Hauptversionen.
+- **Voraussetzungen:** AP-00; bestandener
+  [Hauptversions- und Kompatibilitätsnachweis](AP-01-COMPATIBILITY.md).
 - **Nicht-Ziele:** fachliche Konten, Bands, PDFs, Overlays, Setlists,
   Offlinefachdaten oder PRD-Deployment.
 - **ADRs:** [0001](decisions/ADR-0001-systemarchitektur-und-laufzeitrollen.md),
