@@ -53,6 +53,9 @@ Eigentümerentscheidungen Vorrang.
 
 ## Git- und GitHub-Grenzen
 
+- Branches zu einem Arbeitspaket verwenden das Schema
+  `ap-XX/<kurze-beschreibung>`, beispielsweise
+  `ap-01/compatibility-proof`. Das Präfix `agent/` wird nicht verwendet.
 - Kein direkter Push auf `main`.
 - Kein Merge eines Pull Requests; Merges führt ausschließlich der
   Projekteigentümer durch.
