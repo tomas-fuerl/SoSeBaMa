@@ -2,6 +2,20 @@
   "name": "@sobama/api",
   "version": "0.0.0",
   "private": true,
-  "description": "Reserved workspace for the server-side HTTP API",
-  "type": "module"
+  "description": "Synchronous SoSeBaMa API runtime",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "@nestjs/platform-express": "11.1.28",
+    "@sobama/config": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  }
 }

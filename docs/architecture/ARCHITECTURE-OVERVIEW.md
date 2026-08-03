@@ -3,7 +3,8 @@
 ## Status und Leseregel
 
 Diese Übersicht fasst angenommene ADRs zusammen. Die Entscheidungen sind noch
-nicht implementiert; im Repository existiert keine funktionsfähige Anwendung.
+schrittweise in Umsetzung. Im Repository existieren minimale technische
+Web-, API- und Worker-Starts, aber noch keine fachliche Funktion.
 Normative technische Details stehen im [ADR-Index](decisions/README.md),
 fachliches Verhalten in den [Produktdokumenten](../product/VISION.md).
 

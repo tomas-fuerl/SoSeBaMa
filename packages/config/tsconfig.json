@@ -1,0 +1,7 @@
+{
+  "extends": "@sobama/typescript-config/node.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

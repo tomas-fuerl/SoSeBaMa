@@ -41,8 +41,8 @@ export const sobamaConfig = tseslint.config(
       '.local-agent/**',
       '.pnpm-store/**',
       '.worktrees/**',
-      'coverage/**',
-      'dist/**',
+      '**/coverage/**',
+      '**/dist/**',
       'node_modules/**',
     ],
   },
@@ -55,7 +55,7 @@ export const sobamaConfig = tseslint.config(
     },
   },
   {
-    files: ['apps/web/**/*.{ts,tsx}'],
+    files: ['apps/web/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],
     rules: clientOnlyRestrictions,
   },
 );

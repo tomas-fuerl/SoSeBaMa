@@ -10,12 +10,17 @@
     "pnpm": "11.18.0"
   },
   "scripts": {
-    "check": "pnpm format && pnpm lint && pnpm typecheck && pnpm docs:links",
+    "build": "pnpm --recursive --if-present run build",
+    "check": "pnpm format && pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm docs:links",
+    "dev:web": "pnpm --filter @sobama/web run dev",
     "docs:links": "node tools/check-markdown-links.mjs",
     "format": "prettier . --check",
     "format:write": "prettier . --write",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --project tsconfig.json --noEmit"
+    "start:api": "pnpm --filter @sobama/api run start",
+    "start:worker": "pnpm --filter @sobama/worker run start",
+    "test": "pnpm --recursive --if-present run test",
+    "typecheck": "tsc --project tsconfig.json --noEmit && pnpm --recursive --if-present run typecheck"
   },
   "devDependencies": {
     "@sobama/eslint-config": "workspace:*",
@@ -24,6 +29,7 @@
     "eslint": "10.8.0",
     "prettier": "3.9.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.65.0"
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10"
   }
 }
