@@ -20,7 +20,7 @@ describe('web runtime', () => {
     expect(markup).not.toContain('<nav');
   });
 
-  it('starts, serves its technical health file, and stops cleanly', async () => {
+  it('starts, serves the application and health, and stops cleanly', async () => {
     server = await createServer({
       logLevel: 'silent',
       root: fileURLToPath(new URL('../', import.meta.url)),
@@ -30,7 +30,14 @@ describe('web runtime', () => {
 
     const address = server.httpServer?.address() as AddressInfo | null;
     expect(address).not.toBeNull();
-    const healthUrl = `http://localhost:${address?.port ?? 0}/health.json`;
+    const baseUrl = `http://localhost:${address?.port ?? 0}`;
+    const healthUrl = `${baseUrl}/health.json`;
+
+    const pageResponse = await fetch(`${baseUrl}/`);
+    expect(pageResponse.status).toBe(200);
+    const pageMarkup = await pageResponse.text();
+    expect(pageMarkup).toContain('src="/src/main.tsx"');
+    expect(pageMarkup).toContain('<div id="root"></div>');
 
     const response = await fetch(healthUrl);
     expect(response.status).toBe(200);

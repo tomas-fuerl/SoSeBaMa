@@ -51,6 +51,21 @@ describe('server runtime configuration', () => {
     }
   });
 
+  it('rejects TST and PRD for API and worker without echoing the environment', () => {
+    for (const runtime of ['TST', 'PRD']) {
+      expect(() =>
+        loadApiRuntimeConfig({
+          SOSEBAMA_API_HOST: 'localhost',
+          SOSEBAMA_API_PORT: '4310',
+          SOSEBAMA_ENVIRONMENT: runtime,
+        }),
+      ).toThrowError(/SOSEBAMA_ENVIRONMENT(?!.*(?:TST|PRD))/u);
+      expect(() => loadWorkerRuntimeConfig({ SOSEBAMA_ENVIRONMENT: runtime })).toThrowError(
+        /SOSEBAMA_ENVIRONMENT(?!.*(?:TST|PRD))/u,
+      );
+    }
+  });
+
   it('rejects non-decimal port syntax', () => {
     for (const port of ['1e3', '0x50', '04310']) {
       expect(() =>

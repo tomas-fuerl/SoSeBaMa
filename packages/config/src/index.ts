@@ -1,4 +1,4 @@
-export type RuntimeEnvironment = 'DEV' | 'TST' | 'PRD';
+export type RuntimeEnvironment = 'DEV';
 
 export type EnvironmentSource = Readonly<Record<string, string | undefined>>;
 
@@ -29,16 +29,16 @@ function readRequired(environment: EnvironmentSource, variable: string): string 
 
 function readRuntimeEnvironment(environment: EnvironmentSource): RuntimeEnvironment {
   const value = readRequired(environment, 'SOSEBAMA_ENVIRONMENT');
-  if (value !== 'DEV' && value !== 'TST' && value !== 'PRD') {
-    throw new ConfigurationError('SOSEBAMA_ENVIRONMENT', 'expected DEV, TST, or PRD');
+  if (value !== 'DEV') {
+    throw new ConfigurationError('SOSEBAMA_ENVIRONMENT', 'expected DEV for this local runtime');
   }
   return value;
 }
 
-function readApiHost(environment: EnvironmentSource, runtime: RuntimeEnvironment): string {
+function readApiHost(environment: EnvironmentSource): string {
   const host = readRequired(environment, 'SOSEBAMA_API_HOST');
   const developmentLoopbacks = new Set(['localhost', '127.0.0.1', '::1']);
-  if (runtime === 'DEV' && !developmentLoopbacks.has(host)) {
+  if (!developmentLoopbacks.has(host)) {
     throw new ConfigurationError('SOSEBAMA_API_HOST', 'DEV requires localhost, 127.0.0.1, or ::1');
   }
   return host;
@@ -66,7 +66,7 @@ export function loadApiRuntimeConfig(environment: EnvironmentSource): ApiRuntime
   const runtime = readRuntimeEnvironment(environment);
   return {
     environment: runtime,
-    host: readApiHost(environment, runtime),
+    host: readApiHost(environment),
     port: readApiPort(environment),
   };
 }

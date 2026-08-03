@@ -1,7 +1,7 @@
 # Lokale Laufzeitrollen starten und prüfen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-02
+- Letzter Prüfstand: 2026-08-03
 - Bezogenes Issue: [#13](https://github.com/tomas-fuerl/SoSeBaMa/issues/13)
 - Geltungsbereich: ausschließlich lokales DEV
 
@@ -29,6 +29,8 @@ Platzhalter; sie wird nicht automatisch geladen.
 5. Die API bindet in DEV ausschließlich an `localhost`, `127.0.0.1` oder
    `::1`. Eine externe Interface- oder LAN-Bindung wird von der
    Konfigurationsvalidierung abgelehnt.
+6. API und Worker akzeptieren in diesem lokalen Teilschnitt ausschließlich
+   `DEV`. Werte für TST oder PRD werden vor dem Start abgelehnt.
 
 ## Bauen und automatisiert prüfen
 
@@ -48,8 +50,9 @@ Platzhalter; sie wird nicht automatisch geladen.
    Erwartet wird Exit-Code `0`. Die Tests starten die gebauten API- und
    Worker-Einstiegspunkte als eigene Prozesse, senden `SIGINT` beziehungsweise
    `SIGTERM` und prüfen Start-, Stopp- und Fehlerereignisse sowie Exit-Codes und
-   harte Timeouts. Zusätzlich werden Webstart, Healthzustände und ungültige
-   Konfigurationen geprüft.
+   harte Timeouts. Der Webtest lädt die Startseite und führt den echten
+   React-Bootstrap in einer DOM-Umgebung aus. Zusätzlich werden Healthzustände
+   und ungültige Konfigurationen geprüft.
 
 ## Web starten und stoppen
 
@@ -140,6 +143,9 @@ Platzhalter; sie wird nicht automatisch geladen.
 - **Nicht lokaler API-Host in DEV:** Der Start endet mit `runtime.failed` und
   Exit-Code `1`. Keine externe Bindung erzwingen; einen der dokumentierten
   Loopbackwerte verwenden.
+- **TST oder PRD als lokale Laufzeitumgebung:** Der Start endet mit
+  `runtime.failed` und Exit-Code `1`. Der Teilschnitt ist nicht für diese
+  Umgebungen freigegeben; den Wert nicht lokal umgehen oder vortäuschen.
 - **Port bereits belegt:** API oder Web nicht mit einem anderen ungeprüften
   Wert erzwingen. Einen freien lokalen Port wählen und den Start wiederholen.
 - **Fehler beim Herunterfahren:** API oder Worker meldet
