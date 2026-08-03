@@ -35,11 +35,29 @@ function readRuntimeEnvironment(environment: EnvironmentSource): RuntimeEnvironm
   return value;
 }
 
+function readApiHost(environment: EnvironmentSource, runtime: RuntimeEnvironment): string {
+  const host = readRequired(environment, 'SOSEBAMA_API_HOST');
+  const developmentLoopbacks = new Set(['localhost', '127.0.0.1', '::1']);
+  if (runtime === 'DEV' && !developmentLoopbacks.has(host)) {
+    throw new ConfigurationError('SOSEBAMA_API_HOST', 'DEV requires localhost, 127.0.0.1, or ::1');
+  }
+  return host;
+}
+
 function readApiPort(environment: EnvironmentSource): number {
   const value = readRequired(environment, 'SOSEBAMA_API_PORT');
+  if (!/^[1-9]\d{0,4}$/u.test(value)) {
+    throw new ConfigurationError(
+      'SOSEBAMA_API_PORT',
+      'expected a decimal integer from 1 through 65535',
+    );
+  }
   const port = Number(value);
-  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
-    throw new ConfigurationError('SOSEBAMA_API_PORT', 'expected an integer from 1 through 65535');
+  if (port > 65_535) {
+    throw new ConfigurationError(
+      'SOSEBAMA_API_PORT',
+      'expected a decimal integer from 1 through 65535',
+    );
   }
   return port;
 }
@@ -48,7 +66,7 @@ export function loadApiRuntimeConfig(environment: EnvironmentSource): ApiRuntime
   const runtime = readRuntimeEnvironment(environment);
   return {
     environment: runtime,
-    host: readRequired(environment, 'SOSEBAMA_API_HOST'),
+    host: readApiHost(environment, runtime),
     port: readApiPort(environment),
   };
 }

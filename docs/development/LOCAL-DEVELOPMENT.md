@@ -72,8 +72,9 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    ```
 
    Format, ESLint, TypeScript, die drei Laufzeitbuilds, die automatisierten
-   Laufzeittests und die Prüfung relativer Markdown-Dateiziele müssen jeweils
-   mit Exit-Code `0` enden.
+   Prozess- und Laufzeittests sowie die Prüfung relativer Markdown-Dateiziele
+   müssen jeweils mit Exit-Code `0` enden. Die Prozesstests senden reale lokale
+   Signale und räumen fehlgeschlagene Child Processes mit harten Timeouts auf.
 
 6. Nur wenn die Rollen lokal interaktiv benötigt werden, der
    [Anleitung für Web, API und Worker](RUNTIME-ROLES.md) folgen. Die dortigen

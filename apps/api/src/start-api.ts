@@ -14,16 +14,28 @@ export interface StartedApi {
 
 export async function startApi(config: ApiRuntimeConfig): Promise<StartedApi> {
   const app = await NestFactory.create(ApiModule, { logger: false });
-  const health = app.get(RuntimeHealth);
-  await app.listen(config.port, config.host);
-  health.markReady();
+  let healthForCleanup: RuntimeHealth | undefined;
+  try {
+    const health = app.get(RuntimeHealth);
+    healthForCleanup = health;
+    await app.listen(config.port, config.host);
+    health.markReady();
 
-  const address = app.getHttpServer().address() as AddressInfo | null;
-  if (!address) {
-    health.markError();
-    await app.close();
-    throw new Error('API listener did not expose a network address.');
+    const address = app.getHttpServer().address() as AddressInfo | null;
+    if (!address) {
+      throw new Error('API listener did not expose a network address.');
+    }
+
+    return { app, health, port: address.port };
+  } catch (error: unknown) {
+    healthForCleanup?.markError();
+    try {
+      await app.close();
+    } catch (closeError: unknown) {
+      throw new AggregateError([error, closeError], 'API startup and cleanup both failed.', {
+        cause: closeError,
+      });
+    }
+    throw error;
   }
-
-  return { app, health, port: address.port };
 }

@@ -26,6 +26,9 @@ Platzhalter; sie wird nicht automatisch geladen.
    Befehlen werden `<LOCAL_WEB_PORT>` und `<LOCAL_API_PORT>` vor der Ausführung
    durch diese ausschließlich lokalen Werte ersetzt.
 4. Es werden keine Secrets oder privaten Infrastrukturwerte gesetzt.
+5. Die API bindet in DEV ausschließlich an `localhost`, `127.0.0.1` oder
+   `::1`. Eine externe Interface- oder LAN-Bindung wird von der
+   Konfigurationsvalidierung abgelehnt.
 
 ## Bauen und automatisiert prüfen
 
@@ -42,9 +45,11 @@ Platzhalter; sie wird nicht automatisch geladen.
    pnpm check
    ```
 
-   Erwartet wird Exit-Code `0`. Die Tests starten und stoppen Web, API und
-   Worker kontrolliert und prüfen auch nicht bereite, fehlerhafte und ungültig
-   konfigurierte Zustände.
+   Erwartet wird Exit-Code `0`. Die Tests starten die gebauten API- und
+   Worker-Einstiegspunkte als eigene Prozesse, senden `SIGINT` beziehungsweise
+   `SIGTERM` und prüfen Start-, Stopp- und Fehlerereignisse sowie Exit-Codes und
+   harte Timeouts. Zusätzlich werden Webstart, Healthzustände und ungültige
+   Konfigurationen geprüft.
 
 ## Web starten und stoppen
 
@@ -65,7 +70,8 @@ Platzhalter; sie wird nicht automatisch geladen.
 ## API starten, Health prüfen und stoppen
 
 1. In einem eigenen Terminal die rein lokale DEV-Konfiguration setzen. Der
-   Portplatzhalter wird vor der Ausführung ersetzt:
+   Portplatzhalter wird vor der Ausführung ersetzt. Für den Host ist in DEV nur
+   ein Loopbackwert zulässig:
 
    ```sh
    export SOSEBAMA_ENVIRONMENT="DEV"
@@ -98,7 +104,9 @@ Platzhalter; sie wird nicht automatisch geladen.
    | `/health/ready` | `ready` | Die Rolle darf Anfragen annehmen. |
 
    Ein nicht bereiter Zustand liefert HTTP `503` mit `not-ready`. Ein
-   technischer Fehler liefert HTTP `503` mit `error`. Die Antworten enthalten
+   technischer Fehler liefert HTTP `503` mit `error`. Beim ersten
+   Shutdown-Signal wechselt die API vor dem Schließen auf `not-ready`. Eine
+   spätere Drain-Zeit folgt im Containerarbeitspaket. Die Antworten enthalten
    weder Umgebungswerte noch Diagnose- oder Fachdaten.
 
 4. Im Startterminal `Ctrl-C` drücken. Die API muss herunterfahren und die
@@ -129,8 +137,15 @@ Platzhalter; sie wird nicht automatisch geladen.
 - **Fehlende oder ungültige Konfiguration:** Der API- oder Workerprozess endet
   mit Exit-Code ungleich `0`. Die Fehlermeldung nennt nur den Variablennamen
   und die erwartete Form, niemals den übergebenen Wert.
+- **Nicht lokaler API-Host in DEV:** Der Start endet mit `runtime.failed` und
+  Exit-Code `1`. Keine externe Bindung erzwingen; einen der dokumentierten
+  Loopbackwerte verwenden.
 - **Port bereits belegt:** API oder Web nicht mit einem anderen ungeprüften
   Wert erzwingen. Einen freien lokalen Port wählen und den Start wiederholen.
+- **Fehler beim Herunterfahren:** API oder Worker meldet
+  `runtime.shutdown-failed` und Exit-Code `1`. Der Prozess darf nicht als
+  erfolgreich gestoppt bewertet werden; verbliebene lokale Prozesse werden
+  kontrolliert beendet.
 - **Health meldet `not-ready` oder `error`:** Keine Fachanfrage senden. Den
   lokalen Prozess stoppen und zuerst den fehlgeschlagenen Test oder Startfehler
   untersuchen.
