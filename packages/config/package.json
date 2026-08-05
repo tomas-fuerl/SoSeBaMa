@@ -2,6 +2,17 @@
   "name": "@sobama/config",
   "version": "0.0.0",
   "private": true,
-  "description": "Server-only environment configuration boundary",
-  "type": "module"
+  "description": "Validated server-only runtime configuration boundary",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  }
 }

@@ -4,8 +4,9 @@
 
 Dieses öffentliche Repository befindet sich im initialen Projektaufbau. Es
 enthält die verbindliche Projekt- und Produktgrundlage sowie das
-reproduzierbare Monorepo- und Tooling-Grundgerüst. Eine funktionsfähige
-Anwendung oder fachliche Route existiert noch nicht.
+reproduzierbare Monorepo- und Tooling-Grundgerüst. Web, API und Worker besitzen
+minimale technische Starts und Health-Nachweise; eine fachliche Route oder
+Funktion existiert noch nicht.
 
 Der beschlossene erste Produktstand ist PDF-zentriert. Das Fachmodell verwendet
 plattformweite Songs, aktuelle Basisinhalte, normale berechtigte Overlays,
@@ -35,6 +36,7 @@ Repository-spezifische Arbeitsregeln stehen in [AGENTS.md](AGENTS.md).
 ## Entwicklungsgrundlage
 
 - [Lokale Entwicklungsumgebung einrichten und prüfen](docs/development/LOCAL-DEVELOPMENT.md)
+- [Lokale Web-, API- und Worker-Rollen starten](docs/development/RUNTIME-ROLES.md)
 - [Workspace- und Importgrenzen](docs/architecture/MONOREPO-BOUNDARIES.md)
 - [Hauptversions- und Kompatibilitätsnachweis](docs/architecture/AP-01-COMPATIBILITY.md)
 

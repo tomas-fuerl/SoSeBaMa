@@ -2,6 +2,19 @@
   "name": "@sobama/worker",
   "version": "0.0.0",
   "private": true,
-  "description": "Reserved workspace for server-side background workers",
-  "type": "module"
+  "description": "Background SoSeBaMa worker runtime",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "@sobama/config": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  }
 }

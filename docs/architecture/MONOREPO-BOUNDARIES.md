@@ -8,8 +8,8 @@
 
 Diese Grenze hält Clientcode, öffentliche Verträge, serverinterne
 Konfiguration und spätere Fachmodule auseinander. Sie gilt für lokales DEV,
-GitHub-hosted CI, TST und PRD. Dieser Teilschnitt reserviert nur Workspaces; er
-enthält noch keinen startfähigen oder fachlichen Quellcode.
+GitHub-hosted CI, TST und PRD. Web, API und Worker enthalten minimale technische
+Starts; fachlicher Quellcode bleibt ausgeschlossen.
 
 ## Workspace-Matrix
 
@@ -43,9 +43,10 @@ Zielgruppe.
    Interne Ordner anderer Module bleiben verboten.
 
 Die aktuelle ESLint-Konfiguration erzwingt die Clientverbote aus den Punkten 1
-bis 3 bereits für `apps/web`. Die vollständigen Fachmodul-, Zyklen- und
-Fassadentests folgen in [Issue #14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14),
-sobald Quellmodule existieren.
+bis 3 für JavaScript- und TypeScript-Clientdateien unter `apps/web`. Die
+vollständigen Fachmodul-, Zyklen- und Fassadentests folgen in
+[Issue #14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14), sobald
+Quellmodule existieren.
 
 ## Verifikation
 

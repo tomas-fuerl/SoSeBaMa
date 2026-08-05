@@ -7,7 +7,8 @@
 ## Ziel
 
 Ein frischer Checkout installiert exakt die fixierten Abhängigkeiten. Danach
-enden Format-, Lint- und TypeScript-Prüfung gemeinsam mit Exit-Code `0`.
+enden Format-, Lint-, TypeScript-, Build-, Test- und
+Markdown-Dateizielprüfungen gemeinsam mit Exit-Code `0`.
 
 Diese Anleitung verändert weder TST noch PRD. Sie benötigt keine Secrets,
 privaten Registrys oder Infrastrukturwerte.
@@ -70,7 +71,14 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    pnpm check
    ```
 
-   Format, ESLint und TypeScript müssen jeweils mit Exit-Code `0` enden.
+   Format, ESLint, TypeScript, die drei Laufzeitbuilds, die automatisierten
+   Prozess- und Laufzeittests sowie die Prüfung relativer Markdown-Dateiziele
+   müssen jeweils mit Exit-Code `0` enden. Die Prozesstests senden reale lokale
+   Signale und räumen fehlgeschlagene Child Processes mit harten Timeouts auf.
+
+6. Nur wenn die Rollen lokal interaktiv benötigt werden, der
+   [Anleitung für Web, API und Worker](RUNTIME-ROLES.md) folgen. Die dortigen
+   Prozesse werden nicht durch `pnpm check` dauerhaft gestartet.
 
 ## Verifikation
 
@@ -81,8 +89,12 @@ git status --short
 ```
 
 Neue Einträge dürfen nur erwartete lokale, durch `.gitignore` ausgeschlossene
-Installationsartefakte sein. Es existiert in diesem Teilschnitt noch kein
-Anwendungsstart, Build oder fachlicher Test.
+Installations- und Buildartefakte sein. Die Anwendung enthält ausschließlich
+technische Starts und Health-Nachweise; fachliche Routen und Funktionen fehlen.
+
+`pnpm docs:links` ist bewusst eine Dateizielprüfung. Sie prüft, ob relative
+Markdown-Ziele im Repository existieren. Überschriftenanker und die vollständige
+Markdown-Syntax gehören nicht zu ihrem Umfang.
 
 ## Fehlerbehandlung
 
@@ -94,6 +106,10 @@ Anwendungsstart, Build oder fachlicher Test.
   Keine private Registry oder Zugangsdaten in Repositorydateien eintragen.
 - **Lockfileabweichung:** Abbrechen und Ursache prüfen. Das Lockfile nur in
   einem eigenen, reviewten Abhängigkeitsupdate neu erzeugen.
+- **Erforderliches Installationsskript:** Abbrechen. `--ignore-scripts` ist für
+  den aktuellen Laufzeitschnitt geprüft. Spätere Werkzeuge mit notwendigen
+  Installations- oder Generierungsschritten benötigen zuerst einen eigenen
+  kontrollierten Supply-Chain-Nachweis.
 - **Prüfungsfehler:** Den ersten fehlgeschlagenen Schritt beheben. Prüfregeln
   dürfen nicht zur Umgehung des Fehlers abgeschaltet werden.
 

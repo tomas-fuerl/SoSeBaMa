@@ -9,7 +9,7 @@ const markdownLinkPattern = /\[[^\]]*\]\(([^)]+)\)/g;
 const execFileAsync = promisify(execFile);
 
 function printUsage() {
-  console.log(`Check relative links in all repository Markdown files.
+  console.log(`Check relative file targets in all repository Markdown files.
 
 Usage:
   node tools/check-markdown-links.mjs
@@ -19,8 +19,8 @@ Requirement:
   run from the repository root with Git available in PATH
 
 Exit codes:
-  0  all relative links resolve
-  1  at least one relative link is broken or unreadable
+  0  all relative file targets resolve
+  1  at least one relative file target is broken or unreadable
   2  unsupported arguments`);
 }
 
@@ -88,11 +88,11 @@ async function main() {
   }
 
   if (failures.length > 0) {
-    console.error(`Broken relative Markdown links:\n${failures.join('\n')}`);
+    console.error(`Broken relative Markdown file targets:\n${failures.join('\n')}`);
     return EXIT_CHECK_FAILED;
   }
 
-  console.log(`Markdown links: OK (${markdownFiles.length} files).`);
+  console.log(`Markdown file targets: OK (${markdownFiles.length} files).`);
   return 0;
 }
 

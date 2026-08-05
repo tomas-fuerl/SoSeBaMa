@@ -2,6 +2,22 @@
   "name": "@sobama/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Reserved workspace for the client-side web application",
-  "type": "module"
+  "description": "Client-side SoSeBaMa web runtime",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --host localhost",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "happy-dom": "20.11.1",
+    "vite": "8.2.0"
+  }
 }
