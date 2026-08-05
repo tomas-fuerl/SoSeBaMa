@@ -103,9 +103,10 @@ Für jede Delegation gelten zusätzlich:
    Schritte und benötigen weiterhin den in diesem Dokument festgelegten
    Auftrag.
 
-Das Repository enthält derzeit noch keine Anwendung und daher keinen Build-
-oder Testbefehl. Bis ein verbindlicher Einstiegspunkt ergänzt wird, sind für
-lokale Agentenänderungen mindestens `git diff --check`, eine Prüfung relativer
-Markdown-Links, eine Suche nach Konfliktmarkern und die Sichtung des gesamten
-Diffs erforderlich. Bedienung und Exit-Codes stehen in
-[`tools/local-agent.sh`](tools/local-agent.sh) (`--help`).
+Nach jeder lokalen Agentenänderung sind mindestens der vollständige Diff gegen
+den Ausgangs-Commit, der unveränderte Worktree-Commit, der erlaubte Dateiscope
+und `pnpm check` zu prüfen. Zusätzlich bleiben die Konfliktmarker- und
+Secretmusterprüfung verpflichtend. Bedienung, Exit-Codes, manueller Review und
+Rückbau stehen in der
+[Anleitung für den lokalen Coding-Agenten](docs/development/LOCAL-CODING-AGENT.md)
+und in [`tools/local-agent.sh`](tools/local-agent.sh) (`--help`).
