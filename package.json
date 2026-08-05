@@ -1,0 +1,36 @@
+{
+  "name": "sobama",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Song-Setlist-Band-Manager monorepo",
+  "type": "module",
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": "24.18.1",
+    "pnpm": "11.18.0"
+  },
+  "scripts": {
+    "build": "pnpm --recursive --if-present run build",
+    "check": "pnpm format && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:links",
+    "dev:web": "pnpm --filter @sobama/web run dev",
+    "docs:links": "node tools/check-markdown-links.mjs",
+    "format": "prettier . --check",
+    "format:write": "prettier . --write",
+    "lint": "eslint . --max-warnings=0",
+    "start:api": "pnpm --filter @sobama/api run start",
+    "start:worker": "pnpm --filter @sobama/worker run start",
+    "test": "pnpm build && pnpm test:processes && pnpm --recursive --if-present run test",
+    "test:processes": "vitest run test/runtime-processes.test.ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit && pnpm --recursive --if-present run typecheck"
+  },
+  "devDependencies": {
+    "@sobama/eslint-config": "workspace:*",
+    "@sobama/typescript-config": "workspace:*",
+    "@types/node": "24.13.3",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10"
+  }
+}
