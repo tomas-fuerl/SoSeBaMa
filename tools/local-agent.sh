@@ -23,6 +23,7 @@ Voraussetzungen:
   - sauberes Git-Arbeitsverzeichnis (auch keine unversionierten Dateien)
   - lokal laufendes Ollama mit qwen2.5-coder:3b
   - Aider im PATH
+  - pnpm im PATH für die anschließende Prüfung
 
 Das Skript erzeugt weder Commit noch Push. Der Worktree und das Log bleiben
 unter .local-agent/ zur manuellen Prüfung erhalten.
@@ -45,6 +46,7 @@ fail() {
 command -v git >/dev/null 2>&1 || fail "$EXIT_PREREQUISITE" "git fehlt im PATH."
 command -v ollama >/dev/null 2>&1 || fail "$EXIT_PREREQUISITE" "Ollama fehlt im PATH."
 command -v aider >/dev/null 2>&1 || fail "$EXIT_PREREQUISITE" "Aider fehlt im PATH."
+command -v pnpm >/dev/null 2>&1 || fail "$EXIT_PREREQUISITE" "pnpm fehlt im PATH."
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || \
   fail "$EXIT_REPOSITORY" "Aufruf muss innerhalb eines Git-Repositorys erfolgen."
@@ -149,8 +151,10 @@ if [[ "$worktree_commit" != "$base_commit" ]]; then
   exit "$EXIT_AGENT"
 fi
 
+change_detected=false
 scope_violation=false
 while IFS= read -r -d '' changed_file; do
+  change_detected=true
   file_allowed=false
   for allowed_file in "${allowed_files[@]}"; do
     [[ "$changed_file" == "$allowed_file" ]] && file_allowed=true
@@ -170,10 +174,20 @@ if [[ "$scope_violation" == true ]]; then
     "$worktree" >&2
   exit "$EXIT_AGENT"
 fi
+if [[ "$change_detected" == false ]]; then
+  printf 'Fehler: Der lokale Agent hat keine überprüfbare Änderung erzeugt.\n' \
+    | tee -a "$log_file" >&2
+  printf 'Es wurde nichts übernommen. Prüfe oder verwirf den isolierten Worktree: %s\n' \
+    "$worktree" >&2
+  exit "$EXIT_AGENT"
+fi
 
 printf '\nLokaler Agent beendet. Es wurde nichts übernommen oder committet.\n'
 printf 'Review:\n  git -C %q status --short\n  git -C %q diff --check\n  git -C %q diff\n' \
   "$worktree" "$worktree" "$worktree"
+printf '  pnpm --dir %q install --frozen-lockfile --ignore-scripts --strict-peer-dependencies\n' \
+  "$worktree"
+printf '  pnpm --dir %q check\n' "$worktree"
 printf 'Log (kann Prompt-/Codeinhalt enthalten): %s\n' "$log_file"
 printf '\nNach erfolgreichem Review gibt es zwei bewusste Wege:\n'
 printf '  1. Patch übernehmen: git -C %q diff > .local-agent/%s.patch\n' "$worktree" "$run_id"

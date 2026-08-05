@@ -25,7 +25,7 @@ Environment-Dateien enthalten.
 
 1. Der lokale Checkout liegt auf dem beabsichtigten Feature-Branch und ist
    vollständig sauber.
-2. Git, Ollama und Aider sind lokal im `PATH` verfügbar.
+2. Git, Ollama, Aider und pnpm sind lokal im `PATH` verfügbar.
 3. Ollama läuft lokal und das Modell `qwen2.5-coder:3b` ist installiert.
 4. Die erlaubten Zieldateien sind bereits versioniert und keine Symlinks.
 5. Tomas hat Aufgabe und Dateiscope ausdrücklich freigegeben. Ein Commit, Push
@@ -80,19 +80,27 @@ tools/local-agent.sh --help
 
 ## Ergebnis vollständig prüfen
 
-1. Die drei vom Wrapper ausgegebenen Befehle für Status, `diff --check` und den
+1. Die vom Wrapper ausgegebenen Befehle für Status, `diff --check` und den
    vollständigen Diff ausführen.
 2. Prüfen, dass ausschließlich die vorher erlaubten Dateien geändert sind und
    der Worktree weiterhin auf dem protokollierten Ausgangs-Commit steht.
 3. Den Inhalt fachlich und sicherheitlich vollständig prüfen. Modellausgaben
    gelten niemals ungeprüft als korrekt.
-4. Im Haupt-Worktree die vollständige Repositoryprüfung ausführen:
+4. Im isolierten Worktree die exakt fixierten Abhängigkeiten scriptfrei
+   installieren. `<LOCAL-AGENT-WORKTREE>` wird durch den vom Wrapper
+   ausgegebenen, vollständig geprüften Pfad ersetzt:
 
    ```sh
-   pnpm check
+   pnpm --dir "<LOCAL-AGENT-WORKTREE>" install --frozen-lockfile --ignore-scripts --strict-peer-dependencies
    ```
 
-5. Konfliktmarker und mögliche Secrets beziehungsweise reale
+5. Im isolierten Worktree die vollständige Repositoryprüfung ausführen:
+
+   ```sh
+   pnpm --dir "<LOCAL-AGENT-WORKTREE>" check
+   ```
+
+6. Konfliktmarker und mögliche Secrets beziehungsweise reale
    Infrastrukturwerte erneut prüfen.
 
 Erst nach allen Nachweisen darf ein angezeigter Patch mit `git apply --check`
@@ -105,9 +113,9 @@ bei ausdrücklichem Auftrag. Das Wrapper-Skript übernimmt selbst keine Änderun
 | --- | --- | --- |
 | `0` | Agentenlauf beendet, Scopeprüfung bestanden | Diff trotzdem vollständig prüfen. |
 | `2` | Aufruf, Aufgabenpfad oder Dateiscope ungültig | Eingaben korrigieren; Schutzregel nicht umgehen. |
-| `3` | Git, Ollama, Aider oder Modell fehlt | Lokale Voraussetzung herstellen; keine Ersatzdienste anbinden. |
+| `3` | Git, Ollama, Aider, pnpm oder Modell fehlt | Lokale Voraussetzung herstellen; keine Ersatzdienste anbinden. |
 | `4` | Repository oder Worktree konnte nicht sicher verwendet werden | Abbrechen und lokalen Git-Zustand prüfen. |
-| `5` | Aider schlug fehl oder veränderte Scope beziehungsweise Commit | Nichts übernehmen; isolierten Worktree untersuchen oder verwerfen. |
+| `5` | Aider schlug fehl, erzeugte keine Änderung oder veränderte Scope beziehungsweise Commit | Nichts übernehmen; isolierten Worktree untersuchen oder verwerfen. |
 
 Bei einem Scope- oder Commitverstoß bleibt der Haupt-Worktree unverändert. Der
 lokale Log kann Prompt- und Codeinhalt enthalten und darf nicht veröffentlicht
