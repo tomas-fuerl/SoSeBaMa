@@ -90,7 +90,9 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
 
    Erwartet wird Exit-Code `0`. Der Bericht liegt lokal unter `coverage/` und
    bleibt durch `.gitignore` außerhalb des Repositorys. Für das noch leere
-   Walking Skeleton gilt bewusst kein Coverage-Zielwert.
+   Walking Skeleton gilt bewusst kein Coverage-Zielwert. Testdateien und
+   Coverageausschlüsse kommen aus `vitest.coverage.config.ts`; der Befehl ist
+   dadurch nicht von Shell-Glob-Expansion abhängig.
 
 ## Verifikation
 

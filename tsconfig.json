@@ -4,5 +4,10 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["eslint.config.js", "packages/eslint-config/index.js", "test/**/*.ts"]
+  "include": [
+    "eslint.config.js",
+    "packages/eslint-config/index.js",
+    "test/**/*.ts",
+    "vitest.coverage.config.ts"
+  ]
 }

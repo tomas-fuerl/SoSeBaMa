@@ -10,7 +10,7 @@ const clientOnlyRestrictions = {
       patterns: [
         {
           group: [
-            '@prisma/client',
+            '@prisma/*',
             'prisma',
             '@sobama/api',
             '@sobama/api/*',

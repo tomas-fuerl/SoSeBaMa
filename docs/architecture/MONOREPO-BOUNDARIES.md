@@ -17,6 +17,7 @@ Starts; fachlicher Quellcode bleibt ausgeschlossen.
 
 | Workspace | Zweck | Zulässige Zielgruppe |
 | --- | --- | --- |
+| Root-Projekt | Monorepo-Orchestrierung und Repositoryprüfungen | Entwicklungswerkzeug, Tests |
 | `apps/web` | clientseitige React-PWA | Browser |
 | `apps/api` | serverseitige HTTP-API | Node.js |
 | `apps/worker` | serverseitige Hintergrundarbeit | Node.js |
@@ -31,22 +32,32 @@ Ein generisches Paket namens `shared`, `common`, `helpers` oder `utils` ist
 nicht zulässig. Neue Pakete benötigen einen eindeutigen Zweck und eine benannte
 Zielgruppe.
 
+Die tatsächliche Workspace-Menge wird nicht separat im Test nachgebaut. Der
+Architekturtest liest Root-Projekt und konfigurierte Pakete über
+`pnpm --recursive list --depth -1 --json`. Änderungen an
+`pnpm-workspace.yaml` werden dadurch unmittelbar sichtbar und benötigen für
+jeden neuen Workspace eine explizite Policy. Zu prüfende Quellen kommen aus
+`git ls-files --cached --others --exclude-standard`; ignorierte lokale Editor-,
+Build- und Coverage-Dateien beeinflussen das Ergebnis daher nicht.
+
 ## Zulässige Workspace-Abhängigkeiten
 
-| Quelle | Zulässige lokale Laufzeitabhängigkeiten |
-| --- | --- |
-| `apps/web` | `packages/contracts`, `packages/validation` |
-| `apps/api` | `packages/config`, `packages/contracts`, `packages/validation` |
-| `apps/worker` | `packages/config`, `packages/contracts`, `packages/validation` |
-| `packages/config` | `packages/validation` |
-| `packages/contracts` | keine |
-| `packages/validation` | `packages/contracts` |
-| `packages/testing` | `packages/contracts`, `packages/validation` |
-| `packages/eslint-config` | keine |
-| `packages/typescript-config` | keine |
+| Quelle | Laufzeitabhängigkeiten | Nur `devDependencies` |
+| --- | --- | --- |
+| Root-Projekt | keine | `packages/eslint-config`, `packages/testing`, `packages/typescript-config` |
+| `apps/web` | `packages/contracts`, `packages/validation` | `packages/testing` |
+| `apps/api` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
+| `apps/worker` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
+| `packages/config` | `packages/validation` | `packages/testing` |
+| `packages/contracts` | keine | `packages/testing` |
+| `packages/validation` | `packages/contracts` | `packages/testing` |
+| `packages/testing` | `packages/contracts`, `packages/validation` | keine |
+| `packages/eslint-config` | keine | keine |
+| `packages/typescript-config` | keine | keine |
 
-`packages/testing` darf zusätzlich ausschließlich als `devDependency` und nur
-aus Testcode verwendet werden. Jede lokale Abhängigkeit verwendet das
+`packages/testing` darf auch bei vorhandener `devDependency` nur aus einem
+`test`-Verzeichnis oder aus Dateien mit `.test.` beziehungsweise `.spec.` im
+Namen importiert werden. Jede lokale Abhängigkeit verwendet das
 `workspace:`-Protokoll. Ein neuer Workspace benötigt eine explizite Ergänzung
 dieser Matrix; damit wird seine Abhängigkeitsrichtung vor dem ersten Import
 reviewbar.
@@ -75,6 +86,10 @@ ergänzt diese Prüfung repositoryweit. Er erzwingt:
 - testexklusive Verwendung von `packages/testing`,
 - das Verbot generischer Sammelpakete und
 - frameworkfreien Domaincode ohne NestJS oder Prisma.
+
+Die Prüfung öffentlicher Exporte erkennt explizite Root- und Subpath-Exports,
+bedingte Root-Exports sowie Subpath-Patterns. Dynamisch zusammengesetzte
+Modulnamen sind keine statisch überprüfbare Importgrenze.
 
 Neue Workspaces schlagen so lange fehl, bis Zweck und erlaubte Abhängigkeiten
 explizit in Test und Dokumentation ergänzt wurden. Vollständige Fachmodul-,

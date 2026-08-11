@@ -1,13 +1,14 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+import { ESLint } from 'eslint';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
-const workspaceContainers = ['apps', 'packages'] as const;
+const repositoryRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const sourceExtensions = new Set(['.cjs', '.cts', '.js', '.jsx', '.mjs', '.mts', '.ts', '.tsx']);
-const ignoredDirectories = new Set(['coverage', 'dist', 'node_modules']);
 const forbiddenGenericPackages = new Set(['common', 'helpers', 'shared', 'utils']);
 const dependencyFields = [
   'dependencies',
@@ -15,16 +16,48 @@ const dependencyFields = [
   'optionalDependencies',
   'peerDependencies',
 ] as const;
-const allowedRuntimeDependencies: Readonly<Record<string, ReadonlySet<string>>> = {
-  '@sobama/api': new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
-  '@sobama/config': new Set(['@sobama/validation']),
-  '@sobama/contracts': new Set(),
-  '@sobama/eslint-config': new Set(),
-  '@sobama/testing': new Set(['@sobama/contracts', '@sobama/validation']),
-  '@sobama/typescript-config': new Set(),
-  '@sobama/validation': new Set(['@sobama/contracts']),
-  '@sobama/web': new Set(['@sobama/contracts', '@sobama/validation']),
-  '@sobama/worker': new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
+const execFileAsync = promisify(execFile);
+
+interface WorkspacePolicy {
+  development: ReadonlySet<string>;
+  runtime: ReadonlySet<string>;
+}
+
+const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
+  sobama: {
+    development: new Set(['@sobama/eslint-config', '@sobama/testing', '@sobama/typescript-config']),
+    runtime: new Set(),
+  },
+  '@sobama/api': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
+  },
+  '@sobama/config': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/validation']),
+  },
+  '@sobama/contracts': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(),
+  },
+  '@sobama/eslint-config': { development: new Set(), runtime: new Set() },
+  '@sobama/testing': {
+    development: new Set(),
+    runtime: new Set(['@sobama/contracts', '@sobama/validation']),
+  },
+  '@sobama/typescript-config': { development: new Set(), runtime: new Set() },
+  '@sobama/validation': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/contracts']),
+  },
+  '@sobama/web': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/contracts', '@sobama/validation']),
+  },
+  '@sobama/worker': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
+  },
 };
 
 interface PackageManifest {
@@ -43,6 +76,13 @@ interface Workspace {
   name: string;
 }
 
+interface PnpmWorkspaceRecord {
+  name?: unknown;
+  path?: unknown;
+}
+
+let workspaceCache: Promise<Workspace[]> | undefined;
+
 function toRepositoryPath(path: string): string {
   return relative(repositoryRoot, path).split(sep).join('/');
 }
@@ -52,46 +92,63 @@ async function readJson(path: string): Promise<PackageManifest> {
 }
 
 async function readWorkspaces(): Promise<Workspace[]> {
-  const workspaces: Workspace[] = [];
-
-  for (const container of workspaceContainers) {
-    const containerPath = resolve(repositoryRoot, container);
-    const entries = await readdir(containerPath, { withFileTypes: true });
-    for (const entry of entries.toSorted((left, right) => left.name.localeCompare(right.name))) {
-      if (!entry.isDirectory()) {
-        continue;
-      }
-
-      const directory = resolve(containerPath, entry.name);
-      const manifestPath = resolve(directory, 'package.json');
-      const manifest = await readJson(manifestPath);
-      if (typeof manifest.name !== 'string') {
-        throw new Error(`${toRepositoryPath(manifestPath)} must contain a string package name.`);
-      }
-      workspaces.push({ directory, manifest, manifestPath, name: manifest.name });
-    }
-  }
-
-  return workspaces;
+  workspaceCache ??= discoverWorkspaces();
+  return await workspaceCache;
 }
 
-async function findSourceFiles(directory: string): Promise<string[]> {
-  const files: string[] = [];
-  const entries = await readdir(directory, { withFileTypes: true });
-
-  for (const entry of entries.toSorted((left, right) => left.name.localeCompare(right.name))) {
-    if (ignoredDirectories.has(entry.name)) {
-      continue;
-    }
-    const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await findSourceFiles(path)));
-    } else if (entry.isFile() && sourceExtensions.has(extname(entry.name))) {
-      files.push(path);
-    }
+async function discoverWorkspaces(): Promise<Workspace[]> {
+  const { stdout } = await execFileAsync(
+    'pnpm',
+    ['--recursive', 'list', '--depth', '-1', '--json'],
+    { cwd: repositoryRoot, encoding: 'utf8' },
+  );
+  const records = JSON.parse(String(stdout)) as PnpmWorkspaceRecord[];
+  if (!Array.isArray(records)) {
+    throw new Error('pnpm workspace discovery did not return an array.');
   }
 
-  return files;
+  const workspaces: Workspace[] = [];
+  for (const record of records) {
+    if (typeof record.name !== 'string' || typeof record.path !== 'string') {
+      throw new Error('pnpm workspace discovery returned a record without string name and path.');
+    }
+    const directory = resolve(record.path);
+    const repositoryRelativePath = relative(repositoryRoot, directory);
+    if (repositoryRelativePath === '..' || repositoryRelativePath.startsWith(`..${sep}`)) {
+      throw new Error(`pnpm workspace ${record.name} resolves outside the repository.`);
+    }
+    const manifestPath = resolve(directory, 'package.json');
+    const manifest = await readJson(manifestPath);
+    if (manifest.name !== record.name) {
+      throw new Error(
+        `${toRepositoryPath(manifestPath)} name does not match pnpm workspace ${record.name}.`,
+      );
+    }
+    workspaces.push({ directory, manifest, manifestPath, name: record.name });
+  }
+
+  return workspaces.toSorted((left, right) => left.directory.localeCompare(right.directory));
+}
+
+function requireWorkspace(workspaces: readonly Workspace[], name: string): Workspace {
+  const workspace = workspaces.find((candidate) => candidate.name === name);
+  if (!workspace) {
+    throw new Error(`Expected pnpm workspace ${name} to exist.`);
+  }
+  return workspace;
+}
+
+async function findRepositorySourceFiles(): Promise<string[]> {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['ls-files', '--cached', '--others', '--exclude-standard', '-z'],
+    { cwd: repositoryRoot, encoding: 'utf8' },
+  );
+  return String(stdout)
+    .split('\0')
+    .filter((path) => sourceExtensions.has(extname(path)))
+    .map((path) => resolve(repositoryRoot, path))
+    .toSorted((left, right) => left.localeCompare(right));
 }
 
 function collectModuleSpecifiers(source: string, path: string): string[] {
@@ -129,23 +186,44 @@ function collectModuleSpecifiers(source: string, path: string): string[] {
 }
 
 function workspaceForPath(path: string, workspaces: readonly Workspace[]): Workspace | undefined {
-  return workspaces.find(
-    (workspace) => path === workspace.directory || path.startsWith(`${workspace.directory}${sep}`),
-  );
+  return workspaces
+    .toSorted((left, right) => right.directory.length - left.directory.length)
+    .find(
+      (workspace) =>
+        path === workspace.directory || path.startsWith(`${workspace.directory}${sep}`),
+    );
 }
 
 function declaredDependencies(manifest: PackageManifest): ReadonlySet<string> {
   return new Set(dependencyFields.flatMap((field) => Object.keys(manifest[field] ?? {})));
 }
 
-function exportedSubpaths(manifest: PackageManifest): ReadonlySet<string> {
-  if (typeof manifest.exports === 'string') {
-    return new Set(['.']);
+function exportPatternMatches(pattern: string, exportKey: string): boolean {
+  const wildcardIndex = pattern.indexOf('*');
+  if (wildcardIndex < 0) {
+    return pattern === exportKey;
   }
-  if (!manifest.exports || typeof manifest.exports !== 'object') {
-    return new Set();
+  const prefix = pattern.slice(0, wildcardIndex);
+  const suffix = pattern.slice(wildcardIndex + 1);
+  return exportKey.startsWith(prefix) && exportKey.endsWith(suffix);
+}
+
+function isPublicExport(manifest: PackageManifest, subpath: string | undefined): boolean {
+  const packageExports = manifest.exports;
+  if (typeof packageExports === 'string' || Array.isArray(packageExports)) {
+    return subpath === undefined;
   }
-  return new Set(Object.keys(manifest.exports).filter((key) => key.startsWith('.')));
+  if (!packageExports || typeof packageExports !== 'object') {
+    return false;
+  }
+
+  const exportKeys = Object.keys(packageExports);
+  if (subpath === undefined) {
+    return exportKeys.includes('.') || exportKeys.every((key) => !key.startsWith('.'));
+  }
+
+  const exportKey = `.${subpath}`;
+  return exportKeys.some((key) => key.startsWith('.') && exportPatternMatches(key, exportKey));
 }
 
 function localPackageImport(
@@ -170,7 +248,10 @@ function isDomainSource(path: string, workspace: Workspace): boolean {
 
 function isTestSource(path: string, workspace: Workspace): boolean {
   const segments = relative(workspace.directory, path).split(sep);
-  return segments.includes('test') || segments.some((segment) => segment.includes('.test.'));
+  return (
+    segments.includes('test') ||
+    segments.some((segment) => segment.includes('.spec.') || segment.includes('.test.'))
+  );
 }
 
 function importViolations(
@@ -197,13 +278,12 @@ function importViolations(
           `${repositoryPath}: ${specifier} is internal; import the package's public facade instead.`,
         );
       } else if (localImport.subpath) {
-        const exportKey = `.${localImport.subpath}`;
-        if (!exportedSubpaths(localImport.workspace.manifest).has(exportKey)) {
+        if (!isPublicExport(localImport.workspace.manifest, localImport.subpath)) {
           violations.push(
             `${repositoryPath}: ${specifier} is not a public export of ${localImport.workspace.name}.`,
           );
         }
-      } else if (!exportedSubpaths(localImport.workspace.manifest).has('.')) {
+      } else if (!isPublicExport(localImport.workspace.manifest, undefined)) {
         violations.push(
           `${repositoryPath}: ${localImport.workspace.name} has no public root export.`,
         );
@@ -224,8 +304,8 @@ function importViolations(
 
     if (
       workspace.name === '@sobama/web' &&
-      (specifier === '@prisma/client' ||
-        specifier === 'prisma' ||
+      (specifier === 'prisma' ||
+        specifier.startsWith('@prisma/') ||
         specifier === '@sobama/api' ||
         specifier.startsWith('@sobama/api/') ||
         specifier === '@sobama/config' ||
@@ -253,17 +333,15 @@ function importViolations(
   return violations;
 }
 
-function manifestViolations(
-  workspaces: readonly Workspace[],
-  rootManifest: PackageManifest,
-): string[] {
+function manifestViolations(workspaces: readonly Workspace[]): string[] {
   const violations: string[] = [];
   const workspacesByName = new Map(workspaces.map((workspace) => [workspace.name, workspace]));
 
   for (const workspace of workspaces) {
     const shortName = workspace.name.split('/').at(-1) ?? workspace.name;
+    const workspacePathSegments = relative(repositoryRoot, workspace.directory).split(sep);
     if (
-      workspace.directory.startsWith(resolve(repositoryRoot, 'packages')) &&
+      workspacePathSegments[0] === 'packages' &&
       (forbiddenGenericPackages.has(basename(workspace.directory)) ||
         forbiddenGenericPackages.has(shortName))
     ) {
@@ -272,13 +350,14 @@ function manifestViolations(
       );
     }
 
-    const documentedTargets = allowedRuntimeDependencies[workspace.name];
-    if (!documentedTargets) {
+    const policy = workspacePolicies[workspace.name];
+    if (!policy) {
       violations.push(
         `${toRepositoryPath(workspace.manifestPath)}: add an explicit dependency policy for ${workspace.name}.`,
       );
     }
-    const allowedTargets = documentedTargets ?? new Set<string>();
+    const runtimeTargets = policy?.runtime ?? new Set<string>();
+    const developmentTargets = policy?.development ?? new Set<string>();
 
     for (const field of dependencyFields) {
       for (const [dependency, specifier] of Object.entries(workspace.manifest[field] ?? {})) {
@@ -290,20 +369,15 @@ function manifestViolations(
             `${toRepositoryPath(workspace.manifestPath)}: ${field}.${dependency} must use the workspace: protocol.`,
           );
         }
-        const testOnlyDependency = dependency === '@sobama/testing' && field === 'devDependencies';
-        if (!allowedTargets.has(dependency) && !testOnlyDependency) {
+        const allowedTargets =
+          field === 'devDependencies'
+            ? new Set([...runtimeTargets, ...developmentTargets])
+            : runtimeTargets;
+        if (!allowedTargets.has(dependency)) {
           violations.push(
             `${toRepositoryPath(workspace.manifestPath)}: ${workspace.name} may not depend on ${dependency} in ${field}.`,
           );
         }
-      }
-    }
-  }
-
-  for (const field of dependencyFields) {
-    for (const [dependency, specifier] of Object.entries(rootManifest[field] ?? {})) {
-      if (workspacesByName.has(dependency) && !specifier.startsWith('workspace:')) {
-        violations.push(`package.json: ${field}.${dependency} must use the workspace: protocol.`);
       }
     }
   }
@@ -313,15 +387,15 @@ function manifestViolations(
 
 async function repositoryViolations(): Promise<string[]> {
   const workspaces = await readWorkspaces();
-  const rootManifest = await readJson(resolve(repositoryRoot, 'package.json'));
-  const violations = manifestViolations(workspaces, rootManifest);
+  const violations = manifestViolations(workspaces);
 
-  for (const workspace of workspaces) {
-    for (const file of await findSourceFiles(workspace.directory)) {
-      violations.push(
-        ...importViolations(file, await readFile(file, 'utf8'), workspace, workspaces),
-      );
+  for (const file of await findRepositorySourceFiles()) {
+    const workspace = workspaceForPath(file, workspaces);
+    if (!workspace) {
+      violations.push(`${toRepositoryPath(file)}: no pnpm workspace owns this source file.`);
+      continue;
     }
+    violations.push(...importViolations(file, await readFile(file, 'utf8'), workspace, workspaces));
   }
 
   return violations;
@@ -333,60 +407,146 @@ describe('architecture boundaries', () => {
     expect(violations, violations.join('\n')).toEqual([]);
   });
 
-  it('reports server imports in browser code with an actionable source path', async () => {
+  it('discovers the root and nested workspaces through pnpm and scans root-owned sources', async () => {
     const workspaces = await readWorkspaces();
-    const web = workspaces.find((workspace) => workspace.name === '@sobama/web');
-    expect(web).toBeDefined();
-    const file = resolve(web?.directory ?? '', 'src/example.ts');
+    const root = requireWorkspace(workspaces, 'sobama');
+    const rootSources = (await findRepositorySourceFiles())
+      .filter((file) => workspaceForPath(file, workspaces)?.name === root.name)
+      .map(toRepositoryPath);
 
-    expect(importViolations(file, "import '@sobama/config';", web!, workspaces)).toContain(
-      'apps/web/src/example.ts: browser code may not import server runtime or persistence module @sobama/config.',
+    expect(root.directory).toBe(repositoryRoot);
+    expect(rootSources).toContain('tools/check-markdown-links.mjs');
+    expect(rootSources).toContain('test/architecture-boundaries.test.ts');
+  });
+
+  it('reports forbidden root dependencies and internal imports from root tools', async () => {
+    const workspaces = await readWorkspaces();
+    const root = requireWorkspace(workspaces, 'sobama');
+    const rootWithConfig: Workspace = {
+      ...root,
+      manifest: {
+        ...root.manifest,
+        devDependencies: {
+          ...root.manifest.devDependencies,
+          '@sobama/config': 'workspace:*',
+        },
+      },
+    };
+    const modifiedWorkspaces = workspaces.map((workspace) =>
+      workspace.name === root.name ? rootWithConfig : workspace,
+    );
+
+    expect(manifestViolations(modifiedWorkspaces)).toContain(
+      'package.json: sobama may not depend on @sobama/config in devDependencies.',
+    );
+    expect(
+      importViolations(
+        resolve(repositoryRoot, 'tools/example.mjs'),
+        "import '@sobama/config/internal';",
+        rootWithConfig,
+        modifiedWorkspaces,
+      ),
+    ).toContain(
+      "tools/example.mjs: @sobama/config/internal is internal; import the package's public facade instead.",
     );
   });
 
-  it('reports framework imports in domain code', async () => {
-    const workspaces = await readWorkspaces();
-    const api = workspaces.find((workspace) => workspace.name === '@sobama/api');
-    expect(api).toBeDefined();
-    const file = resolve(api?.directory ?? '', 'src/identity/domain/member.ts');
+  it.each(['@sobama/config', '@prisma/adapter-pg'])(
+    'reports forbidden %s imports in browser code',
+    async (specifier) => {
+      const workspaces = await readWorkspaces();
+      const web = requireWorkspace(workspaces, '@sobama/web');
+      const file = resolve(web.directory, 'src/example.ts');
 
-    expect(importViolations(file, "import '@nestjs/common';", api!, workspaces)).toContain(
-      'apps/api/src/identity/domain/member.ts: domain code must remain framework-free and may not import @nestjs/common.',
+      expect(importViolations(file, `import '${specifier}';`, web, workspaces)).toContain(
+        `apps/web/src/example.ts: browser code may not import server runtime or persistence module ${specifier}.`,
+      );
+    },
+  );
+
+  it('keeps the ESLint client guard consistent for the Prisma namespace', async () => {
+    const eslint = new ESLint({ cwd: repositoryRoot });
+    const [result] = await eslint.lintText("import '@prisma/adapter-pg';", {
+      filePath: resolve(repositoryRoot, 'apps/web/src/example.ts'),
+    });
+
+    expect(result?.messages.some((message) => message.ruleId === 'no-restricted-imports')).toBe(
+      true,
     );
   });
+
+  it.each(['@nestjs/common', '@prisma/client'])(
+    'reports framework import %s in domain code',
+    async (specifier) => {
+      const workspaces = await readWorkspaces();
+      const api = requireWorkspace(workspaces, '@sobama/api');
+      const file = resolve(api.directory, 'src/identity/domain/member.ts');
+
+      expect(importViolations(file, `import '${specifier}';`, api, workspaces)).toContain(
+        `apps/api/src/identity/domain/member.ts: domain code must remain framework-free and may not import ${specifier}.`,
+      );
+    },
+  );
 
   it('reports internal package imports', async () => {
     const workspaces = await readWorkspaces();
-    const api = workspaces.find((workspace) => workspace.name === '@sobama/api');
-    expect(api).toBeDefined();
-    const file = resolve(api?.directory ?? '', 'src/example.ts');
+    const api = requireWorkspace(workspaces, '@sobama/api');
+    const file = resolve(api.directory, 'src/example.ts');
 
-    expect(importViolations(file, "import '@sobama/config/internal';", api!, workspaces)).toContain(
+    expect(importViolations(file, "import '@sobama/config/internal';", api, workspaces)).toContain(
       "apps/api/src/example.ts: @sobama/config/internal is internal; import the package's public facade instead.",
     );
   });
 
+  it('accepts conditional root and pattern exports but rejects unexported subpaths', async () => {
+    const workspaces = await readWorkspaces();
+    const api = requireWorkspace(workspaces, '@sobama/api');
+    const config = requireWorkspace(workspaces, '@sobama/config');
+    const configWithPattern: Workspace = {
+      ...config,
+      manifest: {
+        ...config.manifest,
+        exports: {
+          '.': { import: './src/index.ts', types: './src/index.ts' },
+          './features/*': './src/features/*.ts',
+        },
+      },
+    };
+    const patternWorkspaces = workspaces.map((workspace) =>
+      workspace.name === config.name ? configWithPattern : workspace,
+    );
+    const file = resolve(api.directory, 'src/example.ts');
+
+    expect(importViolations(file, "import '@sobama/config/private';", api, workspaces)).toContain(
+      'apps/api/src/example.ts: @sobama/config/private is not a public export of @sobama/config.',
+    );
+    expect(
+      importViolations(file, "import '@sobama/config/features/member.js';", api, patternWorkspaces),
+    ).toEqual([]);
+    expect(
+      isPublicExport({ exports: { import: './index.js', require: './index.cjs' } }, undefined),
+    ).toBe(true);
+  });
+
   it('reports relative imports across workspace boundaries', async () => {
     const workspaces = await readWorkspaces();
-    const web = workspaces.find((workspace) => workspace.name === '@sobama/web');
-    expect(web).toBeDefined();
-    const file = resolve(web?.directory ?? '', 'src/example.ts');
+    const web = requireWorkspace(workspaces, '@sobama/web');
+    const file = resolve(web.directory, 'src/example.ts');
 
-    expect(importViolations(file, "import '../../api/src/main.js';", web!, workspaces)).toContain(
+    expect(importViolations(file, "import '../../api/src/main.js';", web, workspaces)).toContain(
       'apps/web/src/example.ts: relative import ../../api/src/main.js crosses into @sobama/api; use its public package export.',
     );
   });
 
   it('reports workspace dependencies outside the documented matrix', async () => {
     const workspaces = await readWorkspaces();
-    const web = workspaces.find((workspace) => workspace.name === '@sobama/web');
-    expect(web).toBeDefined();
+    const web = requireWorkspace(workspaces, '@sobama/web');
     const webWithServerDependency: Workspace = {
-      ...web!,
+      ...web,
       manifest: {
-        ...web!.manifest,
+        ...web.manifest,
         dependencies: {
-          ...web!.manifest.dependencies,
+          ...web.manifest.dependencies,
           '@sobama/config': 'workspace:*',
         },
       },
@@ -395,12 +555,50 @@ describe('architecture boundaries', () => {
       workspaces.map((workspace) =>
         workspace.name === webWithServerDependency.name ? webWithServerDependency : workspace,
       ),
-      await readJson(resolve(repositoryRoot, 'package.json')),
     );
 
     expect(violations).toContain(
       'apps/web/package.json: @sobama/web may not depend on @sobama/config in dependencies.',
     );
+  });
+
+  it('allows @sobama/testing from .spec. files and rejects it from production code', async () => {
+    const workspaces = await readWorkspaces();
+    const api = requireWorkspace(workspaces, '@sobama/api');
+    const testing = requireWorkspace(workspaces, '@sobama/testing');
+    const apiWithTesting: Workspace = {
+      ...api,
+      manifest: {
+        ...api.manifest,
+        devDependencies: { ...api.manifest.devDependencies, '@sobama/testing': 'workspace:*' },
+      },
+    };
+    const testingWithExport: Workspace = {
+      ...testing,
+      manifest: { ...testing.manifest, exports: './src/index.ts' },
+    };
+    const modifiedWorkspaces = workspaces.map((workspace) => {
+      if (workspace.name === api.name) return apiWithTesting;
+      if (workspace.name === testing.name) return testingWithExport;
+      return workspace;
+    });
+
+    expect(
+      importViolations(
+        resolve(api.directory, 'src/member.ts'),
+        "import '@sobama/testing';",
+        apiWithTesting,
+        modifiedWorkspaces,
+      ),
+    ).toContain('apps/api/src/member.ts: @sobama/testing may be imported only by test code.');
+    expect(
+      importViolations(
+        resolve(api.directory, 'src/member.spec.ts'),
+        "import '@sobama/testing';",
+        apiWithTesting,
+        modifiedWorkspaces,
+      ),
+    ).toEqual([]);
   });
 
   it('reports generic aggregator packages and unpinned workspace dependencies', async () => {
@@ -415,10 +613,10 @@ describe('architecture boundaries', () => {
       manifestPath: sharedManifestPath,
       name: '@sobama/shared',
     };
-    const violations = manifestViolations(
-      [...workspaces.filter((workspace) => workspace.name !== '@sobama/shared'), shared],
-      await readJson(resolve(repositoryRoot, 'package.json')),
-    );
+    const violations = manifestViolations([
+      ...workspaces.filter((workspace) => workspace.name !== '@sobama/shared'),
+      shared,
+    ]);
 
     expect(violations).toContain(
       'packages/shared/package.json: generic aggregator package @sobama/shared is forbidden.',
