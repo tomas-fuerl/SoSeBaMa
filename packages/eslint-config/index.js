@@ -38,7 +38,6 @@ export const sobamaConfig = tseslint.config(
   {
     ignores: [
       '.git/**',
-      '.local-agent/**',
       '.pnpm-store/**',
       '.worktrees/**',
       '**/coverage/**',
