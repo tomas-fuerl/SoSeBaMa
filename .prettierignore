@@ -1,5 +1,4 @@
 .git/
-.local-agent/
 .pnpm-store/
 .worktrees/
 **/*.md
