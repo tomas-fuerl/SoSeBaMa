@@ -1,8 +1,10 @@
 # Workspace- und Importgrenzen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-02
-- Bezogenes Issue: [#12](https://github.com/tomas-fuerl/SoSeBaMa/issues/12)
+- Letzter Prüfstand: 2026-08-11
+- Bezogene Issues:
+  [#12](https://github.com/tomas-fuerl/SoSeBaMa/issues/12),
+  [#14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14)
 
 ## Ziel und Geltungsbereich
 
@@ -29,6 +31,26 @@ Ein generisches Paket namens `shared`, `common`, `helpers` oder `utils` ist
 nicht zulässig. Neue Pakete benötigen einen eindeutigen Zweck und eine benannte
 Zielgruppe.
 
+## Zulässige Workspace-Abhängigkeiten
+
+| Quelle | Zulässige lokale Laufzeitabhängigkeiten |
+| --- | --- |
+| `apps/web` | `packages/contracts`, `packages/validation` |
+| `apps/api` | `packages/config`, `packages/contracts`, `packages/validation` |
+| `apps/worker` | `packages/config`, `packages/contracts`, `packages/validation` |
+| `packages/config` | `packages/validation` |
+| `packages/contracts` | keine |
+| `packages/validation` | `packages/contracts` |
+| `packages/testing` | `packages/contracts`, `packages/validation` |
+| `packages/eslint-config` | keine |
+| `packages/typescript-config` | keine |
+
+`packages/testing` darf zusätzlich ausschließlich als `devDependency` und nur
+aus Testcode verwendet werden. Jede lokale Abhängigkeit verwendet das
+`workspace:`-Protokoll. Ein neuer Workspace benötigt eine explizite Ergänzung
+dieser Matrix; damit wird seine Abhängigkeitsrichtung vor dem ersten Import
+reviewbar.
+
 ## Verbindliche Importregeln
 
 1. `apps/web` darf öffentliche Verträge und deren Validierung importieren.
@@ -42,22 +64,36 @@ Zielgruppe.
 5. Spätere Fachmodule exportieren ausschließlich ihre öffentliche Fassade.
    Interne Ordner anderer Module bleiben verboten.
 
-Die aktuelle ESLint-Konfiguration erzwingt die Clientverbote aus den Punkten 1
-bis 3 für JavaScript- und TypeScript-Clientdateien unter `apps/web`. Die
-vollständigen Fachmodul-, Zyklen- und Fassadentests folgen in
-[Issue #14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14), sobald
-Quellmodule existieren.
+Die ESLint-Konfiguration erzwingt die Clientverbote aus den Punkten 1 bis 3 für
+JavaScript- und TypeScript-Clientdateien unter `apps/web`. Der Architekturtest
+ergänzt diese Prüfung repositoryweit. Er erzwingt:
+
+- die oben dokumentierte Workspace-Abhängigkeitsmatrix,
+- das `workspace:`-Protokoll für lokale Paketabhängigkeiten,
+- öffentliche Paketexporte statt interner Unterpfade,
+- Paketimporte statt relativer Importe über Workspace-Grenzen,
+- testexklusive Verwendung von `packages/testing`,
+- das Verbot generischer Sammelpakete und
+- frameworkfreien Domaincode ohne NestJS oder Prisma.
+
+Neue Workspaces schlagen so lange fehl, bis Zweck und erlaubte Abhängigkeiten
+explizit in Test und Dokumentation ergänzt wurden. Vollständige Fachmodul-,
+Zyklen-, Unit-of-Work- und Fassadenprüfungen werden erst mit den betreffenden
+Quellmodulen ergänzt. Sie werden durch diesen vorbereitenden Test nicht
+vorgetäuscht.
 
 ## Verifikation
 
 ```sh
 pnpm lint
 pnpm typecheck
+pnpm test:architecture
 ```
 
-Beide Befehle müssen mit Exit-Code `0` enden. Ein verbotener Clientimport muss
-die ESLint-Prüfung fehlschlagen lassen. Regeln werden nicht durch lokale
-VS-Code-Einstellungen ersetzt oder abgeschwächt.
+Alle drei Befehle müssen mit Exit-Code `0` enden. Ein verbotener Import oder
+eine unzulässige Paketabhängigkeit nennt die betroffene Datei und Regel. Der
+vollständige lokale und CI-Einstieg bleibt `pnpm check`. Regeln werden nicht
+durch lokale VS-Code-Einstellungen ersetzt oder abgeschwächt.
 
 ## Security und Umgebungen
 

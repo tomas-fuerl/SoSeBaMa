@@ -28,6 +28,7 @@ Thumbs.db
 
 # Protokolle und temporäre Dateien
 *.log
+coverage/
 .pnpm-store/
 dist/
 node_modules/
