@@ -1,0 +1,33 @@
+name: sosebama-dev
+
+services:
+  gateway:
+    image: sosebama-web:dev
+    ports:
+      - name: gateway
+        target: 8080
+        published: '${SOSEBAMA_DEV_GATEWAY_PORT:?set a free local DEV gateway port}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+
+  web:
+    image: sosebama-web:dev
+    build:
+      context: .
+      dockerfile: containers/web.Dockerfile
+
+  api:
+    image: sosebama-backend:dev
+    build:
+      context: .
+      dockerfile: containers/backend.Dockerfile
+    environment:
+      SOSEBAMA_API_HOST: 0.0.0.0
+      SOSEBAMA_API_PORT: '3000'
+      SOSEBAMA_ENVIRONMENT: DEV
+      SOSEBAMA_RUNTIME_CONTEXT: container
+
+  worker:
+    image: sosebama-backend:dev
+    environment:
+      SOSEBAMA_ENVIRONMENT: DEV

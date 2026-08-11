@@ -1,0 +1,14 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	root * /srv
+	header /health.json Cache-Control "no-store"
+
+	route {
+		try_files {path} /index.html
+		file_server
+	}
+}

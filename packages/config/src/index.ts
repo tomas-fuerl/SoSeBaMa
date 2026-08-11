@@ -12,6 +12,8 @@ export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
 }
 
+type ApiRuntimeContext = 'container' | 'local';
+
 export class ConfigurationError extends Error {
   constructor(variable: string, expectation: string) {
     super(`Invalid configuration variable ${variable}: ${expectation}.`);
@@ -35,11 +37,38 @@ function readRuntimeEnvironment(environment: EnvironmentSource): RuntimeEnvironm
   return value;
 }
 
-function readApiHost(environment: EnvironmentSource): string {
+function readApiRuntimeContext(environment: EnvironmentSource): ApiRuntimeContext {
+  const value = environment.SOSEBAMA_RUNTIME_CONTEXT?.trim();
+  if (!value || value === 'local') {
+    return 'local';
+  }
+  if (value === 'container') {
+    return value;
+  }
+  throw new ConfigurationError(
+    'SOSEBAMA_RUNTIME_CONTEXT',
+    'expected local or container for this DEV runtime',
+  );
+}
+
+function readApiHost(environment: EnvironmentSource, context: ApiRuntimeContext): string {
   const host = readRequired(environment, 'SOSEBAMA_API_HOST');
+  if (context === 'container') {
+    if (host !== '0.0.0.0') {
+      throw new ConfigurationError(
+        'SOSEBAMA_API_HOST',
+        'container DEV requires the internal all-interfaces bind address',
+      );
+    }
+    return host;
+  }
+
   const developmentLoopbacks = new Set(['localhost', '127.0.0.1', '::1']);
   if (!developmentLoopbacks.has(host)) {
-    throw new ConfigurationError('SOSEBAMA_API_HOST', 'DEV requires localhost, 127.0.0.1, or ::1');
+    throw new ConfigurationError(
+      'SOSEBAMA_API_HOST',
+      'local DEV requires localhost, 127.0.0.1, or ::1',
+    );
   }
   return host;
 }
@@ -64,9 +93,10 @@ function readApiPort(environment: EnvironmentSource): number {
 
 export function loadApiRuntimeConfig(environment: EnvironmentSource): ApiRuntimeConfig {
   const runtime = readRuntimeEnvironment(environment);
+  const context = readApiRuntimeContext(environment);
   return {
     environment: runtime,
-    host: readApiHost(environment),
+    host: readApiHost(environment, context),
     port: readApiPort(environment),
   };
 }

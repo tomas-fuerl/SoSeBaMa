@@ -4,6 +4,9 @@
   "private": true,
   "description": "Background SoSeBaMa worker runtime",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "start": "node dist/main.js",

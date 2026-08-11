@@ -4,6 +4,9 @@
   "private": true,
   "description": "Validated server-only runtime configuration boundary",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",

@@ -17,7 +17,9 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    env:
+      SOSEBAMA_DEV_GATEWAY_PORT: '18080'
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,3 +35,14 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts --strict-peer-dependencies
       - name: Run repository checks
         run: pnpm check
+      - name: Validate DEV Compose configuration
+        run: pnpm container:config
+      - name: Check DEV container policy
+        run: pnpm container:policy
+      - name: Build DEV container images
+        run: pnpm container:build
+      - name: Start and health-check DEV containers
+        run: pnpm container:up
+      - name: Stop DEV containers
+        if: always()
+        run: pnpm container:down

@@ -8,6 +8,7 @@
     "eslint.config.js",
     "packages/eslint-config/index.js",
     "test/**/*.ts",
+    "vitest.container.config.ts",
     "vitest.coverage.config.ts"
   ]
 }

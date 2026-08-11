@@ -1,7 +1,7 @@
 # Lokale Laufzeitrollen starten und prüfen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-03
+- Letzter Prüfstand: 2026-08-11
 - Bezogenes Issue: [#13](https://github.com/tomas-fuerl/SoSeBaMa/issues/13)
 - Geltungsbereich: ausschließlich lokales DEV
 
@@ -10,7 +10,9 @@
 Web, API und Worker starten als drei getrennte technische Rollen. Der Schnitt
 enthält nur eine technische Webansicht, API-Health und einen leeren Worker. Er
 enthält keine Fachroute, Navigation, Jobregistrierung, Datenbankverbindung,
-Secrets, Telemetrieintegration, Container oder Zugriffe auf TST und PRD.
+Secrets, Telemetrieintegration oder Zugriffe auf TST und PRD. Diese Anleitung
+beschreibt direkte Hostprozesse. Der getrennte Containerablauf steht in der
+[DEV-Containeranleitung](DEV-CONTAINERS.md).
 
 Das Web erhält keine serverinterne Konfiguration. API und Worker lesen ihre
 expliziten Werte ausschließlich über das serverseitige Paket `@sobama/config`.
