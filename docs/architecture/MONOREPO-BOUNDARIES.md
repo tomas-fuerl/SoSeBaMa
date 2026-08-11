@@ -1,8 +1,10 @@
 # Workspace- und Importgrenzen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-02
-- Bezogenes Issue: [#12](https://github.com/tomas-fuerl/SoSeBaMa/issues/12)
+- Letzter Prüfstand: 2026-08-11
+- Bezogene Issues:
+  [#12](https://github.com/tomas-fuerl/SoSeBaMa/issues/12),
+  [#14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14)
 
 ## Ziel und Geltungsbereich
 
@@ -15,6 +17,7 @@ Starts; fachlicher Quellcode bleibt ausgeschlossen.
 
 | Workspace | Zweck | Zulässige Zielgruppe |
 | --- | --- | --- |
+| Root-Projekt | Monorepo-Orchestrierung und Repositoryprüfungen | Entwicklungswerkzeug, Tests |
 | `apps/web` | clientseitige React-PWA | Browser |
 | `apps/api` | serverseitige HTTP-API | Node.js |
 | `apps/worker` | serverseitige Hintergrundarbeit | Node.js |
@@ -29,6 +32,36 @@ Ein generisches Paket namens `shared`, `common`, `helpers` oder `utils` ist
 nicht zulässig. Neue Pakete benötigen einen eindeutigen Zweck und eine benannte
 Zielgruppe.
 
+Die tatsächliche Workspace-Menge wird nicht separat im Test nachgebaut. Der
+Architekturtest liest Root-Projekt und konfigurierte Pakete über
+`pnpm --recursive list --depth -1 --json`. Änderungen an
+`pnpm-workspace.yaml` werden dadurch unmittelbar sichtbar und benötigen für
+jeden neuen Workspace eine explizite Policy. Zu prüfende Quellen kommen aus
+`git ls-files --cached --others --exclude-standard`; ignorierte lokale Editor-,
+Build- und Coverage-Dateien beeinflussen das Ergebnis daher nicht.
+
+## Zulässige Workspace-Abhängigkeiten
+
+| Quelle | Laufzeitabhängigkeiten | Nur `devDependencies` |
+| --- | --- | --- |
+| Root-Projekt | keine | `packages/eslint-config`, `packages/testing`, `packages/typescript-config` |
+| `apps/web` | `packages/contracts`, `packages/validation` | `packages/testing` |
+| `apps/api` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
+| `apps/worker` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
+| `packages/config` | `packages/validation` | `packages/testing` |
+| `packages/contracts` | keine | `packages/testing` |
+| `packages/validation` | `packages/contracts` | `packages/testing` |
+| `packages/testing` | `packages/contracts`, `packages/validation` | keine |
+| `packages/eslint-config` | keine | keine |
+| `packages/typescript-config` | keine | keine |
+
+`packages/testing` darf auch bei vorhandener `devDependency` nur aus einem
+`test`-Verzeichnis oder aus Dateien mit `.test.` beziehungsweise `.spec.` im
+Namen importiert werden. Jede lokale Abhängigkeit verwendet das
+`workspace:`-Protokoll. Ein neuer Workspace benötigt eine explizite Ergänzung
+dieser Matrix; damit wird seine Abhängigkeitsrichtung vor dem ersten Import
+reviewbar.
+
 ## Verbindliche Importregeln
 
 1. `apps/web` darf öffentliche Verträge und deren Validierung importieren.
@@ -42,22 +75,43 @@ Zielgruppe.
 5. Spätere Fachmodule exportieren ausschließlich ihre öffentliche Fassade.
    Interne Ordner anderer Module bleiben verboten.
 
-Die aktuelle ESLint-Konfiguration erzwingt die Clientverbote aus den Punkten 1
-bis 3 für JavaScript- und TypeScript-Clientdateien unter `apps/web`. Die
-vollständigen Fachmodul-, Zyklen- und Fassadentests folgen in
-[Issue #14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14), sobald
-Quellmodule existieren.
+Die ESLint-Konfiguration erzwingt die Clientverbote aus den Punkten 1 bis 3 für
+JavaScript- und TypeScript-Clientdateien unter `apps/web`. Der Architekturtest
+ergänzt diese Prüfung repositoryweit. Er erzwingt:
+
+- die oben dokumentierte Workspace-Abhängigkeitsmatrix,
+- das `workspace:`-Protokoll für lokale Paketabhängigkeiten,
+- öffentliche Paketexporte statt interner Unterpfade,
+- Paketimporte statt relativer Importe über Workspace-Grenzen,
+- testexklusive Verwendung von `packages/testing`,
+- das Verbot generischer Sammelpakete und
+- frameworkfreien Domaincode ohne NestJS oder Prisma.
+
+Die Prüfung öffentlicher Exporte erkennt explizite Root- und Subpath-Exports,
+bedingte Root-Exports sowie Subpath-Patterns. Sie berücksichtigt dabei
+`null`-Ziele und den jeweils spezifischsten passenden Pattern-Export, sodass
+gezielt ausgeschlossene Unterpfade nicht durch ein breiteres Pattern wieder
+öffentlich werden. Dynamisch zusammengesetzte Modulnamen sind keine statisch
+überprüfbare Importgrenze.
+
+Neue Workspaces schlagen so lange fehl, bis Zweck und erlaubte Abhängigkeiten
+explizit in Test und Dokumentation ergänzt wurden. Vollständige Fachmodul-,
+Zyklen-, Unit-of-Work- und Fassadenprüfungen werden erst mit den betreffenden
+Quellmodulen ergänzt. Sie werden durch diesen vorbereitenden Test nicht
+vorgetäuscht.
 
 ## Verifikation
 
 ```sh
 pnpm lint
 pnpm typecheck
+pnpm test:architecture
 ```
 
-Beide Befehle müssen mit Exit-Code `0` enden. Ein verbotener Clientimport muss
-die ESLint-Prüfung fehlschlagen lassen. Regeln werden nicht durch lokale
-VS-Code-Einstellungen ersetzt oder abgeschwächt.
+Alle drei Befehle müssen mit Exit-Code `0` enden. Ein verbotener Import oder
+eine unzulässige Paketabhängigkeit nennt die betroffene Datei und Regel. Der
+vollständige lokale und CI-Einstieg bleibt `pnpm check`. Regeln werden nicht
+durch lokale VS-Code-Einstellungen ersetzt oder abgeschwächt.
 
 ## Security und Umgebungen
 
