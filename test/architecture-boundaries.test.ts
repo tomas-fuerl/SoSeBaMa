@@ -208,22 +208,71 @@ function exportPatternMatches(pattern: string, exportKey: string): boolean {
   return exportKey.startsWith(prefix) && exportKey.endsWith(suffix);
 }
 
-function isPublicExport(manifest: PackageManifest, subpath: string | undefined): boolean {
-  const packageExports = manifest.exports;
-  if (typeof packageExports === 'string' || Array.isArray(packageExports)) {
-    return subpath === undefined;
+function compareExportPatterns(left: string, right: string): number {
+  const leftPrefixLength = left.indexOf('*') + 1;
+  const rightPrefixLength = right.indexOf('*') + 1;
+  if (leftPrefixLength !== rightPrefixLength) {
+    return rightPrefixLength - leftPrefixLength;
   }
-  if (!packageExports || typeof packageExports !== 'object') {
+
+  return right.length - left.length || left.localeCompare(right);
+}
+
+function hasUsableExportTarget(target: unknown): boolean {
+  if (typeof target === 'string') {
+    return true;
+  }
+  if (Array.isArray(target)) {
+    return target.some((candidate) => hasUsableExportTarget(candidate));
+  }
+  if (!target || typeof target !== 'object') {
     return false;
   }
 
-  const exportKeys = Object.keys(packageExports);
-  if (subpath === undefined) {
-    return exportKeys.includes('.') || exportKeys.every((key) => !key.startsWith('.'));
+  return Object.values(target).some((candidate) => hasUsableExportTarget(candidate));
+}
+
+function resolveExportTarget(packageExports: unknown, exportKey: string): unknown {
+  if (
+    typeof packageExports === 'string' ||
+    packageExports === null ||
+    Array.isArray(packageExports)
+  ) {
+    return exportKey === '.' ? packageExports : undefined;
+  }
+  if (typeof packageExports !== 'object') {
+    return undefined;
   }
 
-  const exportKey = `.${subpath}`;
-  return exportKeys.some((key) => key.startsWith('.') && exportPatternMatches(key, exportKey));
+  const exportsMap = packageExports as Record<string, unknown>;
+  const exportKeys = Object.keys(exportsMap);
+  const hasSubpathKeys = exportKeys.some((key) => key.startsWith('.'));
+  if (exportKey === '.') {
+    if (!hasSubpathKeys) {
+      return exportsMap;
+    }
+    return Object.hasOwn(exportsMap, '.') ? exportsMap['.'] : undefined;
+  }
+  if (!hasSubpathKeys) {
+    return undefined;
+  }
+
+  if (Object.hasOwn(exportsMap, exportKey)) {
+    return exportsMap[exportKey];
+  }
+
+  const matchingPattern = exportKeys
+    .filter(
+      (key) => key.startsWith('.') && key.includes('*') && exportPatternMatches(key, exportKey),
+    )
+    .toSorted(compareExportPatterns)[0];
+  return matchingPattern === undefined ? undefined : exportsMap[matchingPattern];
+}
+
+function isPublicExport(manifest: PackageManifest, subpath: string | undefined): boolean {
+  return hasUsableExportTarget(
+    resolveExportTarget(manifest.exports, subpath === undefined ? '.' : `.${subpath}`),
+  );
 }
 
 function localPackageImport(
@@ -498,7 +547,7 @@ describe('architecture boundaries', () => {
     );
   });
 
-  it('accepts conditional root and pattern exports but rejects unexported subpaths', async () => {
+  it('resolves conditional, pattern and null exports with specific-pattern precedence', async () => {
     const workspaces = await readWorkspaces();
     const api = requireWorkspace(workspaces, '@sobama/api');
     const config = requireWorkspace(workspaces, '@sobama/config');
@@ -509,6 +558,7 @@ describe('architecture boundaries', () => {
         exports: {
           '.': { import: './src/index.ts', types: './src/index.ts' },
           './features/*': './src/features/*.ts',
+          './features/private-internal/*': null,
         },
       },
     };
@@ -524,8 +574,20 @@ describe('architecture boundaries', () => {
       importViolations(file, "import '@sobama/config/features/member.js';", api, patternWorkspaces),
     ).toEqual([]);
     expect(
+      importViolations(
+        file,
+        "import '@sobama/config/features/private-internal/member.js';",
+        api,
+        patternWorkspaces,
+      ),
+    ).toContain(
+      'apps/api/src/example.ts: @sobama/config/features/private-internal/member.js is not a public export of @sobama/config.',
+    );
+    expect(
       isPublicExport({ exports: { import: './index.js', require: './index.cjs' } }, undefined),
     ).toBe(true);
+    expect(isPublicExport({ exports: { '.': null } }, undefined)).toBe(false);
+    expect(isPublicExport({ exports: {} }, undefined)).toBe(false);
   });
 
   it('reports relative imports across workspace boundaries', async () => {

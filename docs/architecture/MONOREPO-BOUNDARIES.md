@@ -88,8 +88,11 @@ ergänzt diese Prüfung repositoryweit. Er erzwingt:
 - frameworkfreien Domaincode ohne NestJS oder Prisma.
 
 Die Prüfung öffentlicher Exporte erkennt explizite Root- und Subpath-Exports,
-bedingte Root-Exports sowie Subpath-Patterns. Dynamisch zusammengesetzte
-Modulnamen sind keine statisch überprüfbare Importgrenze.
+bedingte Root-Exports sowie Subpath-Patterns. Sie berücksichtigt dabei
+`null`-Ziele und den jeweils spezifischsten passenden Pattern-Export, sodass
+gezielt ausgeschlossene Unterpfade nicht durch ein breiteres Pattern wieder
+öffentlich werden. Dynamisch zusammengesetzte Modulnamen sind keine statisch
+überprüfbare Importgrenze.
 
 Neue Workspaces schlagen so lange fehl, bis Zweck und erlaubte Abhängigkeiten
 explizit in Test und Dokumentation ergänzt wurden. Vollständige Fachmodul-,
