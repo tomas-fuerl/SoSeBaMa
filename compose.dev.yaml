@@ -28,9 +28,11 @@ services:
       SOSEBAMA_API_HOST: 0.0.0.0
       SOSEBAMA_API_PORT: '3000'
       SOSEBAMA_ENVIRONMENT: DEV
+      SOSEBAMA_TELEMETRY_EXPORTER: none
 
   worker:
     image: sosebama-backend:dev
     pull_policy: never
     environment:
       SOSEBAMA_ENVIRONMENT: DEV
+      SOSEBAMA_TELEMETRY_EXPORTER: none

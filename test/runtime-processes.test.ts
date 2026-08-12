@@ -120,7 +120,7 @@ async function findFreeLoopbackPort(): Promise<number> {
   const server = createServer();
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
-    server.listen(0, 'localhost', resolve);
+    server.listen(0, '127.0.0.1', resolve);
   });
   const address = server.address() as AddressInfo | null;
   await new Promise<void>((resolve, reject) => {
@@ -132,7 +132,15 @@ async function findFreeLoopbackPort(): Promise<number> {
   return address.port;
 }
 
-describe('built runtime processes', () => {
+function parseJsonLines(output: string): Array<Record<string, unknown>> {
+  return output
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+describe('built runtime processes', { timeout: PROCESS_TIMEOUT_MS + 5_000 }, () => {
   const processes = new Set<RuntimeProcess>();
 
   const startProcess = (entrypoint: string, environment: NodeJS.ProcessEnv) => {
@@ -149,12 +157,21 @@ describe('built runtime processes', () => {
   it('starts the API, handles SIGINT, reports stop, and exits successfully', async () => {
     const port = await findFreeLoopbackPort();
     const runtimeProcess = startProcess('apps/api/dist/main.js', {
-      SOSEBAMA_API_HOST: 'localhost',
+      SOSEBAMA_API_HOST: '127.0.0.1',
       SOSEBAMA_API_PORT: String(port),
       SOSEBAMA_ENVIRONMENT: 'DEV',
     });
 
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');
+    expect(parseJsonLines(runtimeProcess.stdout)).toEqual([
+      expect.objectContaining({
+        environment: 'DEV',
+        event: 'runtime.started',
+        role: 'api',
+        service: 'sobama-api',
+      }),
+    ]);
+    expect(runtimeProcess.stdout).not.toMatch(/"(?:hostname|pid)":/u);
     expect(runtimeProcess.signal('SIGINT')).toBe(true);
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.stopped"');
     await expect(runtimeProcess.waitForExit()).resolves.toEqual({ code: 0, signal: null });
@@ -166,6 +183,14 @@ describe('built runtime processes', () => {
     });
 
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');
+    expect(parseJsonLines(runtimeProcess.stdout)).toEqual([
+      expect.objectContaining({
+        environment: 'DEV',
+        event: 'runtime.started',
+        role: 'worker',
+        service: 'sobama-worker',
+      }),
+    ]);
     expect(runtimeProcess.signal('SIGTERM')).toBe(true);
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.stopped"');
     await expect(runtimeProcess.waitForExit()).resolves.toEqual({ code: 0, signal: null });
@@ -183,4 +208,20 @@ describe('built runtime processes', () => {
       expect(runtimeProcess.stdout).not.toContain('"event":"runtime.started"');
     });
   }
+
+  it('keeps a worker runtime healthy when the optional OTLP collector is unavailable', async () => {
+    const unavailableCollectorPort = await findFreeLoopbackPort();
+    const runtimeProcess = startProcess('apps/worker/dist/main.js', {
+      OTEL_EXPORTER_OTLP_ENDPOINT: `http://127.0.0.1:${unavailableCollectorPort}`,
+      SOSEBAMA_ENVIRONMENT: 'DEV',
+      SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+    });
+
+    await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');
+    expect(runtimeProcess.signal('SIGTERM')).toBe(true);
+    await runtimeProcess.waitForOutput('stdout', '"event":"runtime.stopped"');
+    await expect(runtimeProcess.waitForExit()).resolves.toEqual({ code: 0, signal: null });
+    expect(runtimeProcess.stderr).toContain('"event":"telemetry.flush-failed"');
+    expect(runtimeProcess.stderr).not.toContain(String(unavailableCollectorPort));
+  });
 });

@@ -1,6 +1,15 @@
 import 'reflect-metadata';
 
-import { ConfigurationError, loadWorkerRuntimeConfig } from '@sobama/config';
+import {
+  ConfigurationError,
+  loadTelemetryRuntimeConfig,
+  loadWorkerRuntimeConfig,
+} from '@sobama/config';
+import {
+  createRuntimeLogger,
+  createRuntimeObservability,
+  type RuntimeObservability,
+} from '@sobama/observability';
 
 import { startWorker, type StartedWorker } from './start-worker.js';
 
@@ -38,35 +47,40 @@ function observeShutdownSignals(): ShutdownSignals {
   };
 }
 
-function writeFailure(event: 'runtime.failed' | 'runtime.shutdown-failed', message: string): void {
-  process.stderr.write(`${JSON.stringify({ event, message, role: 'worker' })}\n`);
-}
-
 async function main(): Promise<void> {
   const shutdownSignals = observeShutdownSignals();
+  const bootstrapLogger = createRuntimeLogger('worker', 'unvalidated');
+  let observability: RuntimeObservability | undefined;
   let runtime: StartedWorker | undefined;
   let phase: 'startup' | 'running' | 'shutdown' = 'startup';
   let shutdownFailureReported = false;
 
   try {
     const config = loadWorkerRuntimeConfig(process.env);
+    const telemetry = loadTelemetryRuntimeConfig(process.env);
+    observability = createRuntimeObservability({
+      environment: config.environment,
+      role: 'worker',
+      telemetry,
+    });
     runtime = await startWorker(config);
-    process.stdout.write(`${JSON.stringify({ event: 'runtime.started', role: 'worker' })}\n`);
+    observability.started();
     phase = 'running';
 
     await shutdownSignals.wait();
     phase = 'shutdown';
     await runtime.app.close();
-    process.stdout.write(`${JSON.stringify({ event: 'runtime.stopped', role: 'worker' })}\n`);
+    observability.stopped();
   } catch (error: unknown) {
     const shutdownFailed = phase === 'shutdown';
-    const message =
-      !shutdownFailed && error instanceof ConfigurationError
-        ? error.message
-        : shutdownFailed
-          ? 'Worker runtime failed to shut down.'
-          : 'Worker runtime failed to start.';
-    writeFailure(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', message);
+    if (observability) {
+      observability.failed(shutdownFailed ? 'shutdown' : 'startup');
+    } else {
+      bootstrapLogger.error(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', {
+        category: error instanceof ConfigurationError ? 'configuration' : 'runtime',
+        ...(error instanceof ConfigurationError ? { variable: error.variable } : {}),
+      });
+    }
     shutdownFailureReported = shutdownFailed;
     process.exitCode = 1;
   } finally {
@@ -76,11 +90,18 @@ async function main(): Promise<void> {
         await runtime.app.close();
       } catch {
         if (!shutdownFailureReported) {
-          writeFailure('runtime.shutdown-failed', 'Worker runtime failed to shut down.');
+          if (observability) {
+            observability.failed('shutdown');
+          } else {
+            bootstrapLogger.error('runtime.shutdown-failed', {
+              category: 'runtime',
+            });
+          }
           process.exitCode = 1;
         }
       }
     }
+    await observability?.shutdown();
   }
 }
 

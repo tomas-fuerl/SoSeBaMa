@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ConfigurationError, loadApiRuntimeConfig, loadWorkerRuntimeConfig } from '../src/index.js';
+import {
+  ConfigurationError,
+  loadApiRuntimeConfig,
+  loadTelemetryRuntimeConfig,
+  loadWorkerRuntimeConfig,
+} from '../src/index.js';
 
 describe('server runtime configuration', () => {
   it('accepts an explicit local development API configuration', () => {
@@ -131,5 +136,30 @@ describe('server runtime configuration', () => {
         SOSEBAMA_ENVIRONMENT: 'DEV',
       }),
     ).toThrowError(/SOSEBAMA_API_PORT(?!.*private-value)/u);
+  });
+
+  it('keeps telemetry export disabled by default', () => {
+    expect(loadTelemetryRuntimeConfig({})).toEqual({ exporter: 'none' });
+  });
+
+  it('accepts a credential-free OTLP base endpoint', () => {
+    expect(
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318/base/',
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+      }),
+    ).toEqual({ endpoint: 'http://collector:4318/base', exporter: 'otlp' });
+  });
+
+  it('rejects unsafe telemetry exporters and endpoints without echoing their values', () => {
+    expect(() =>
+      loadTelemetryRuntimeConfig({ SOSEBAMA_TELEMETRY_EXPORTER: 'private-exporter' }),
+    ).toThrowError(/SOSEBAMA_TELEMETRY_EXPORTER(?!.*private-exporter)/u);
+    expect(() =>
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://private-user:private-value@collector/path?token=x',
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+      }),
+    ).toThrowError(/OTEL_EXPORTER_OTLP_ENDPOINT(?!.*(?:private-user|private-value|token))/u);
   });
 });

@@ -12,12 +12,17 @@ export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
 }
 
+export type TelemetryRuntimeConfig = { exporter: 'none' } | { endpoint: string; exporter: 'otlp' };
+
 export type ApiRuntimeContext = 'container' | 'local';
 
 export class ConfigurationError extends Error {
+  readonly variable: string;
+
   constructor(variable: string, expectation: string) {
     super(`Invalid configuration variable ${variable}: ${expectation}.`);
     this.name = 'ConfigurationError';
+    this.variable = variable;
   }
 }
 
@@ -75,6 +80,46 @@ function readApiPort(environment: EnvironmentSource): number {
     );
   }
   return port;
+}
+
+function readOtlpEndpoint(environment: EnvironmentSource): string {
+  const value = readRequired(environment, 'OTEL_EXPORTER_OTLP_ENDPOINT');
+  let endpoint: URL;
+  try {
+    endpoint = new URL(value);
+  } catch {
+    throw new ConfigurationError(
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+      'expected an absolute HTTP or HTTPS URL without credentials, query, or fragment',
+    );
+  }
+  if (
+    !['http:', 'https:'].includes(endpoint.protocol) ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  ) {
+    throw new ConfigurationError(
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+      'expected an absolute HTTP or HTTPS URL without credentials, query, or fragment',
+    );
+  }
+  return `${endpoint.origin}${endpoint.pathname.replace(/\/+$/u, '')}`;
+}
+
+export function loadTelemetryRuntimeConfig(environment: EnvironmentSource): TelemetryRuntimeConfig {
+  const exporter = environment.SOSEBAMA_TELEMETRY_EXPORTER?.trim() || 'none';
+  if (exporter === 'none') {
+    return { exporter };
+  }
+  if (exporter === 'otlp') {
+    return { endpoint: readOtlpEndpoint(environment), exporter };
+  }
+  throw new ConfigurationError(
+    'SOSEBAMA_TELEMETRY_EXPORTER',
+    'expected none or otlp for this runtime',
+  );
 }
 
 export function loadApiRuntimeConfig(

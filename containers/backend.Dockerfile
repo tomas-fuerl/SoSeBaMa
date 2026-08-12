@@ -11,6 +11,7 @@ COPY apps/worker/package.json apps/worker/package.json
 COPY packages/config/package.json packages/config/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/observability/package.json packages/observability/package.json
 COPY packages/testing/package.json packages/testing/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/validation/package.json packages/validation/package.json
@@ -23,10 +24,12 @@ COPY apps/api apps/api
 COPY apps/worker apps/worker
 COPY packages/config packages/config
 COPY packages/contracts packages/contracts
+COPY packages/observability packages/observability
 COPY packages/typescript-config packages/typescript-config
 COPY packages/validation packages/validation
 
 RUN pnpm --filter @sobama/config run build \
+    && pnpm --filter @sobama/observability run build \
     && pnpm --filter @sobama/api run build \
     && pnpm --filter @sobama/worker run build
 RUN pnpm --filter @sobama/api deploy --prod --legacy /output/api

@@ -1,4 +1,14 @@
-import { ConfigurationError, loadApiRuntimeConfig, type ApiRuntimeContext } from '@sobama/config';
+import {
+  ConfigurationError,
+  loadApiRuntimeConfig,
+  loadTelemetryRuntimeConfig,
+  type ApiRuntimeContext,
+} from '@sobama/config';
+import {
+  createRuntimeLogger,
+  createRuntimeObservability,
+  type RuntimeObservability,
+} from '@sobama/observability';
 
 import { startApi, type StartedApi } from './start-api.js';
 
@@ -33,38 +43,41 @@ function observeShutdownSignals(): ShutdownSignals {
   };
 }
 
-function writeFailure(event: 'runtime.failed' | 'runtime.shutdown-failed', message: string): void {
-  process.stderr.write(`${JSON.stringify({ event, message, role: 'api' })}\n`);
-}
-
 export async function runApi(context: ApiRuntimeContext): Promise<void> {
   const shutdownSignals = observeShutdownSignals();
+  const bootstrapLogger = createRuntimeLogger('api', 'unvalidated');
+  let observability: RuntimeObservability | undefined;
   let runtime: StartedApi | undefined;
   let phase: 'startup' | 'running' | 'shutdown' = 'startup';
   let shutdownFailureReported = false;
 
   try {
     const config = loadApiRuntimeConfig(process.env, context);
+    const telemetry = loadTelemetryRuntimeConfig(process.env);
+    observability = createRuntimeObservability({
+      environment: config.environment,
+      role: 'api',
+      telemetry,
+    });
     runtime = await startApi(config);
-    process.stdout.write(
-      `${JSON.stringify({ event: 'runtime.started', port: runtime.port, role: 'api' })}\n`,
-    );
+    observability.started();
     phase = 'running';
 
     await shutdownSignals.wait();
     phase = 'shutdown';
     runtime.health.markNotReady();
     await runtime.app.close();
-    process.stdout.write(`${JSON.stringify({ event: 'runtime.stopped', role: 'api' })}\n`);
+    observability.stopped();
   } catch (error: unknown) {
     const shutdownFailed = phase === 'shutdown';
-    const message =
-      !shutdownFailed && error instanceof ConfigurationError
-        ? error.message
-        : shutdownFailed
-          ? 'API runtime failed to shut down.'
-          : 'API runtime failed to start.';
-    writeFailure(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', message);
+    if (observability) {
+      observability.failed(shutdownFailed ? 'shutdown' : 'startup');
+    } else {
+      bootstrapLogger.error(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', {
+        category: error instanceof ConfigurationError ? 'configuration' : 'runtime',
+        ...(error instanceof ConfigurationError ? { variable: error.variable } : {}),
+      });
+    }
     shutdownFailureReported = shutdownFailed;
     process.exitCode = 1;
   } finally {
@@ -75,10 +88,17 @@ export async function runApi(context: ApiRuntimeContext): Promise<void> {
         await runtime.app.close();
       } catch {
         if (!shutdownFailureReported) {
-          writeFailure('runtime.shutdown-failed', 'API runtime failed to shut down.');
+          if (observability) {
+            observability.failed('shutdown');
+          } else {
+            bootstrapLogger.error('runtime.shutdown-failed', {
+              category: 'runtime',
+            });
+          }
           process.exitCode = 1;
         }
       }
     }
+    await observability?.shutdown();
   }
 }

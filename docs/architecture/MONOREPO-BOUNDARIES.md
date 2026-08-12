@@ -1,7 +1,7 @@
 # Workspace- und Importgrenzen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-11
+- Letzter Prüfstand: 2026-08-12
 - Bezogene Issues:
   [#12](https://github.com/tomas-fuerl/SoSeBaMa/issues/12),
   [#14](https://github.com/tomas-fuerl/SoSeBaMa/issues/14)
@@ -24,6 +24,7 @@ Starts; fachlicher Quellcode bleibt ausgeschlossen.
 | `packages/contracts` | öffentliche technische Verträge | Browser, API, Worker |
 | `packages/validation` | Validierung öffentlicher Verträge | Browser, API, Worker |
 | `packages/config` | validierte Umgebungs- und Laufzeitkonfiguration | nur API und Worker |
+| `packages/observability` | redigierte Logs, Backendtraces und niedrig kardinale Metriken | nur API und Worker |
 | `packages/testing` | Testfabriken und Testhilfen | nur Tests |
 | `packages/eslint-config` | gemeinsame statische Regeln | Entwicklungswerkzeug |
 | `packages/typescript-config` | gemeinsame TypeScript-Basis | Entwicklungswerkzeug |
@@ -46,9 +47,10 @@ Build- und Coverage-Dateien beeinflussen das Ergebnis daher nicht.
 | --- | --- | --- |
 | Root-Projekt | keine | `packages/eslint-config`, `packages/testing`, `packages/typescript-config` |
 | `apps/web` | `packages/contracts`, `packages/validation` | `packages/testing` |
-| `apps/api` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
-| `apps/worker` | `packages/config`, `packages/contracts`, `packages/validation` | `packages/testing` |
+| `apps/api` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/validation` | `packages/testing` |
+| `apps/worker` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/validation` | `packages/testing` |
 | `packages/config` | `packages/validation` | `packages/testing` |
+| `packages/observability` | keine | `packages/testing` |
 | `packages/contracts` | keine | `packages/testing` |
 | `packages/validation` | `packages/contracts` | `packages/testing` |
 | `packages/testing` | `packages/contracts`, `packages/validation` | keine |
@@ -65,8 +67,9 @@ reviewbar.
 ## Verbindliche Importregeln
 
 1. `apps/web` darf öffentliche Verträge und deren Validierung importieren.
-2. `apps/web` darf weder `apps/api`, `apps/worker`, `packages/config`, Prisma
-   noch interne Unterpfade anderer Pakete importieren.
+2. `apps/web` darf weder `apps/api`, `apps/worker`, `packages/config`,
+   `packages/observability`, Prisma noch interne Unterpfade anderer Pakete
+   importieren.
 3. Serverinterne Modelle, Autorisierungslogik, Auditdetails und Secrets werden
    niemals über Clientpakete exportiert.
 4. API und Worker dürfen gemeinsame öffentliche Verträge und serverseitige
