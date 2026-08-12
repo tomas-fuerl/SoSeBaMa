@@ -1,0 +1,105 @@
+x-runtime-hardening: &runtime-hardening
+  cap_drop:
+    - ALL
+  init: true
+  pids_limit: 128
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  stop_grace_period: 10s
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=16m,uid=1000,gid=1000,mode=1777
+  user: '1000:1000'
+
+services:
+  gateway:
+    <<: *runtime-hardening
+    command:
+      - run
+      - --config
+      - /etc/caddy/Gateway.Caddyfile
+      - --adapter
+      - caddyfile
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    expose:
+      - '8080'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          Promise.all([['gateway','http://127.0.0.1:8080/health/gateway'],['web','http://127.0.0.1:8080/health.json'],['api','http://127.0.0.1:8080/api/health/ready']].map(async([role,url])=>{const
+          response=await fetch(url);const body=await
+          response.json();if(!response.ok||body.role!==role||body.status!=='ready')throw new
+          Error('not ready')})).catch(()=>process.exit(1))
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 2s
+    networks:
+      - application
+      - edge
+
+  web:
+    <<: *runtime-hardening
+    expose:
+      - '8080'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:8080/health.json').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 2s
+    networks:
+      - application
+
+  api:
+    <<: *runtime-hardening
+    expose:
+      - '3000'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/health/ready').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 2s
+    networks:
+      - application
+
+  worker:
+    <<: *runtime-hardening
+    command:
+      - node
+      - /opt/sobama/worker/dist/main.js
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - process.kill(1, 0)
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 2s
+    networks:
+      - application
+
+networks:
+  application:
+    internal: true
+  edge: {}

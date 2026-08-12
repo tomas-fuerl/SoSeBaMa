@@ -39,6 +39,23 @@ describe('server runtime configuration', () => {
     }
   });
 
+  it('accepts the internal all-interfaces bind only in the DEV container context', () => {
+    expect(
+      loadApiRuntimeConfig(
+        {
+          SOSEBAMA_API_HOST: '0.0.0.0',
+          SOSEBAMA_API_PORT: '4310',
+          SOSEBAMA_ENVIRONMENT: 'DEV',
+        },
+        'container',
+      ),
+    ).toEqual({
+      environment: 'DEV',
+      host: '0.0.0.0',
+      port: 4310,
+    });
+  });
+
   it('rejects non-loopback hosts in DEV without echoing their contents', () => {
     for (const host of ['0.0.0.0', '192.0.2.1']) {
       expect(() =>
@@ -49,6 +66,30 @@ describe('server runtime configuration', () => {
         }),
       ).toThrowError(/SOSEBAMA_API_HOST(?!.*(?:0\.0\.0\.0|192\.0\.2\.1))/u);
     }
+  });
+
+  it('rejects invalid container hosts without echoing their contents', () => {
+    expect(() =>
+      loadApiRuntimeConfig(
+        {
+          SOSEBAMA_API_HOST: '192.0.2.1',
+          SOSEBAMA_API_PORT: '4310',
+          SOSEBAMA_ENVIRONMENT: 'DEV',
+        },
+        'container',
+      ),
+    ).toThrowError(/SOSEBAMA_API_HOST(?!.*192\.0\.2\.1)/u);
+  });
+
+  it('does not allow environment variables to select the container bind context', () => {
+    expect(() =>
+      loadApiRuntimeConfig({
+        SOSEBAMA_API_HOST: '0.0.0.0',
+        SOSEBAMA_API_PORT: '4310',
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_RUNTIME_CONTEXT: 'container',
+      }),
+    ).toThrowError(/SOSEBAMA_API_HOST/u);
   });
 
   it('rejects TST and PRD for API and worker without echoing the environment', () => {

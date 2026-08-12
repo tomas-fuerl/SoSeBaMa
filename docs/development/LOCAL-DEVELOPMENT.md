@@ -96,6 +96,11 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    von der Coverage aus. Der Befehl ist dadurch nicht von Shell-Glob-Expansion
    abhängig.
 
+8. Nur wenn der lokale DEV-Containerrahmen benötigt wird, der
+   [DEV-Containeranleitung](DEV-CONTAINERS.md) folgen. Docker ist keine
+   Voraussetzung für die Schritte 1 bis 7. GitHub CI validiert und baut den
+   Containerrahmen zusätzlich und führt dessen Health- und Rückbaunachweis aus.
+
 ## Verifikation
 
 Nach der Prüfung bleibt der versionierte Stand unverändert:
@@ -138,4 +143,5 @@ versionierten Dateien werden nicht automatisch zurückgesetzt.
 ## Pflege
 
 Der Projekteigentümer prüft diese Anleitung bei jeder Änderung von Node.js,
-pnpm, Root-Kommandos, Lockfileverhalten oder GitHub Actions erneut.
+pnpm, Root-Kommandos, Lockfileverhalten, Containerprüfungen oder GitHub Actions
+erneut.
