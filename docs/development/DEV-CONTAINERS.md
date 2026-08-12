@@ -1,7 +1,7 @@
 # Lokalen DEV-Containerrahmen starten und zurückbauen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-11
+- Letzter Prüfstand: 2026-08-12
 - Bezogenes Issue: [#15](https://github.com/tomas-fuerl/SoSeBaMa/issues/15)
 - Geltungsbereich: ausschließlich lokales DEV
 
@@ -28,8 +28,13 @@ von Issue #15.
 - API, Web und Worker besitzen keine Hostports. Nur Caddy verbindet das
   `edge`- mit dem internen `application`-Netz.
 - Alle Container laufen als Nicht-Root, mit read-only Root-Dateisystem, ohne
-  Capabilities und mit `no-new-privileges`. Docker-Socket, Hostnetz und
-  persistente Volumes fehlen.
+  hinzugefügte Capabilities und mit `no-new-privileges`. Docker-Socket,
+  Host-PID/-IPC, Geräte, Hostnetz und persistente Volumes fehlen.
+- DEV-Services verwenden ausschließlich die zuvor lokal gebauten Images.
+  Compose darf fehlende DEV-Images nicht aus einer Registry laden.
+- Der API-Containerbind wird ausschließlich durch den eigenen
+  Container-Entrypoint freigegeben. Eine Prozessvariable kann einen direkten
+  lokalen API-Start nicht von Loopback auf `0.0.0.0` umschalten.
 
 ## Voraussetzungen
 
@@ -37,7 +42,7 @@ von Issue #15.
 2. Der Checkout enthält keine unbekannten Änderungen.
 3. Docker Desktop oder eine kompatible lokale Docker-Engine läuft.
 4. Docker Compose V2 ist verfügbar.
-5. Die öffentlichen Docker- und npm-Registrys sind erreichbar.
+5. Für den Build sind die öffentlichen Docker- und npm-Registrys erreichbar.
 6. Ein freier lokaler Port ist bekannt. Der sichtbare Platzhalter
    `<LOCAL_GATEWAY_PORT>` wird ausschließlich lokal ersetzt.
 
@@ -84,6 +89,10 @@ von Issue #15.
 
    Erwartet wird Exit-Code `0`. Gateway, Web, API und Worker müssen `Healthy`
    erreichen. Der Gatewaycheck ruft dabei auch Web und API über Caddy auf.
+   Fehlt ein lokales DEV-Image, bricht der Start ab, ohne es aus einer Registry
+   zu laden. Der noch leere Worker weist in diesem Teilschnitt nur die
+   Prozess-Liveness nach; vor echten Jobs benötigt er einen fachlich geeigneten
+   Readiness-Indikator.
 
 2. Die lokale Gatewayadresse anzeigen:
 
@@ -94,7 +103,18 @@ von Issue #15.
    Erwartet wird `127.0.0.1:<LOCAL_GATEWAY_PORT>`. Eine andere Hostadresse ist
    ein Abbruchgrund.
 
-3. Die drei technischen Healthantworten ausschließlich über Caddy abrufen:
+3. Den Hosteingang und alle drei technischen Healthantworten automatisiert
+   prüfen:
+
+   ```sh
+   pnpm container:smoke
+   ```
+
+   Erwartet wird Exit-Code `0`. Der Befehl prüft Gateway, Web und API über
+   `127.0.0.1:<LOCAL_GATEWAY_PORT>` und damit denselben Hostpfad wie ein lokaler
+   Client.
+
+4. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
 
    ```sh
    curl --fail --silent --show-error "http://127.0.0.1:<LOCAL_GATEWAY_PORT>/health/gateway"
@@ -105,7 +125,7 @@ von Issue #15.
    Erwartet werden die Rollen `gateway`, `web` und `api` jeweils mit Status
    `ready`. Andere Antworten, Weiterleitungen oder Fachinhalte sind Fehler.
 
-4. Containerstatus und veröffentlichte Ports prüfen:
+5. Containerstatus und veröffentlichte Ports prüfen:
 
    ```sh
    pnpm container:status
@@ -127,15 +147,22 @@ von Issue #15.
    Stoppsignal und entfernt danach Container, Netze und gegebenenfalls
    ausschließlich diesem DEV-Projekt zugeordnete Volumes.
 
-2. Den Rückbau prüfen:
+2. Den Rückbau maschinell prüfen:
 
    ```sh
-   pnpm container:status
+   pnpm container:cleanup
    ```
 
-   Es dürfen keine Container des Projekts `sosebama-dev` mehr erscheinen. Die
-   lokal gebauten Images bleiben für den nächsten Buildcache erhalten und
-   enthalten keine Daten oder Secrets.
+   Erwartet wird Exit-Code `0`. Der Befehl schlägt fehl, falls Container oder
+   Netze des Projekts `sosebama-dev` zurückbleiben. Die lokal gebauten Images
+   bleiben für den nächsten Buildcache erhalten und enthalten keine Daten oder
+   Secrets.
+
+Die beiden maschinellen Nachweise verwenden das vorhandene Node.js über
+`tools/check-dev-containers.mjs`. `--help` beschreibt Eingabe und Kommandos.
+Exit-Code `1` kennzeichnet einen fehlgeschlagenen Nachweis, Exit-Code `2` eine
+fehlende oder ungültige Eingabe. Der Cleanup-Nachweis verändert keine
+Ressourcen und kann gefahrlos wiederholt werden.
 
 ## Fehlerbehandlung
 
@@ -147,14 +174,16 @@ von Issue #15.
   `docker version` wiederholen. Nicht auf einen fremden Dockerhost ausweichen.
 - **Registry- oder Buildfehler:** Den Stack nicht starten. Den unveränderten
   Build nach Wiederherstellung des öffentlichen Registryzugriffs wiederholen.
+- **Lokales DEV-Image fehlt:** `pnpm container:check` erneut ausführen. Die
+  Pull-Sperre nicht umgehen und keinen gleichnamigen Registry-Tag verwenden.
 - **Container wird `unhealthy` oder beendet sich:** Keine Anfrage senden.
   Secretfreie DEV-Logs mit
   `docker compose -f compose.yaml -f compose.dev.yaml logs --no-color`
   lokal prüfen und anschließend `pnpm container:down` ausführen. Logs vor einer
   Weitergabe trotzdem auf vertrauliche lokale Eingaben prüfen.
-- **Unerwarteter Hostport, Docker-Socket, Hostnetz oder Rootbenutzer:** Sofort
-  stoppen. Diese Abweichung darf nicht durch eine lokale Override-Datei
-  umgangen werden.
+- **Unerwarteter Hostport, Docker-Socket, Hostnetz, Hostnamespace, Gerät,
+  Capability oder Rootbenutzer:** Sofort stoppen. Diese Abweichung darf nicht
+  durch eine lokale Override-Datei umgangen werden.
 
 ## Rollback und Pflege
 

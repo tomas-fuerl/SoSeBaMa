@@ -43,6 +43,11 @@ jobs:
         run: pnpm container:build
       - name: Start and health-check DEV containers
         run: pnpm container:up
+      - name: Verify DEV host ingress
+        run: pnpm container:smoke
       - name: Stop DEV containers
         if: always()
         run: pnpm container:down
+      - name: Verify DEV cleanup
+        if: always()
+        run: pnpm container:cleanup

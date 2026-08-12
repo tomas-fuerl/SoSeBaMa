@@ -19,13 +19,18 @@ interface RenderedPort {
 }
 
 interface RenderedService {
+  cap_add?: string[];
   cap_drop?: string[];
+  devices?: unknown[];
   image?: string;
+  ipc?: string;
   network_mode?: string;
   networks?: Record<string, unknown>;
+  pid?: string;
   pids_limit?: number;
   ports?: RenderedPort[];
   privileged?: boolean;
+  pull_policy?: string;
   read_only?: boolean;
   security_opt?: string[];
   tmpfs?: string[];
@@ -75,6 +80,9 @@ describe('DEV container policy', () => {
       expect(service?.read_only, serviceName).toBe(true);
       expect(service?.privileged, serviceName).not.toBe(true);
       expect(service?.network_mode, serviceName).not.toBe('host');
+      expect(service?.pid, serviceName).toBeUndefined();
+      expect(service?.ipc, serviceName).toBeUndefined();
+      expect(service?.cap_add ?? [], serviceName).toEqual([]);
       expect(service?.cap_drop, serviceName).toContain('ALL');
       expect(service?.security_opt, serviceName).toContain('no-new-privileges:true');
       expect(service?.pids_limit, serviceName).toBe(128);
@@ -82,6 +90,7 @@ describe('DEV container policy', () => {
         expect.arrayContaining([expect.stringMatching(/^\/tmp:/u)]),
       );
       expect(service?.volumes ?? [], serviceName).toEqual([]);
+      expect(service?.devices ?? [], serviceName).toEqual([]);
     }
 
     expect(JSON.stringify(compose)).not.toContain('docker.sock');
@@ -94,6 +103,12 @@ describe('DEV container policy', () => {
     expect(services.api?.ports ?? []).toEqual([]);
     expect(services.web?.ports ?? []).toEqual([]);
     expect(services.worker?.ports ?? []).toEqual([]);
+  });
+
+  it('uses only prebuilt local DEV images without implicit registry pulls', () => {
+    for (const serviceName of serviceNames) {
+      expect(services[serviceName]?.pull_policy, serviceName).toBe('never');
+    }
   });
 
   it('pins every external Dockerfile base and avoids latest image tags', () => {

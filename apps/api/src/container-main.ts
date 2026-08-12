@@ -2,4 +2,4 @@ import 'reflect-metadata';
 
 import { runApi } from './run-api.js';
 
-void runApi('local');
+void runApi('container');

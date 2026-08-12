@@ -43,4 +43,4 @@ COPY --from=build --chown=node:node /output/worker ./worker
 
 USER node
 
-CMD ["node", "/opt/sobama/api/dist/main.js"]
+CMD ["node", "/opt/sobama/api/dist/container-main.js"]

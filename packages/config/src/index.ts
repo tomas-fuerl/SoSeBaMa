@@ -12,7 +12,7 @@ export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
 }
 
-type ApiRuntimeContext = 'container' | 'local';
+export type ApiRuntimeContext = 'container' | 'local';
 
 export class ConfigurationError extends Error {
   constructor(variable: string, expectation: string) {
@@ -35,20 +35,6 @@ function readRuntimeEnvironment(environment: EnvironmentSource): RuntimeEnvironm
     throw new ConfigurationError('SOSEBAMA_ENVIRONMENT', 'expected DEV for this local runtime');
   }
   return value;
-}
-
-function readApiRuntimeContext(environment: EnvironmentSource): ApiRuntimeContext {
-  const value = environment.SOSEBAMA_RUNTIME_CONTEXT?.trim();
-  if (!value || value === 'local') {
-    return 'local';
-  }
-  if (value === 'container') {
-    return value;
-  }
-  throw new ConfigurationError(
-    'SOSEBAMA_RUNTIME_CONTEXT',
-    'expected local or container for this DEV runtime',
-  );
 }
 
 function readApiHost(environment: EnvironmentSource, context: ApiRuntimeContext): string {
@@ -91,9 +77,11 @@ function readApiPort(environment: EnvironmentSource): number {
   return port;
 }
 
-export function loadApiRuntimeConfig(environment: EnvironmentSource): ApiRuntimeConfig {
+export function loadApiRuntimeConfig(
+  environment: EnvironmentSource,
+  context: ApiRuntimeContext = 'local',
+): ApiRuntimeConfig {
   const runtime = readRuntimeEnvironment(environment);
-  const context = readApiRuntimeContext(environment);
   return {
     environment: runtime,
     host: readApiHost(environment, context),
