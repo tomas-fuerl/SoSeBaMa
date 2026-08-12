@@ -6,7 +6,7 @@ import {
   loadWorkerRuntimeConfig,
 } from '@sobama/config';
 import {
-  createRuntimeLogger,
+  createRuntimeFailureReporter,
   createRuntimeObservability,
   type RuntimeObservability,
 } from '@sobama/observability';
@@ -49,7 +49,7 @@ function observeShutdownSignals(): ShutdownSignals {
 
 async function main(): Promise<void> {
   const shutdownSignals = observeShutdownSignals();
-  const bootstrapLogger = createRuntimeLogger('worker', 'unvalidated');
+  const failureReporter = createRuntimeFailureReporter('worker', 'unvalidated');
   let observability: RuntimeObservability | undefined;
   let runtime: StartedWorker | undefined;
   let phase: 'startup' | 'running' | 'shutdown' = 'startup';
@@ -76,10 +76,10 @@ async function main(): Promise<void> {
     if (observability) {
       observability.failed(shutdownFailed ? 'shutdown' : 'startup');
     } else {
-      bootstrapLogger.error(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', {
-        category: error instanceof ConfigurationError ? 'configuration' : 'runtime',
-        ...(error instanceof ConfigurationError ? { variable: error.variable } : {}),
-      });
+      failureReporter.failed(
+        shutdownFailed ? 'shutdown' : 'startup',
+        error instanceof ConfigurationError ? 'configuration' : 'runtime',
+      );
     }
     shutdownFailureReported = shutdownFailed;
     process.exitCode = 1;
@@ -93,9 +93,7 @@ async function main(): Promise<void> {
           if (observability) {
             observability.failed('shutdown');
           } else {
-            bootstrapLogger.error('runtime.shutdown-failed', {
-              category: 'runtime',
-            });
+            failureReporter.failed('shutdown', 'runtime');
           }
           process.exitCode = 1;
         }

@@ -17,12 +17,9 @@ export type TelemetryRuntimeConfig = { exporter: 'none' } | { endpoint: string; 
 export type ApiRuntimeContext = 'container' | 'local';
 
 export class ConfigurationError extends Error {
-  readonly variable: string;
-
   constructor(variable: string, expectation: string) {
     super(`Invalid configuration variable ${variable}: ${expectation}.`);
     this.name = 'ConfigurationError';
-    this.variable = variable;
   }
 }
 
@@ -84,26 +81,24 @@ function readApiPort(environment: EnvironmentSource): number {
 
 function readOtlpEndpoint(environment: EnvironmentSource): string {
   const value = readRequired(environment, 'OTEL_EXPORTER_OTLP_ENDPOINT');
+  const expectation =
+    'expected an absolute loopback HTTP or HTTPS URL without credentials, query, or fragment';
   let endpoint: URL;
   try {
     endpoint = new URL(value);
   } catch {
-    throw new ConfigurationError(
-      'OTEL_EXPORTER_OTLP_ENDPOINT',
-      'expected an absolute HTTP or HTTPS URL without credentials, query, or fragment',
-    );
+    throw new ConfigurationError('OTEL_EXPORTER_OTLP_ENDPOINT', expectation);
   }
+  const loopbackHosts = new Set(['127.0.0.1', '[::1]', 'localhost']);
   if (
     !['http:', 'https:'].includes(endpoint.protocol) ||
+    !loopbackHosts.has(endpoint.hostname) ||
     endpoint.username ||
     endpoint.password ||
     endpoint.search ||
     endpoint.hash
   ) {
-    throw new ConfigurationError(
-      'OTEL_EXPORTER_OTLP_ENDPOINT',
-      'expected an absolute HTTP or HTTPS URL without credentials, query, or fragment',
-    );
+    throw new ConfigurationError('OTEL_EXPORTER_OTLP_ENDPOINT', expectation);
   }
   return `${endpoint.origin}${endpoint.pathname.replace(/\/+$/u, '')}`;
 }

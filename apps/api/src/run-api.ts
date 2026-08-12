@@ -5,7 +5,7 @@ import {
   type ApiRuntimeContext,
 } from '@sobama/config';
 import {
-  createRuntimeLogger,
+  createRuntimeFailureReporter,
   createRuntimeObservability,
   type RuntimeObservability,
 } from '@sobama/observability';
@@ -45,7 +45,7 @@ function observeShutdownSignals(): ShutdownSignals {
 
 export async function runApi(context: ApiRuntimeContext): Promise<void> {
   const shutdownSignals = observeShutdownSignals();
-  const bootstrapLogger = createRuntimeLogger('api', 'unvalidated');
+  const failureReporter = createRuntimeFailureReporter('api', 'unvalidated');
   let observability: RuntimeObservability | undefined;
   let runtime: StartedApi | undefined;
   let phase: 'startup' | 'running' | 'shutdown' = 'startup';
@@ -73,10 +73,10 @@ export async function runApi(context: ApiRuntimeContext): Promise<void> {
     if (observability) {
       observability.failed(shutdownFailed ? 'shutdown' : 'startup');
     } else {
-      bootstrapLogger.error(shutdownFailed ? 'runtime.shutdown-failed' : 'runtime.failed', {
-        category: error instanceof ConfigurationError ? 'configuration' : 'runtime',
-        ...(error instanceof ConfigurationError ? { variable: error.variable } : {}),
-      });
+      failureReporter.failed(
+        shutdownFailed ? 'shutdown' : 'startup',
+        error instanceof ConfigurationError ? 'configuration' : 'runtime',
+      );
     }
     shutdownFailureReported = shutdownFailed;
     process.exitCode = 1;
@@ -91,9 +91,7 @@ export async function runApi(context: ApiRuntimeContext): Promise<void> {
           if (observability) {
             observability.failed('shutdown');
           } else {
-            bootstrapLogger.error('runtime.shutdown-failed', {
-              category: 'runtime',
-            });
+            failureReporter.failed('shutdown', 'runtime');
           }
           process.exitCode = 1;
         }

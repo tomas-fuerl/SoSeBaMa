@@ -13,10 +13,12 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import {
-  createRuntimeLogger,
-  createRuntimeObservability,
+  createRuntimeFailureReporterCore,
+  createRuntimeObservabilityCore,
+  type RuntimeFailureCategory,
+  type RuntimeFailureStage,
   type RuntimeLogStreams,
-} from '../src/index.js';
+} from '../src/runtime.js';
 
 class CaptureStream {
   output = '';
@@ -33,6 +35,14 @@ function captureStreams(): {
   const stderr = new CaptureStream();
   const stdout = new CaptureStream();
   return { captures: { stderr, stdout }, streams: { stderr, stdout } };
+}
+
+function parseJsonLines(output: string): Array<Record<string, unknown>> {
+  return output
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
 class FailingTraceExporter implements SpanExporter {
@@ -64,53 +74,60 @@ class FailingMetricExporter implements PushMetricExporter {
 }
 
 describe('server observability foundation', () => {
-  it('writes bounded JSON logs and recursively redacts sensitive values', () => {
+  it('writes only allowlisted failure fields and normalizes invalid runtime values', () => {
     const { captures, streams } = captureStreams();
-    const logger = createRuntimeLogger('api', 'DEV', streams);
+    const reporter = createRuntimeFailureReporterCore('api', 'unvalidated', streams);
 
-    logger.info('runtime.test', {
-      authorization: 'private-authorization',
-      message: 'private-message',
-      nested: {
-        email: 'private-email',
-        safe: 'visible',
-        values: [{ requestBody: 'private-body' }],
-      },
-    });
+    reporter.failed('shutdown', 'configuration');
+    reporter.failed(
+      'private-stage' as RuntimeFailureStage,
+      'private-category' as RuntimeFailureCategory,
+    );
 
-    const record = JSON.parse(captures.stdout.output.trim()) as Record<string, unknown>;
-    expect(record).toMatchObject({
-      authorization: '[Redacted]',
-      environment: 'DEV',
-      event: 'runtime.test',
+    const records = parseJsonLines(captures.stderr.output);
+    expect(records).toHaveLength(2);
+    expect(records[0]).toMatchObject({
+      category: 'configuration',
+      environment: 'unvalidated',
+      event: 'runtime.shutdown-failed',
       role: 'api',
       service: 'sobama-api',
+      stage: 'shutdown',
     });
-    expect(record).not.toHaveProperty('hostname');
-    expect(record).not.toHaveProperty('pid');
-    expect(captures.stdout.output).toContain('visible');
-    expect(captures.stdout.output).not.toMatch(/private-(?:authorization|body|email|message)/u);
-    expect(captures.stderr.output).toBe('');
-
-    logger.info('private user supplied value');
-    expect(captures.stdout.output).not.toContain('private user supplied value');
-    expect(captures.stdout.output).toContain('"event":"runtime.invalid-event"');
+    expect(Object.keys(records[0] ?? {}).toSorted()).toEqual([
+      'category',
+      'environment',
+      'event',
+      'level',
+      'role',
+      'service',
+      'stage',
+      'time',
+    ]);
+    expect(records[1]).toMatchObject({
+      category: 'runtime',
+      event: 'runtime.failed',
+      stage: 'startup',
+    });
+    expect(captures.stderr.output).not.toContain('private');
+    expect(captures.stdout.output).toBe('');
   });
 
-  it('exports bounded lifecycle spans, metrics, and W3C trace context', async () => {
+  it('exports fixed lifecycle spans, metrics, and W3C trace context', async () => {
     const traces = new InMemorySpanExporter();
     const metrics = new InMemoryMetricExporter(AggregationTemporality.CUMULATIVE);
     const { captures, streams } = captureStreams();
-    const observability = createRuntimeObservability({
-      environment: 'DEV',
-      exporters: { metrics, traces },
-      role: 'worker',
-      streams,
-      telemetry: { exporter: 'none' },
-    });
+    const observability = createRuntimeObservabilityCore(
+      {
+        environment: 'DEV',
+        role: 'worker',
+        telemetry: { endpoint: 'http://127.0.0.1:4318', exporter: 'otlp' },
+      },
+      { exporters: { metrics, traces }, streams },
+    );
 
     observability.started();
-    const propagationSpan = observability.span('runtime.propagation');
+    const propagationSpan = observability.propagationSpan();
     const carrier: Record<string, string> = {};
     propagationSpan.inject(carrier);
     propagationSpan.end('ok');
@@ -119,6 +136,8 @@ describe('server observability foundation', () => {
     observability.stopped();
     await expect(observability.flush()).resolves.toBeUndefined();
 
+    expect(observability).not.toHaveProperty('span');
+    expect(observability).not.toHaveProperty('logger');
     expect(carrier.traceparent).toMatch(/^00-[a-f\d]{32}-[a-f\d]{16}-01$/u);
     expect(Object.keys(carrier)).toEqual(['traceparent']);
 
@@ -161,15 +180,51 @@ describe('server observability foundation', () => {
     await expect(observability.shutdown()).resolves.toBeUndefined();
   });
 
+  it('gives exporter none precedence over package-internal test overrides', async () => {
+    const traces = new InMemorySpanExporter();
+    const metrics = new InMemoryMetricExporter(AggregationTemporality.CUMULATIVE);
+    const { streams } = captureStreams();
+    const observability = createRuntimeObservabilityCore(
+      { environment: 'DEV', role: 'api', telemetry: { exporter: 'none' } },
+      { exporters: { metrics, traces }, streams },
+    );
+
+    observability.started();
+    observability.propagationSpan().end('ok');
+    await observability.shutdown();
+
+    expect(traces.getFinishedSpans()).toEqual([]);
+    expect(metrics.getMetrics()).toEqual([]);
+  });
+
+  it('rejects non-loopback exporters at the observability boundary without echoing them', () => {
+    const endpoint = 'https://private-external.invalid/collector';
+
+    expect(() =>
+      createRuntimeObservabilityCore({
+        environment: 'DEV',
+        role: 'api',
+        telemetry: { endpoint, exporter: 'otlp' },
+      }),
+    ).toThrowError(/Invalid local telemetry configuration(?!.*private-external)/u);
+  });
+
   it('keeps exporter failures generic and non-blocking', async () => {
     const { captures, streams } = captureStreams();
-    const observability = createRuntimeObservability({
-      environment: 'DEV',
-      exporters: { metrics: new FailingMetricExporter(), traces: new FailingTraceExporter() },
-      role: 'api',
-      streams,
-      telemetry: { exporter: 'none' },
-    });
+    const observability = createRuntimeObservabilityCore(
+      {
+        environment: 'DEV',
+        role: 'api',
+        telemetry: { endpoint: 'http://127.0.0.1:4318', exporter: 'otlp' },
+      },
+      {
+        exporters: {
+          metrics: new FailingMetricExporter(),
+          traces: new FailingTraceExporter(),
+        },
+        streams,
+      },
+    );
 
     expect(() => observability.started()).not.toThrow();
     await expect(observability.shutdown()).resolves.toBeUndefined();

@@ -7,7 +7,7 @@
 
 ## Ziel und Grenzen
 
-API und Worker schreiben maschinenlesbare, redigierte Pino-JSON-Logs. Die
+API und Worker schreiben maschinenlesbare, allowlist-begrenzte Pino-JSON-Logs. Die
 gemeinsame serverseitige OpenTelemetry-Grundlage erzeugt begrenzte
 Lifecycle-Traces und niedrig kardinale Metriken. Ein optionaler lokaler
 OTLP-Collector darf ausfallen, ohne Start, Health oder kontrollierten Stopp der
@@ -20,24 +20,31 @@ wird nicht verwendet. Audit, Fachhistorie und Telemetrie bleiben getrennt.
 
 ## Sicherheits- und Datenregeln
 
-- Logs enthalten nur technische, vorab begrenzte Felder. `pid` und `hostname`
-  fehlen.
-- Schlüssel für Authorization, Baggage, Cookies, Tokens, Secrets, Passwörter,
-  E-Mails, Bodies, Inhalte, PDFs, Overlays und SQL-Parameter werden rekursiv
-  durch `[Redacted]` ersetzt. Freitextfelder wie `message` werden ebenfalls
-  redigiert; Ereignisnamen müssen dem begrenzten technischen Namensschema
-  entsprechen.
+- Logs enthalten ausschließlich die von der Observability-Schicht selbst
+  gesetzten technischen Felder `time`, `level`, `environment`, `role`,
+  `service`, `event` sowie bei Fehlern `stage` und gegebenenfalls `category`.
+  Die öffentliche API akzeptiert weder freie Ereignisnamen noch zusätzliche
+  Attribute oder Freitext. `pid` und `hostname` fehlen ebenfalls.
 - Fehler aus Exportern werden ausschließlich als generisches technisches
   Ereignis protokolliert. Endpunkt und Fehlerinhalt werden nicht ausgegeben.
-- Spans enthalten in diesem Schnitt keine dynamischen Attribute. Die Resource
-  enthält nur Service, Namespace und `DEV`.
+- Spans verwenden ausschließlich die fest codierten Namen `runtime.started`,
+  `runtime.stopped`, `runtime.failed`, `runtime.shutdown-failed` und
+  `runtime.propagation`. Die API akzeptiert keine frei gewählten Span-Namen.
+  Spans enthalten keine dynamischen Attribute. Die Resource enthält nur
+  Service, Namespace und `DEV`.
 - `sobama.runtime.started` und `sobama.runtime.failed` besitzen keine
   Datenpunktattribute. Benutzer-, Objekt-, Band-, Job-, Session- und Trace-IDs
   sind damit nicht als Labels möglich.
 - Der Propagator schreibt ausschließlich W3C `traceparent`. Externes Baggage
   wird weder übernommen noch weitergereicht.
-- OTLP-URLs dürfen keine Zugangsdaten, Query oder Fragment enthalten. Secrets
+- OTLP-URLs dürfen ausschließlich `localhost`, `127.0.0.1` oder `::1`
+  adressieren und keine Zugangsdaten, Query oder Fragment enthalten. Secrets
   und Authentifizierungsheader werden nicht über Umgebungsvariablen ergänzt.
+  Sowohl die Konfigurations- als auch die Exportgrenze prüfen diese Regel, damit
+  ein direkter Factory-Aufruf sie nicht umgehen kann.
+- Die öffentliche Produktionsfactory besitzt keine Exporter-Overrides. Bei
+  `SOSEBAMA_TELEMETRY_EXPORTER=none` haben auch paketinterne Test-Exporter keinen
+  Effekt.
 
 ## Sicherer Standardzustand
 
@@ -61,9 +68,10 @@ Der DEV-Containerrahmen setzt diesen Zustand ausdrücklich für API und Worker.
    pnpm test:coverage
    ```
 
-   Erwartet werden ausschließlich Exit-Code `0`. Die Tests prüfen Pino-Felder,
-   rekursive Redaction, Lifecycle-Spans, W3C Trace Context, Metriknamen,
-   Labelabwesenheit und einen ausfallenden Collector.
+   Erwartet werden ausschließlich Exit-Code `0`. Die Tests prüfen die
+   Feld-Allowlist, feste Span-Namen, W3C Trace Context, lokale OTLP-Ziele,
+   Metriknamen, Labelabwesenheit, `none`-Vorrang und einen ausfallenden
+   Collector.
 
 2. Für den Containerpfad der
    [DEV-Containeranleitung](DEV-CONTAINERS.md) bis einschließlich Start und
@@ -91,13 +99,14 @@ erforderlich.
 
    ```sh
    export SOSEBAMA_TELEMETRY_EXPORTER="otlp"
-   export OTEL_EXPORTER_OTLP_ENDPOINT="<LOCAL_OTLP_BASE_URL>"
+   export OTEL_EXPORTER_OTLP_ENDPOINT="<LOCAL_LOOPBACK_OTLP_BASE_URL>"
    ```
 
-   `<LOCAL_OTLP_BASE_URL>` ist eine absolute HTTP- oder HTTPS-Basis-URL ohne
-   Zugangsdaten, Query und Fragment. Kein TST-/PRD-Endpunkt und keine private
-   Zielhostkonfiguration dürfen in Repository, Prompt, Log oder Artefakt
-   übernommen werden.
+   `<LOCAL_LOOPBACK_OTLP_BASE_URL>` ist eine absolute HTTP- oder
+   HTTPS-Basis-URL mit dem Host `localhost`, `127.0.0.1` oder `::1` und ohne
+   Zugangsdaten, Query und Fragment. Andere Hostnamen und IP-Adressen werden
+   abgelehnt. Kein TST-/PRD-Endpunkt und keine private Zielhostkonfiguration
+   dürfen in Repository, Prompt, Log oder Artefakt übernommen werden.
 
 2. API oder Worker direkt nach der
    [Anleitung für lokale Laufzeitrollen](RUNTIME-ROLES.md) starten. Die
@@ -112,15 +121,16 @@ erforderlich.
 
 - **Exporterwert ungültig:** Nur `none` oder `otlp` verwenden. Keine
   zusätzliche Exporterimplementierung lokal einschleusen.
-- **OTLP-URL abgelehnt:** Zugangsdaten, Query und Fragment entfernen und eine
-  absolute HTTP-/HTTPS-Basis-URL verwenden. Keine Prüfung durch Ausgabe des
+- **OTLP-URL abgelehnt:** Einen der erlaubten Loopback-Hosts verwenden und
+  Zugangsdaten, Query und Fragment entfernen. Keine Prüfung durch Ausgabe des
   abgelehnten Werts vornehmen.
 - **Collector nicht erreichbar:** Die Rolle weiter über Health prüfen und
   kontrolliert stoppen. Telemetrieausfall ist kein Grund, fachliche oder
   technische Laufzeit mit zusätzlichen Rechten neu zu starten.
-- **Nicht redigierter oder dynamischer Wert sichtbar:** Ausgabe nicht
+- **Nicht erlaubter oder dynamischer Wert sichtbar:** Ausgabe nicht
   weitergeben. Rolle stoppen, den betroffenen Logpfad als Securitybefund
-  behandeln und Redaction samt Regressionstest vor erneutem Start ergänzen.
+  behandeln und die technische Allowlist samt Regressionstest vor erneutem
+  Start korrigieren. Keine Denylist ergänzen.
 - **`pnpm container:logs` schlägt fehl:** Keine Logformate manuell tolerant
   machen. Containerzustand und ausschließlich secretfreie lokale Logs prüfen,
   danach kontrolliert abbauen.
@@ -132,6 +142,6 @@ erforderlich.
 über einen reviewten Revert. Es existieren keine Telemetriedatenbank,
 Migrationen oder persistenten Volumes in diesem Teilschnitt.
 
-Der Projekteigentümer prüft diese Anleitung bei Änderungen an Logfeldern,
-Redaction, Span- oder Metriknamen, Labels, Propagation, Exportern,
+Der Projekteigentümer prüft diese Anleitung bei Änderungen an Logfeld- oder
+Span-Allowlist, Metriknamen, Labels, Propagation, Exportern,
 Collectorverdrahtung oder Umgebungsgrenzen.

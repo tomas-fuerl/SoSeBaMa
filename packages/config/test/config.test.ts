@@ -142,13 +142,17 @@ describe('server runtime configuration', () => {
     expect(loadTelemetryRuntimeConfig({})).toEqual({ exporter: 'none' });
   });
 
-  it('accepts a credential-free OTLP base endpoint', () => {
+  it.each([
+    ['http://127.0.0.1:4318/base/', 'http://127.0.0.1:4318/base'],
+    ['https://[::1]:4318/base/', 'https://[::1]:4318/base'],
+    ['http://localhost:4318/', 'http://localhost:4318'],
+  ])('accepts the local OTLP base endpoint %s', (input, expected) => {
     expect(
       loadTelemetryRuntimeConfig({
-        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318/base/',
+        OTEL_EXPORTER_OTLP_ENDPOINT: input,
         SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
       }),
-    ).toEqual({ endpoint: 'http://collector:4318/base', exporter: 'otlp' });
+    ).toEqual({ endpoint: expected, exporter: 'otlp' });
   });
 
   it('rejects unsafe telemetry exporters and endpoints without echoing their values', () => {
@@ -157,9 +161,24 @@ describe('server runtime configuration', () => {
     ).toThrowError(/SOSEBAMA_TELEMETRY_EXPORTER(?!.*private-exporter)/u);
     expect(() =>
       loadTelemetryRuntimeConfig({
-        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://private-user:private-value@collector/path?token=x',
+        OTEL_EXPORTER_OTLP_ENDPOINT:
+          'https://private-user:private-value@external.invalid/path?token=x',
         SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
       }),
-    ).toThrowError(/OTEL_EXPORTER_OTLP_ENDPOINT(?!.*(?:private-user|private-value|token))/u);
+    ).toThrowError(
+      /OTEL_EXPORTER_OTLP_ENDPOINT(?!.*(?:private-user|private-value|external|token))/u,
+    );
   });
+
+  it.each(['http://collector:4318', 'https://external.invalid/v1', 'http://192.168.1.5:4318'])(
+    'rejects the non-loopback OTLP endpoint %s without echoing it',
+    (endpoint) => {
+      expect(() =>
+        loadTelemetryRuntimeConfig({
+          OTEL_EXPORTER_OTLP_ENDPOINT: endpoint,
+          SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+        }),
+      ).toThrowError(new RegExp(`OTEL_EXPORTER_OTLP_ENDPOINT(?!.*${endpoint})`, 'u'));
+    },
+  );
 });

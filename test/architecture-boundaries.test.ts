@@ -513,6 +513,20 @@ describe('architecture boundaries', () => {
     );
   });
 
+  it('keeps observability test overrides behind the package-internal runtime module', async () => {
+    const workspaces = await readWorkspaces();
+    const api = requireWorkspace(workspaces, '@sobama/api');
+    const observability = requireWorkspace(workspaces, '@sobama/observability');
+    const file = resolve(api.directory, 'src/example.ts');
+
+    expect(isPublicExport(observability.manifest, '/runtime')).toBe(false);
+    expect(
+      importViolations(file, "import '@sobama/observability/runtime';", api, workspaces),
+    ).toContain(
+      'apps/api/src/example.ts: @sobama/observability/runtime is not a public export of @sobama/observability.',
+    );
+  });
+
   it.each(['@sobama/config', '@sobama/observability', '@prisma/adapter-pg'])(
     'reports forbidden %s imports in browser code',
     async (specifier) => {
