@@ -105,9 +105,13 @@ function readOtlpEndpoint(environment: EnvironmentSource): string {
 
 function rejectUnsupportedOtlpEnvironment(environment: EnvironmentSource): void {
   const supportedVariable = 'OTEL_EXPORTER_OTLP_ENDPOINT';
-  const hasUnsupportedVariable = Object.keys(environment).some(
-    (variable) => variable.startsWith('OTEL_EXPORTER_OTLP_') && variable !== supportedVariable,
-  );
+  const hasUnsupportedVariable = Object.keys(environment).some((variable) => {
+    const normalizedVariable = variable.toUpperCase();
+    return (
+      normalizedVariable.startsWith('OTEL_EXPORTER_OTLP_') &&
+      normalizedVariable !== supportedVariable
+    );
+  });
   if (hasUnsupportedVariable) {
     throw new ConfigurationError(
       'OTEL_EXPORTER_OTLP_*',

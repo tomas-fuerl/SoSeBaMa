@@ -27,9 +27,13 @@ export interface RuntimeFailureReporter {
   failed(stage: RuntimeFailureStage, category: RuntimeFailureCategory): void;
 }
 
+export interface RuntimeTraceCarrier {
+  readonly traceparent: string;
+}
+
 export interface RuntimePropagationSpan {
   end(outcome: 'error' | 'ok'): void;
-  inject(carrier: Record<string, string>): void;
+  inject(): RuntimeTraceCarrier;
 }
 
 export interface RuntimeObservabilityOptions {
@@ -85,6 +89,13 @@ function validateRole(role: RuntimeRole): RuntimeRole {
 
 function validateEnvironment(environment: RuntimeEnvironmentName): RuntimeEnvironmentName {
   if (environment !== 'DEV' && environment !== 'unvalidated') {
+    throw new Error('Invalid runtime environment.');
+  }
+  return environment;
+}
+
+function validateRuntimeEnvironment(environment: 'DEV'): 'DEV' {
+  if (environment !== 'DEV') {
     throw new Error('Invalid runtime environment.');
   }
   return environment;
@@ -152,10 +163,13 @@ function validateTelemetryConfig(telemetry: TelemetryExporterConfig): TelemetryE
     throw new Error('Invalid local telemetry configuration.');
   }
   if (
-    Object.keys(process.env).some(
-      (variable) =>
-        variable.startsWith('OTEL_EXPORTER_OTLP_') && variable !== supportedOtlpEnvironmentVariable,
-    )
+    Object.keys(process.env).some((variable) => {
+      const normalizedVariable = variable.toUpperCase();
+      return (
+        normalizedVariable.startsWith('OTEL_EXPORTER_OTLP_') &&
+        normalizedVariable !== supportedOtlpEnvironmentVariable
+      );
+    })
   ) {
     throw new Error('Invalid local telemetry configuration.');
   }
@@ -208,7 +222,7 @@ export function createRuntimeObservabilityCore(
   dependencies: RuntimeObservabilityDependencies = {},
 ): RuntimeObservability {
   const role = validateRole(options.role);
-  const environment = validateEnvironment(options.environment);
+  const environment = validateRuntimeEnvironment(options.environment);
   const logger = createBoundedRuntimeLogger(role, environment, dependencies.streams);
   const resource = resourceFromAttributes({
     'deployment.environment.name': environment,
@@ -256,7 +270,15 @@ export function createRuntimeObservabilityCore(
         current.setStatus({ code: outcome === 'ok' ? SpanStatusCode.OK : SpanStatusCode.ERROR });
         current.end();
       },
-      inject: (carrier) => propagator.inject(spanContext, carrier, defaultTextMapSetter),
+      inject: () => {
+        const carrier: Record<string, string> = {};
+        propagator.inject(spanContext, carrier, defaultTextMapSetter);
+        const traceparent = carrier.traceparent;
+        if (!traceparent) {
+          throw new Error('Trace propagation failed.');
+        }
+        return { traceparent };
+      },
     };
   };
 

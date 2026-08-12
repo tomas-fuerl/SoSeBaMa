@@ -18,6 +18,7 @@ import {
   type RuntimeFailureCategory,
   type RuntimeFailureStage,
   type RuntimeLogStreams,
+  type RuntimeObservabilityOptions,
 } from '../src/runtime.js';
 
 class CaptureStream {
@@ -132,8 +133,12 @@ describe('server observability foundation', () => {
 
     observability.started();
     const propagationSpan = observability.propagationSpan();
-    const carrier: Record<string, string> = {};
-    propagationSpan.inject(carrier);
+    const foreignCarrier = {
+      baggage: 'private-baggage',
+      private: 'private-marker',
+      tracestate: 'private-tracestate',
+    };
+    const carrier = Reflect.apply(propagationSpan.inject, propagationSpan, [foreignCarrier]);
     propagationSpan.end('ok');
     observability.failed('startup');
     observability.failed('shutdown');
@@ -144,6 +149,12 @@ describe('server observability foundation', () => {
     expect(observability).not.toHaveProperty('logger');
     expect(carrier.traceparent).toMatch(/^00-[a-f\d]{32}-[a-f\d]{16}-01$/u);
     expect(Object.keys(carrier)).toEqual(['traceparent']);
+    expect(foreignCarrier).toEqual({
+      baggage: 'private-baggage',
+      private: 'private-marker',
+      tracestate: 'private-tracestate',
+    });
+    expect(JSON.stringify(carrier)).not.toContain('private');
 
     const spans = traces.getFinishedSpans();
     expect(spans.map((span) => span.name).toSorted()).toEqual([
@@ -201,6 +212,21 @@ describe('server observability foundation', () => {
     expect(metrics.getMetrics()).toEqual([]);
   });
 
+  it.each(['unvalidated', 'TST', 'PRD'])(
+    'rejects the non-DEV runtime environment %s at the observability boundary',
+    (environment) => {
+      const options = {
+        environment,
+        role: 'api',
+        telemetry: { exporter: 'none' },
+      } as unknown as RuntimeObservabilityOptions;
+
+      expect(() => createRuntimeObservabilityCore(options)).toThrowError(
+        /Invalid runtime environment(?!.*(?:unvalidated|TST|PRD))/u,
+      );
+    },
+  );
+
   it('rejects non-loopback exporters at the observability boundary without echoing them', () => {
     const endpoint = 'https://private-external.invalid/collector';
 
@@ -218,6 +244,8 @@ describe('server observability foundation', () => {
     'OTEL_EXPORTER_OTLP_TRACES_HEADERS',
     'OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE',
     'OTEL_EXPORTER_OTLP_CLIENT_KEY',
+    'otel_exporter_otlp_headers',
+    'Otel_Exporter_Otlp_Traces_Client_Key',
   ])('rejects inherited OTLP input %s before creating exporters', (variable) => {
     vi.stubEnv(variable, 'private-otel-marker');
 

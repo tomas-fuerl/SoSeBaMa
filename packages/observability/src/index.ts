@@ -9,6 +9,7 @@ export type {
   RuntimeObservabilityOptions,
   RuntimePropagationSpan,
   RuntimeRole,
+  RuntimeTraceCarrier,
   TelemetryExporterConfig,
 } from './runtime.js';
 

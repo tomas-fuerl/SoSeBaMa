@@ -175,6 +175,8 @@ describe('server runtime configuration', () => {
     'OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY',
     'OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE',
     'OTEL_EXPORTER_OTLP_TIMEOUT',
+    'otel_exporter_otlp_headers',
+    'Otel_Exporter_Otlp_Traces_Client_Key',
   ])('rejects unsupported OTLP environment input %s without echoing its value', (variable) => {
     expect(() =>
       loadTelemetryRuntimeConfig({

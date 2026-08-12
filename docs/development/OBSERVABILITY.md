@@ -36,17 +36,23 @@ wird nicht verwendet. Audit, Fachhistorie und Telemetrie bleiben getrennt.
   Datenpunktattribute. Benutzer-, Objekt-, Band-, Job-, Session- und Trace-IDs
   sind damit nicht als Labels möglich.
 - Der Propagator schreibt ausschließlich W3C `traceparent`. Externes Baggage
-  wird weder übernommen noch weitergereicht.
+  wird weder übernommen noch weitergereicht. Die API nimmt keinen fremden
+  Header-Carrier entgegen, sondern liefert ein neues Objekt ausschließlich mit
+  dem selbst erzeugten `traceparent` zurück.
 - OTLP-URLs dürfen ausschließlich `localhost`, `127.0.0.1` oder `::1`
   adressieren und keine Zugangsdaten, Query oder Fragment enthalten. Secrets
   und Authentifizierungsheader werden nicht über Umgebungsvariablen ergänzt.
   `OTEL_EXPORTER_OTLP_ENDPOINT` ist die einzige unterstützte
   `OTEL_EXPORTER_OTLP_*`-Variable. Jede weitere Variable dieses Präfixes wird
-  vor dem Erzeugen eines Exporters generisch abgelehnt. Das verhindert auch das
-  Einlesen fremder Header, Zertifikate oder Private-Key-Dateien durch die
-  OpenTelemetry-Bibliothek. Sowohl die Konfigurations- als auch die
-  Exportgrenze prüfen diese Regel, damit ein direkter Factory-Aufruf sie nicht
-  umgehen kann.
+  unabhängig von Groß-/Kleinschreibung vor dem Erzeugen eines Exporters
+  generisch abgelehnt. Das verhindert auch das Einlesen fremder Header,
+  Zertifikate oder Private-Key-Dateien durch die OpenTelemetry-Bibliothek.
+  Sowohl die Konfigurations- als auch die Exportgrenze prüfen diese Regel,
+  damit ein direkter Factory-Aufruf sie nicht umgehen kann.
+- Der begrenzte Failure-Reporter darf vor der Konfigurationsprüfung den Zustand
+  `unvalidated` protokollieren. Die vollständige Observability-Factory
+  akzeptiert zur Laufzeit ausschließlich `DEV`; `unvalidated`, TST und PRD
+  werden an dieser Grenze generisch abgelehnt.
 - Die öffentliche Produktionsfactory besitzt keine Exporter-Overrides. Bei
   `SOSEBAMA_TELEMETRY_EXPORTER=none` haben auch paketinterne Test-Exporter keinen
   Effekt.
@@ -75,8 +81,9 @@ Der DEV-Containerrahmen setzt diesen Zustand ausdrücklich für API und Worker.
 
    Erwartet werden ausschließlich Exit-Code `0`. Die Tests prüfen die
    Feld-Allowlist, feste Span-Namen, W3C Trace Context, lokale OTLP-Ziele,
-   die Abweisung geerbter OTLP-Konfiguration, Metriknamen, Labelabwesenheit,
-   `none`-Vorrang und einen ausfallenden Collector.
+   einen frischen baggagefreien Trace-Carrier, die DEV-only-Runtime-Grenze,
+   die case-insensitive Abweisung geerbter OTLP-Konfiguration, Metriknamen,
+   Labelabwesenheit, `none`-Vorrang und einen ausfallenden Collector.
 
 2. Für den Containerpfad der
    [DEV-Containeranleitung](DEV-CONTAINERS.md) bis einschließlich Start und
@@ -104,7 +111,7 @@ erforderlich.
    anzeigen:
 
    ```sh
-   env | sed 's/=.*//' | grep '^OTEL_EXPORTER_OTLP_' || true
+   env | sed 's/=.*//' | grep -i '^OTEL_EXPORTER_OTLP_' || true
    ```
 
    Erwartet wird keine Ausgabe. Falls Namen erscheinen, die Variablen in
