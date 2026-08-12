@@ -103,12 +103,26 @@ function readOtlpEndpoint(environment: EnvironmentSource): string {
   return `${endpoint.origin}${endpoint.pathname.replace(/\/+$/u, '')}`;
 }
 
+function rejectUnsupportedOtlpEnvironment(environment: EnvironmentSource): void {
+  const supportedVariable = 'OTEL_EXPORTER_OTLP_ENDPOINT';
+  const hasUnsupportedVariable = Object.keys(environment).some(
+    (variable) => variable.startsWith('OTEL_EXPORTER_OTLP_') && variable !== supportedVariable,
+  );
+  if (hasUnsupportedVariable) {
+    throw new ConfigurationError(
+      'OTEL_EXPORTER_OTLP_*',
+      'only OTEL_EXPORTER_OTLP_ENDPOINT is supported for local DEV',
+    );
+  }
+}
+
 export function loadTelemetryRuntimeConfig(environment: EnvironmentSource): TelemetryRuntimeConfig {
   const exporter = environment.SOSEBAMA_TELEMETRY_EXPORTER?.trim() || 'none';
   if (exporter === 'none') {
     return { exporter };
   }
   if (exporter === 'otlp') {
+    rejectUnsupportedOtlpEnvironment(environment);
     return { endpoint: readOtlpEndpoint(environment), exporter };
   }
   throw new ConfigurationError(

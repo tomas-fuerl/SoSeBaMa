@@ -170,6 +170,21 @@ describe('server runtime configuration', () => {
     );
   });
 
+  it.each([
+    'OTEL_EXPORTER_OTLP_HEADERS',
+    'OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY',
+    'OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE',
+    'OTEL_EXPORTER_OTLP_TIMEOUT',
+  ])('rejects unsupported OTLP environment input %s without echoing its value', (variable) => {
+    expect(() =>
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:4318',
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+        [variable]: 'private-otel-value',
+      }),
+    ).toThrowError(/OTEL_EXPORTER_OTLP_\*(?!.*private-otel-value)/u);
+  });
+
   it.each(['http://collector:4318', 'https://external.invalid/v1', 'http://192.168.1.5:4318'])(
     'rejects the non-loopback OTLP endpoint %s without echoing it',
     (endpoint) => {

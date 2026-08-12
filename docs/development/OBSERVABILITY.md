@@ -40,8 +40,13 @@ wird nicht verwendet. Audit, Fachhistorie und Telemetrie bleiben getrennt.
 - OTLP-URLs dürfen ausschließlich `localhost`, `127.0.0.1` oder `::1`
   adressieren und keine Zugangsdaten, Query oder Fragment enthalten. Secrets
   und Authentifizierungsheader werden nicht über Umgebungsvariablen ergänzt.
-  Sowohl die Konfigurations- als auch die Exportgrenze prüfen diese Regel, damit
-  ein direkter Factory-Aufruf sie nicht umgehen kann.
+  `OTEL_EXPORTER_OTLP_ENDPOINT` ist die einzige unterstützte
+  `OTEL_EXPORTER_OTLP_*`-Variable. Jede weitere Variable dieses Präfixes wird
+  vor dem Erzeugen eines Exporters generisch abgelehnt. Das verhindert auch das
+  Einlesen fremder Header, Zertifikate oder Private-Key-Dateien durch die
+  OpenTelemetry-Bibliothek. Sowohl die Konfigurations- als auch die
+  Exportgrenze prüfen diese Regel, damit ein direkter Factory-Aufruf sie nicht
+  umgehen kann.
 - Die öffentliche Produktionsfactory besitzt keine Exporter-Overrides. Bei
   `SOSEBAMA_TELEMETRY_EXPORTER=none` haben auch paketinterne Test-Exporter keinen
   Effekt.
@@ -70,8 +75,8 @@ Der DEV-Containerrahmen setzt diesen Zustand ausdrücklich für API und Worker.
 
    Erwartet werden ausschließlich Exit-Code `0`. Die Tests prüfen die
    Feld-Allowlist, feste Span-Namen, W3C Trace Context, lokale OTLP-Ziele,
-   Metriknamen, Labelabwesenheit, `none`-Vorrang und einen ausfallenden
-   Collector.
+   die Abweisung geerbter OTLP-Konfiguration, Metriknamen, Labelabwesenheit,
+   `none`-Vorrang und einen ausfallenden Collector.
 
 2. Für den Containerpfad der
    [DEV-Containeranleitung](DEV-CONTAINERS.md) bis einschließlich Start und
@@ -95,7 +100,18 @@ Diese Option ist nur für einen bereits separat freigegebenen, lokalen und
 secretfreien DEV-Collector vorgesehen. Sie ist für den normalen Start nicht
 erforderlich.
 
-1. Im Startterminal ausschließlich sichtbare lokale Platzhalter ersetzen:
+1. Im Startterminal ausschließlich die Namen bereits gesetzter OTLP-Variablen
+   anzeigen:
+
+   ```sh
+   env | sed 's/=.*//' | grep '^OTEL_EXPORTER_OTLP_' || true
+   ```
+
+   Erwartet wird keine Ausgabe. Falls Namen erscheinen, die Variablen in
+   diesem Terminal mit `unset <VARIABLE_NAME>` entfernen. Ihre Werte nicht
+   anzeigen, kopieren oder in Prompt und Log übernehmen.
+
+2. Ausschließlich sichtbare lokale Platzhalter ersetzen:
 
    ```sh
    export SOSEBAMA_TELEMETRY_EXPORTER="otlp"
@@ -108,12 +124,12 @@ erforderlich.
    abgelehnt. Kein TST-/PRD-Endpunkt und keine private Zielhostkonfiguration
    dürfen in Repository, Prompt, Log oder Artefakt übernommen werden.
 
-2. API oder Worker direkt nach der
+3. API oder Worker direkt nach der
    [Anleitung für lokale Laufzeitrollen](RUNTIME-ROLES.md) starten. Die
    Signalpfade `/v1/traces` und `/v1/metrics` werden automatisch an die
    Basis-URL angehängt.
 
-3. Den Rollenstart und die Health-Nachweise unabhängig vom Collector prüfen.
+4. Den Rollenstart und die Health-Nachweise unabhängig vom Collector prüfen.
    Ein Collectorfehler darf nur `telemetry.flush-failed` beziehungsweise
    `telemetry.shutdown-failed` erzeugen und den Rollen-Exit-Code nicht ändern.
 
@@ -124,6 +140,10 @@ erforderlich.
 - **OTLP-URL abgelehnt:** Einen der erlaubten Loopback-Hosts verwenden und
   Zugangsdaten, Query und Fragment entfernen. Keine Prüfung durch Ausgabe des
   abgelehnten Werts vornehmen.
+- **Weitere OTLP-Variable abgelehnt:** Neben
+  `OTEL_EXPORTER_OTLP_ENDPOINT` keine `OTEL_EXPORTER_OTLP_*`-Variable setzen.
+  Nur den Variablennamen ermitteln, die Variable mit `unset <VARIABLE_NAME>`
+  entfernen und ihren Wert weder anzeigen noch weitergeben.
 - **Collector nicht erreichbar:** Die Rolle weiter über Health prüfen und
   kontrolliert stoppen. Telemetrieausfall ist kein Grund, fachliche oder
   technische Laufzeit mit zusätzlichen Rechten neu zu starten.

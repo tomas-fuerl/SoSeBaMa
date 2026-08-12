@@ -74,6 +74,7 @@ interface BoundedRuntimeLogger {
 }
 
 const exportTimeoutMillis = 1_000;
+const supportedOtlpEnvironmentVariable = 'OTEL_EXPORTER_OTLP_ENDPOINT';
 
 function validateRole(role: RuntimeRole): RuntimeRole {
   if (role !== 'api' && role !== 'worker') {
@@ -148,6 +149,14 @@ function validateTelemetryConfig(telemetry: TelemetryExporterConfig): TelemetryE
     return telemetry;
   }
   if (telemetry.exporter !== 'otlp') {
+    throw new Error('Invalid local telemetry configuration.');
+  }
+  if (
+    Object.keys(process.env).some(
+      (variable) =>
+        variable.startsWith('OTEL_EXPORTER_OTLP_') && variable !== supportedOtlpEnvironmentVariable,
+    )
+  ) {
     throw new Error('Invalid local telemetry configuration.');
   }
   let endpoint: URL;

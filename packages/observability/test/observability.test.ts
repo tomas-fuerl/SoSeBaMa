@@ -10,7 +10,7 @@ import {
   type ReadableSpan,
   type SpanExporter,
 } from '@opentelemetry/sdk-trace-base';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createRuntimeFailureReporterCore,
@@ -74,6 +74,10 @@ class FailingMetricExporter implements PushMetricExporter {
 }
 
 describe('server observability foundation', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('writes only allowlisted failure fields and normalizes invalid runtime values', () => {
     const { captures, streams } = captureStreams();
     const reporter = createRuntimeFailureReporterCore('api', 'unvalidated', streams);
@@ -207,6 +211,23 @@ describe('server observability foundation', () => {
         telemetry: { endpoint, exporter: 'otlp' },
       }),
     ).toThrowError(/Invalid local telemetry configuration(?!.*private-external)/u);
+  });
+
+  it.each([
+    'OTEL_EXPORTER_OTLP_HEADERS',
+    'OTEL_EXPORTER_OTLP_TRACES_HEADERS',
+    'OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE',
+    'OTEL_EXPORTER_OTLP_CLIENT_KEY',
+  ])('rejects inherited OTLP input %s before creating exporters', (variable) => {
+    vi.stubEnv(variable, 'private-otel-marker');
+
+    expect(() =>
+      createRuntimeObservabilityCore({
+        environment: 'DEV',
+        role: 'api',
+        telemetry: { endpoint: 'http://127.0.0.1:4318', exporter: 'otlp' },
+      }),
+    ).toThrowError(/Invalid local telemetry configuration(?!.*private-otel-marker)/u);
   });
 
   it('keeps exporter failures generic and non-blocking', async () => {
