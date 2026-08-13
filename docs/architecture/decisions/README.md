@@ -3,9 +3,11 @@
 ## Status
 
 Die folgenden Entscheidungen wurden am 2026-07-30 vom Projekteigentümer
-angenommen. Sie bilden die verbindliche Architekturgrundlage. Im Repository ist
-noch keine funktionsfähige Anwendung vorhanden; die Entscheidungen sind noch
-nicht implementiert.
+angenommen. Sie bilden die verbindliche Architekturgrundlage. Ihre Umsetzung
+erfolgt über die Arbeitspakete der
+[Implementierungsroadmap](../IMPLEMENTATION-ROADMAP.md); das Repository enthält
+bislang ausschließlich technische Starts und Health-Nachweise ohne fachliche
+Funktion.
 
 Das verbindliche Verfahren und die Statusregeln stehen im
 [ADR-Verfahren](../../ADR.md).

@@ -10,8 +10,10 @@ von Songs, Inhalten und Overlays steht im
 
 ## Status
 
-Die Architekturgrundlage wurde am 2026-07-30 angenommen. Sie ist noch nicht
-implementiert. Das Repository enthält keine funktionsfähige Anwendung.
+Die Architekturgrundlage wurde am 2026-07-30 angenommen. AP-00 ist
+abgeschlossen; AP-01 setzt das Fundament in Teilschnitten um. Web, API und
+Worker besitzen minimale technische Starts und Health-Nachweise; eine fachliche
+Route oder Funktion existiert noch nicht.
 
 Einzelentscheidungen folgen dem [ADR-Verfahren](../ADR.md). Der
 [ADR-Index](decisions/README.md) enthält `ADR-0001` bis `ADR-0016`.

@@ -4,10 +4,10 @@
 
 Diese Roadmap setzt
 [ADR-0015](decisions/ADR-0015-implementierungsstrategie-und-arbeitspakete.md)
-um. Die Architektur ist angenommen, aber noch nicht implementiert. Jedes
-Arbeitspaket ist ein vertikales Epic und wird durch kleine reviewbare Pull
-Requests geliefert. Die Reihenfolge ist kumulativ; ein späteres Paket übernimmt
-die Nachweise früherer Pakete.
+um. Die Architektur ist angenommen; AP-00 ist abgeschlossen und AP-01 ist in
+Umsetzung. Jedes Arbeitspaket ist ein vertikales Epic und wird durch kleine
+reviewbare Pull Requests geliefert. Die Reihenfolge ist kumulativ; ein späteres
+Paket übernimmt die Nachweise früherer Pakete.
 
 ## Definition of Ready
 
