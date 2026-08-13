@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 const help = `Usage: node tools/check-dev-containers.mjs <command>
 
 Commands:
+  health   Verify that every DEV role reports a healthy container health state.
   smoke    Verify gateway, web, and API through the local DEV host ingress.
   logs     Verify bounded JSON startup logs from API and worker.
   cleanup  Fail if sosebama-dev containers or networks remain.
@@ -48,6 +49,45 @@ async function verifyHostIngress() {
     );
   } catch {
     fail('DEV host ingress verification failed.', 1);
+  }
+}
+
+/**
+ * The worker publishes no port and sits on an internal network, so its health
+ * is not observable through the host ingress. The container health state is the
+ * only external evidence that its probes actually answer.
+ */
+function verifyContainerHealth() {
+  try {
+    const output = execFileSync(
+      'docker',
+      [
+        'compose',
+        '-f',
+        'compose.yaml',
+        '-f',
+        'compose.dev.yaml',
+        'ps',
+        '--all',
+        '--format',
+        'json',
+      ],
+      { encoding: 'utf8' },
+    );
+    const trimmed = output.trim();
+    const records = trimmed.startsWith('[')
+      ? JSON.parse(trimmed)
+      : trimmed.split('\n').filter(Boolean).map((line) => JSON.parse(line));
+
+    for (const service of ['api', 'gateway', 'web', 'worker']) {
+      const record = records.find((candidate) => candidate.Service === service);
+      if (record?.Health !== 'healthy') {
+        fail(`DEV ${service} container does not report a healthy state.`, 1);
+        return;
+      }
+    }
+  } catch {
+    fail('DEV container health verification failed.', 1);
   }
 }
 
@@ -119,6 +159,8 @@ function verifyRuntimeLogs() {
 const command = process.argv[2];
 if (command === '--help' || command === '-h') {
   process.stdout.write(help);
+} else if (command === 'health') {
+  verifyContainerHealth();
 } else if (command === 'smoke') {
   await verifyHostIngress();
 } else if (command === 'logs') {
@@ -127,5 +169,5 @@ if (command === '--help' || command === '-h') {
   verifyCleanup();
 } else {
   process.stderr.write(help);
-  fail('Expected one command: smoke, logs, or cleanup.', 2);
+  fail('Expected one command: health, smoke, logs, or cleanup.', 2);
 }

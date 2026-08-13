@@ -69,6 +69,7 @@ async function main(): Promise<void> {
 
     await shutdownSignals.wait();
     phase = 'shutdown';
+    runtime.health.markNotReady();
     await runtime.app.close();
     observability.stopped();
   } catch (error: unknown) {
@@ -86,6 +87,7 @@ async function main(): Promise<void> {
   } finally {
     shutdownSignals.dispose();
     if (runtime && runtime.health.current() !== 'stopped') {
+      runtime.health.markNotReady();
       try {
         await runtime.app.close();
       } catch {

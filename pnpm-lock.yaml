@@ -50,6 +50,9 @@ importers:
       '@sobama/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sobama/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sobama/observability':
         specifier: workspace:*
         version: link:../../packages/observability
@@ -93,6 +96,9 @@ importers:
       '@sobama/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sobama/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sobama/observability':
         specifier: workspace:*
         version: link:../../packages/observability

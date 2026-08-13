@@ -124,6 +124,59 @@ describe('server runtime configuration', () => {
     }
   });
 
+  it('serves worker health on a constant loopback host with a default port', () => {
+    expect(loadWorkerRuntimeConfig({ SOSEBAMA_ENVIRONMENT: 'DEV' })).toEqual({
+      environment: 'DEV',
+      health: { host: '127.0.0.1', port: 3001 },
+    });
+  });
+
+  it('accepts an explicit worker health port and treats a blank value as unset', () => {
+    expect(
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: '4311',
+      }).health,
+    ).toEqual({ host: '127.0.0.1', port: 4311 });
+
+    expect(
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: '   ',
+      }).health.port,
+    ).toBe(3001);
+  });
+
+  it('rejects a malformed worker health port without echoing its value', () => {
+    for (const port of ['0', '65536', '1e3', '0x50', '04310']) {
+      expect(() =>
+        loadWorkerRuntimeConfig({
+          SOSEBAMA_ENVIRONMENT: 'DEV',
+          SOSEBAMA_WORKER_HEALTH_PORT: port,
+        }),
+      ).toThrow(ConfigurationError);
+    }
+
+    expect(() =>
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: 'private-value',
+      }),
+    ).toThrowError(/SOSEBAMA_WORKER_HEALTH_PORT(?!.*private-value)/u);
+  });
+
+  it('never lets the environment turn the worker into a reachable network service', () => {
+    // The bind address is a constant, so no variable, however plausibly named,
+    // may widen it beyond container-internal loopback.
+    const config = loadWorkerRuntimeConfig({
+      SOSEBAMA_API_HOST: '0.0.0.0',
+      SOSEBAMA_ENVIRONMENT: 'DEV',
+      SOSEBAMA_WORKER_HEALTH_HOST: '0.0.0.0',
+    });
+
+    expect(config.health.host).toBe('127.0.0.1');
+  });
+
   it('rejects missing and malformed values without echoing their contents', () => {
     expect(() => loadWorkerRuntimeConfig({})).toThrow(
       'Invalid configuration variable SOSEBAMA_ENVIRONMENT',

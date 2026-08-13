@@ -1,14 +1,15 @@
 # Lokale Laufzeitrollen starten und prüfen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-12
+- Letzter Prüfstand: 2026-08-13
 - Bezogenes Issue: [#13](https://github.com/tomas-fuerl/SoSeBaMa/issues/13)
 - Geltungsbereich: ausschließlich lokales DEV
 
 ## Ziel und Grenzen
 
 Web, API und Worker starten als drei getrennte technische Rollen. Der Schnitt
-enthält nur eine technische Webansicht, API-Health und einen leeren Worker. Er
+enthält nur eine technische Webansicht sowie Health-Endpunkte für API und
+Worker; der Worker verarbeitet keine Aufgaben. Er
 enthält keine Fachroute, Navigation, Jobregistrierung, Datenbankverbindung,
 Secrets, Collector, Telemetriespeicher oder Zugriffe auf TST und PRD. API und
 Worker verwenden die [DEV-Telemetriegrundlage](OBSERVABILITY.md). Diese
@@ -25,9 +26,11 @@ Platzhalter; sie wird nicht automatisch geladen.
 1. Die [lokale Entwicklungsgrundlage](LOCAL-DEVELOPMENT.md) ist vollständig
    eingerichtet.
 2. Der Checkout enthält keine unbekannten Änderungen.
-3. Zwei freie lokale Ports für Web und API sind bekannt. In den folgenden
-   Befehlen werden `<LOCAL_WEB_PORT>` und `<LOCAL_API_PORT>` vor der Ausführung
-   durch diese ausschließlich lokalen Werte ersetzt.
+3. Freie lokale Ports für Web, API und den Worker-Health-Endpunkt sind bekannt.
+   In den folgenden Befehlen werden `<LOCAL_WEB_PORT>`, `<LOCAL_API_PORT>` und
+   `<LOCAL_WORKER_HEALTH_PORT>` vor der Ausführung durch diese ausschließlich
+   lokalen Werte ersetzt. Der Worker-Health-Port ist optional; ohne Angabe gilt
+   `3001`.
 4. Es werden keine Secrets oder privaten Infrastrukturwerte gesetzt.
 5. Die API bindet in DEV ausschließlich an `localhost`, `127.0.0.1` oder
    `::1`. Eine externe Interface- oder LAN-Bindung wird von der
@@ -120,13 +123,19 @@ Platzhalter; sie wird nicht automatisch geladen.
    Node-Prozess meldet `runtime.stopped` und endet mit Exit-Code `0`; pnpm kann
    den absichtlichen interaktiven Abbruch zusätzlich als `SIGINT` melden.
 
-## Worker starten und stoppen
+## Worker starten, Health prüfen und stoppen
+
+Der Worker besitzt keine Fachroute. Er beantwortet ausschließlich drei
+technische Health-Endpunkte auf einem eigenen lokalen Port. Der Bind-Host ist
+fest auf `127.0.0.1` gesetzt und kann nicht über die Umgebung geändert werden;
+damit wird der Worker durch keine Konfiguration zu einem Netzwerkdienst.
 
 1. In einem eigenen Terminal die Umgebung setzen und den gebauten Worker
-   starten:
+   starten. Der Portplatzhalter ist optional; ohne ihn gilt `3001`:
 
    ```sh
    export SOSEBAMA_ENVIRONMENT="DEV"
+   export SOSEBAMA_WORKER_HEALTH_PORT="<LOCAL_WORKER_HEALTH_PORT>"
    pnpm build
    pnpm start:worker
    ```
@@ -134,9 +143,29 @@ Platzhalter; sie wird nicht automatisch geladen.
    Erwartet wird eine JSON-Zeile mit `runtime.started` und der Rolle `worker`.
    Der Prozess registriert keine Jobs und besitzt keine Datenbankabhängigkeit.
 
-2. `Ctrl-C` drücken. Der direkte Node-Prozess meldet `runtime.stopped`; danach
-   muss der Worker beendet sein. pnpm kann den absichtlichen interaktiven
-   Abbruch zusätzlich als `SIGINT` melden.
+2. Die drei technischen Endpunkte prüfen:
+
+   ```sh
+   curl "http://127.0.0.1:<LOCAL_WORKER_HEALTH_PORT>/health/startup"
+   curl "http://127.0.0.1:<LOCAL_WORKER_HEALTH_PORT>/health/live"
+   curl "http://127.0.0.1:<LOCAL_WORKER_HEALTH_PORT>/health/ready"
+   ```
+
+   | Endpunkt | Erfolgsstatus | Bedeutung |
+   | --- | --- | --- |
+   | `/health/startup` | `started` | Der Prozess ist gestartet. |
+   | `/health/live` | `alive` | Der Prozess ist nicht im Fehlerzustand. |
+   | `/health/ready` | `ready` | Die Rolle ist betriebsbereit. |
+
+   Ein nicht bereiter Zustand liefert HTTP `503` mit `not-ready`, ein
+   technischer Fehler HTTP `503` mit `error`. Beim ersten Shutdown-Signal
+   wechselt der Worker vor dem Schließen auf `not-ready`. Jeder andere Pfad
+   liefert HTTP `404` ohne Inhalt, jede andere Methode HTTP `405`. Die Antworten
+   enthalten weder Umgebungswerte noch Diagnose- oder Fachdaten.
+
+3. `Ctrl-C` drücken. Der direkte Node-Prozess meldet `runtime.stopped`; danach
+   muss der Worker beendet und der Health-Port geschlossen sein. pnpm kann den
+   absichtlichen interaktiven Abbruch zusätzlich als `SIGINT` melden.
 
 ## Fehlerbehandlung
 
@@ -151,6 +180,10 @@ Platzhalter; sie wird nicht automatisch geladen.
   Umgebungen freigegeben; den Wert nicht lokal umgehen oder vortäuschen.
 - **Port bereits belegt:** API oder Web nicht mit einem anderen ungeprüften
   Wert erzwingen. Einen freien lokalen Port wählen und den Start wiederholen.
+- **Worker-Health-Port bereits belegt:** Der Start endet mit `runtime.failed`
+  und Exit-Code `1`, bevor der Worker bereit meldet. Das ist beabsichtigt: Ein
+  Worker ohne erreichbaren Health-Endpunkt wäre von außen nicht beobachtbar.
+  Einen freien lokalen Port über `SOSEBAMA_WORKER_HEALTH_PORT` setzen.
 - **Fehler beim Herunterfahren:** API oder Worker meldet
   `runtime.shutdown-failed` und Exit-Code `1`. Der Prozess darf nicht als
   erfolgreich gestoppt bewertet werden; verbliebene lokale Prozesse werden

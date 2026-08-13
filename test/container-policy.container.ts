@@ -18,10 +18,16 @@ interface RenderedPort {
   target?: number;
 }
 
+interface RenderedHealthcheck {
+  test?: string[];
+}
+
 interface RenderedService {
   cap_add?: string[];
   cap_drop?: string[];
   devices?: unknown[];
+  expose?: string[];
+  healthcheck?: RenderedHealthcheck;
   image?: string;
   ipc?: string;
   network_mode?: string;
@@ -94,6 +100,42 @@ describe('DEV container policy', () => {
     }
 
     expect(JSON.stringify(compose)).not.toContain('docker.sock');
+  });
+
+  it('verifies the role and status contract in every healthcheck', () => {
+    for (const serviceName of serviceNames) {
+      const test = services[serviceName]?.healthcheck?.test ?? [];
+      expect(test[0], serviceName).toBe('CMD');
+      const probe = test.join(' ');
+
+      // A signal-only probe such as process.kill(1, 0) succeeds for as long as
+      // the container exists and can therefore not detect a blocked runtime.
+      expect(probe, serviceName).not.toContain('process.kill');
+      expect(probe, serviceName).toContain('response.ok');
+      expect(probe, serviceName).toContain('body.role');
+      expect(probe, serviceName).toContain("body.status!=='ready'");
+    }
+
+    // Each role-local check asserts its own role literally.
+    for (const serviceName of ['api', 'web', 'worker'] as const) {
+      expect(services[serviceName]?.healthcheck?.test?.join(' '), serviceName).toContain(
+        `body.role!=='${serviceName}'`,
+      );
+    }
+
+    // The gateway is the single application entry point and therefore verifies
+    // all three ingress roles generically instead of only itself.
+    const gateway = services.gateway?.healthcheck?.test?.join(' ') ?? '';
+    expect(gateway).toContain('body.role!==role');
+    for (const role of ['gateway', 'web', 'api']) {
+      expect(gateway, role).toContain(`'${role}'`);
+    }
+  });
+
+  it('keeps the worker health endpoint off every published and internal port', () => {
+    expect(services.worker?.ports ?? []).toEqual([]);
+    expect(services.worker?.expose ?? []).toEqual([]);
+    expect(services.worker?.healthcheck?.test?.join(' ')).toContain('http://127.0.0.1:');
   });
 
   it('publishes only Caddy on the selected loopback port', () => {

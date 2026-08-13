@@ -180,6 +180,7 @@ describe('built runtime processes', { timeout: PROCESS_TIMEOUT_MS + 5_000 }, () 
   it('starts the worker, handles SIGTERM, reports stop, and exits successfully', async () => {
     const runtimeProcess = startProcess('apps/worker/dist/main.js', {
       SOSEBAMA_ENVIRONMENT: 'DEV',
+      SOSEBAMA_WORKER_HEALTH_PORT: String(await findFreeLoopbackPort()),
     });
 
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');
@@ -209,12 +210,51 @@ describe('built runtime processes', { timeout: PROCESS_TIMEOUT_MS + 5_000 }, () 
     });
   }
 
+  it('answers the worker health probes on loopback only and closes them on shutdown', async () => {
+    const healthPort = await findFreeLoopbackPort();
+    const runtimeProcess = startProcess('apps/worker/dist/main.js', {
+      SOSEBAMA_ENVIRONMENT: 'DEV',
+      SOSEBAMA_WORKER_HEALTH_PORT: String(healthPort),
+    });
+
+    await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');
+
+    const ready = await fetch(`http://127.0.0.1:${healthPort}/health/ready`);
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toEqual({ role: 'worker', status: 'ready' });
+
+    for (const path of ['/health/startup', '/health/live']) {
+      const response = await fetch(`http://127.0.0.1:${healthPort}${path}`);
+      expect(response.status, path).toBe(200);
+    }
+
+    // Bound to loopback only: a wildcard bind on the same port must therefore
+    // still be possible. If the worker had taken 0.0.0.0, this would fail with
+    // EADDRINUSE. This is deterministic and does not depend on the host's
+    // network interfaces.
+    const wildcard = createServer();
+    await expect(
+      new Promise<void>((resolve, reject) => {
+        wildcard.once('error', reject);
+        wildcard.listen(healthPort, '0.0.0.0', resolve);
+      }),
+    ).resolves.toBeUndefined();
+    await new Promise<void>((resolve, reject) => {
+      wildcard.close((error) => (error ? reject(error) : resolve()));
+    });
+
+    expect(runtimeProcess.signal('SIGTERM')).toBe(true);
+    await expect(runtimeProcess.waitForExit()).resolves.toEqual({ code: 0, signal: null });
+    await expect(fetch(`http://127.0.0.1:${healthPort}/health/ready`)).rejects.toThrow();
+  });
+
   it('keeps a worker runtime healthy when the optional OTLP collector is unavailable', async () => {
     const unavailableCollectorPort = await findFreeLoopbackPort();
     const runtimeProcess = startProcess('apps/worker/dist/main.js', {
       OTEL_EXPORTER_OTLP_ENDPOINT: `http://127.0.0.1:${unavailableCollectorPort}`,
       SOSEBAMA_ENVIRONMENT: 'DEV',
       SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+      SOSEBAMA_WORKER_HEALTH_PORT: String(await findFreeLoopbackPort()),
     });
 
     await runtimeProcess.waitForOutput('stdout', '"event":"runtime.started"');

@@ -8,9 +8,24 @@ export interface ApiRuntimeConfig {
   port: number;
 }
 
+export interface WorkerHealthConfig {
+  host: string;
+  port: number;
+}
+
 export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
+  health: WorkerHealthConfig;
 }
+
+/**
+ * The worker health endpoint is a container-internal diagnostic surface. Its
+ * bind address is a constant rather than a configuration value so that no
+ * environment variable can turn the worker into a reachable network service.
+ */
+const WORKER_HEALTH_HOST = '127.0.0.1';
+
+const DEFAULT_WORKER_HEALTH_PORT = 3001;
 
 export type TelemetryRuntimeConfig = { exporter: 'none' } | { endpoint: string; exporter: 'otlp' };
 
@@ -61,22 +76,29 @@ function readApiHost(environment: EnvironmentSource, context: ApiRuntimeContext)
   return host;
 }
 
-function readApiPort(environment: EnvironmentSource): number {
-  const value = readRequired(environment, 'SOSEBAMA_API_PORT');
+function parsePort(variable: string, value: string): number {
+  const expectation = 'expected a decimal integer from 1 through 65535';
   if (!/^[1-9]\d{0,4}$/u.test(value)) {
-    throw new ConfigurationError(
-      'SOSEBAMA_API_PORT',
-      'expected a decimal integer from 1 through 65535',
-    );
+    throw new ConfigurationError(variable, expectation);
   }
   const port = Number(value);
   if (port > 65_535) {
-    throw new ConfigurationError(
-      'SOSEBAMA_API_PORT',
-      'expected a decimal integer from 1 through 65535',
-    );
+    throw new ConfigurationError(variable, expectation);
   }
   return port;
+}
+
+function readApiPort(environment: EnvironmentSource): number {
+  return parsePort('SOSEBAMA_API_PORT', readRequired(environment, 'SOSEBAMA_API_PORT'));
+}
+
+function readWorkerHealthPort(environment: EnvironmentSource): number {
+  const variable = 'SOSEBAMA_WORKER_HEALTH_PORT';
+  const value = environment[variable]?.trim();
+  if (!value) {
+    return DEFAULT_WORKER_HEALTH_PORT;
+  }
+  return parsePort(variable, value);
 }
 
 function readOtlpEndpoint(environment: EnvironmentSource): string {
@@ -150,5 +172,9 @@ export function loadApiRuntimeConfig(
 export function loadWorkerRuntimeConfig(environment: EnvironmentSource): WorkerRuntimeConfig {
   return {
     environment: readRuntimeEnvironment(environment),
+    health: {
+      host: WORKER_HEALTH_HOST,
+      port: readWorkerHealthPort(environment),
+    },
   };
 }
