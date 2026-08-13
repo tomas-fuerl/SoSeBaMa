@@ -50,9 +50,15 @@ importers:
       '@sobama/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sobama/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sobama/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@sobama/runtime-health':
+        specifier: workspace:*
+        version: link:../../packages/runtime-health
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -93,9 +99,15 @@ importers:
       '@sobama/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sobama/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sobama/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@sobama/runtime-health':
+        specifier: workspace:*
+        version: link:../../packages/runtime-health
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -151,6 +163,12 @@ importers:
       pino:
         specifier: 10.3.1
         version: 10.3.1
+
+  packages/runtime-health:
+    dependencies:
+      '@sobama/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/testing: {}
 

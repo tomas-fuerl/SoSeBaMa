@@ -34,6 +34,7 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
       '@sobama/config',
       '@sobama/contracts',
       '@sobama/observability',
+      '@sobama/runtime-health',
       '@sobama/validation',
     ]),
   },
@@ -47,6 +48,10 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
   },
   '@sobama/eslint-config': { development: new Set(), runtime: new Set() },
   '@sobama/observability': { development: new Set(['@sobama/testing']), runtime: new Set() },
+  '@sobama/runtime-health': {
+    development: new Set(['@sobama/testing']),
+    runtime: new Set(['@sobama/contracts']),
+  },
   '@sobama/testing': {
     development: new Set(),
     runtime: new Set(['@sobama/contracts', '@sobama/validation']),
@@ -66,6 +71,7 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
       '@sobama/config',
       '@sobama/contracts',
       '@sobama/observability',
+      '@sobama/runtime-health',
       '@sobama/validation',
     ]),
   },
@@ -372,6 +378,8 @@ function importViolations(
         specifier.startsWith('@sobama/config/') ||
         specifier === '@sobama/observability' ||
         specifier.startsWith('@sobama/observability/') ||
+        specifier === '@sobama/runtime-health' ||
+        specifier.startsWith('@sobama/runtime-health/') ||
         specifier === '@sobama/worker' ||
         specifier.startsWith('@sobama/worker/'))
     ) {
@@ -527,18 +535,20 @@ describe('architecture boundaries', () => {
     );
   });
 
-  it.each(['@sobama/config', '@sobama/observability', '@prisma/adapter-pg'])(
-    'reports forbidden %s imports in browser code',
-    async (specifier) => {
-      const workspaces = await readWorkspaces();
-      const web = requireWorkspace(workspaces, '@sobama/web');
-      const file = resolve(web.directory, 'src/example.ts');
+  it.each([
+    '@sobama/config',
+    '@sobama/observability',
+    '@sobama/runtime-health',
+    '@prisma/adapter-pg',
+  ])('reports forbidden %s imports in browser code', async (specifier) => {
+    const workspaces = await readWorkspaces();
+    const web = requireWorkspace(workspaces, '@sobama/web');
+    const file = resolve(web.directory, 'src/example.ts');
 
-      expect(importViolations(file, `import '${specifier}';`, web, workspaces)).toContain(
-        `apps/web/src/example.ts: browser code may not import server runtime or persistence module ${specifier}.`,
-      );
-    },
-  );
+    expect(importViolations(file, `import '${specifier}';`, web, workspaces)).toContain(
+      `apps/web/src/example.ts: browser code may not import server runtime or persistence module ${specifier}.`,
+    );
+  });
 
   it('keeps the ESLint client guard consistent for the Prisma namespace', async () => {
     const eslint = new ESLint({ cwd: repositoryRoot });

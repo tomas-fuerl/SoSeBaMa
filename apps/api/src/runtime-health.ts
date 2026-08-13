@@ -1,6 +1,7 @@
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
+import { type HealthLifecycleStatus } from '@sobama/runtime-health';
 
-export type RuntimeHealthStatus = 'starting' | 'not-ready' | 'ready' | 'error' | 'stopped';
+export type RuntimeHealthStatus = HealthLifecycleStatus;
 
 @Injectable()
 export class RuntimeHealth implements OnApplicationShutdown {

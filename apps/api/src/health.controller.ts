@@ -1,42 +1,33 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { type HealthResponseBody } from '@sobama/contracts';
+import { resolveHealthResponse, type HealthProbe } from '@sobama/runtime-health';
 
 import { RuntimeHealth } from './runtime-health.js';
-
-interface HealthResponse {
-  role: 'api';
-  status: 'started' | 'alive' | 'not-ready' | 'ready' | 'error';
-}
 
 @Controller('health')
 export class HealthController {
   constructor(private readonly runtimeHealth: RuntimeHealth) {}
 
   @Get('startup')
-  startup(): HealthResponse {
-    if (this.runtimeHealth.current() === 'error') {
-      throw new ServiceUnavailableException({ role: 'api', status: 'error' });
-    }
-    return { role: 'api', status: 'started' };
+  startup(): HealthResponseBody {
+    return this.respond('startup');
   }
 
   @Get('live')
-  liveness(): HealthResponse {
-    const status = this.runtimeHealth.current();
-    if (status === 'error' || status === 'stopped') {
-      throw new ServiceUnavailableException({ role: 'api', status: 'error' });
-    }
-    return { role: 'api', status: 'alive' };
+  liveness(): HealthResponseBody {
+    return this.respond('live');
   }
 
   @Get('ready')
-  readiness(): HealthResponse {
-    const status = this.runtimeHealth.current();
-    if (status === 'ready') {
-      return { role: 'api', status: 'ready' };
+  readiness(): HealthResponseBody {
+    return this.respond('ready');
+  }
+
+  private respond(probe: HealthProbe): HealthResponseBody {
+    const { body, httpStatus } = resolveHealthResponse('api', probe, this.runtimeHealth.current());
+    if (httpStatus !== 200) {
+      throw new ServiceUnavailableException(body);
     }
-    if (status === 'error') {
-      throw new ServiceUnavailableException({ role: 'api', status: 'error' });
-    }
-    throw new ServiceUnavailableException({ role: 'api', status: 'not-ready' });
+    return body;
   }
 }

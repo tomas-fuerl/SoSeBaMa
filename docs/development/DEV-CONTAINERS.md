@@ -1,7 +1,7 @@
 # Lokalen DEV-Containerrahmen starten und zurückbauen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-12
+- Letzter Prüfstand: 2026-08-13
 - Bezogenes Issue: [#15](https://github.com/tomas-fuerl/SoSeBaMa/issues/15)
 - Geltungsbereich: ausschließlich lokales DEV
 
@@ -27,6 +27,12 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
   TST-/PRD-Datei ergänzen oder nachbilden.
 - API, Web und Worker besitzen keine Hostports. Nur Caddy verbindet das
   `edge`- mit dem internen `application`-Netz.
+- Der Worker beantwortet seine Health-Endpunkte ausschließlich auf dem
+  containerinternen Loopback `127.0.0.1`. Die Bindeadresse ist eine Konstante
+  unmittelbar am Listener; die Konfiguration kennt nur einen Port, sodass weder
+  eine Umgebungsvariable noch ein Programmaufruf die Adresse erweitern kann. Der
+  Endpunkt ist weder aus dem `application`-Netz noch vom Host erreichbar und
+  besitzt keinen Hostport.
 - Alle Container laufen als Nicht-Root, mit read-only Root-Dateisystem, ohne
   hinzugefügte Capabilities und mit `no-new-privileges`. Docker-Socket,
   Host-PID/-IPC, Geräte, Hostnetz und persistente Volumes fehlen.
@@ -90,9 +96,8 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    Erwartet wird Exit-Code `0`. Gateway, Web, API und Worker müssen `Healthy`
    erreichen. Der Gatewaycheck ruft dabei auch Web und API über Caddy auf.
    Fehlt ein lokales DEV-Image, bricht der Start ab, ohne es aus einer Registry
-   zu laden. Der noch leere Worker weist in diesem Teilschnitt nur die
-   Prozess-Liveness nach; vor echten Jobs benötigt er einen fachlich geeigneten
-   Readiness-Indikator.
+   zu laden. Alle vier Healthchecks prüfen Rolle und Status der Antwort; ein
+   bloßer HTTP-Erfolg genügt keinem der Checks.
 
 2. Die lokale Gatewayadresse anzeigen:
 
@@ -114,7 +119,19 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    `127.0.0.1:<LOCAL_GATEWAY_PORT>` und damit denselben Hostpfad wie ein lokaler
    Client.
 
-4. Die strukturierten API- und Worker-Startlogs prüfen:
+4. Den Healthzustand aller vier Rollen maschinell prüfen:
+
+   ```sh
+   pnpm container:health
+   ```
+
+   Erwartet wird Exit-Code `0`. Der Befehl fordert für Gateway, Web, API und
+   Worker den Docker-Healthzustand `healthy`. Er ist der einzige externe
+   Nachweis für den Worker: Dieser veröffentlicht keinen Port und liegt im
+   internen Netz, ist also über den Hosteingang aus `pnpm container:smoke`
+   grundsätzlich nicht erreichbar.
+
+5. Die strukturierten API- und Worker-Startlogs prüfen:
 
    ```sh
    pnpm container:logs
@@ -124,7 +141,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    `runtime.started`; PID und Hostname fehlen. Der vollständige Datenvertrag
    steht in der [DEV-Telemetrieanleitung](OBSERVABILITY.md).
 
-5. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
+6. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
 
    ```sh
    curl --fail --silent --show-error "http://127.0.0.1:<LOCAL_GATEWAY_PORT>/health/gateway"
@@ -135,7 +152,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    Erwartet werden die Rollen `gateway`, `web` und `api` jeweils mit Status
    `ready`. Andere Antworten, Weiterleitungen oder Fachinhalte sind Fehler.
 
-6. Containerstatus und veröffentlichte Ports prüfen:
+7. Containerstatus und veröffentlichte Ports prüfen:
 
    ```sh
    pnpm container:status
@@ -144,6 +161,48 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    Alle vier Rollen müssen gesund sein. Ausschließlich `gateway` darf die
    lokale Portbindung zeigen. API, Web und Worker dürfen keinen Hostport
    besitzen.
+
+## Ausfallnachweis für den Worker
+
+Dieser Nachweis belegt, dass der Worker-Healthcheck eine blockierte Laufzeit
+tatsächlich erkennt. Er ist nicht destruktiv, verändert keine Daten und wird im
+laufenden Stack ausgeführt.
+
+Wichtig: Wegen `init: true` ist PID 1 im Container der Docker-Init-Prozess, nicht
+die Node-Laufzeit. `docker compose kill` trifft deshalb PID 1 und blockiert den
+Worker nicht. Der Nachweis muss den Node-Prozess selbst adressieren.
+
+1. Die PID der Node-Laufzeit im Worker ermitteln:
+
+   ```sh
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T worker node -e 'const fs=require("node:fs");for(const p of fs.readdirSync("/proc")){if(!/^[0-9]+$/.test(p))continue;let c="";try{c=fs.readFileSync("/proc/"+p+"/cmdline","utf8")}catch{}if(c.includes("worker/dist/main.js")&&!c.includes("docker-init"))console.log(p)}'
+   ```
+
+   Erwartet wird genau eine PID ungleich `1`. Der Platzhalter `<WORKER_PID>`
+   wird in den folgenden Schritten durch diesen Wert ersetzt.
+
+2. Die Laufzeit anhalten und den Healthzustand beobachten:
+
+   ```sh
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T worker node -e 'process.kill(<WORKER_PID>,"SIGSTOP")'
+   docker inspect --format '{{.State.Health.Status}}' sosebama-dev-worker-1
+   ```
+
+   Der Zustand muss nach spätestens `interval` × `retries` von `healthy` auf
+   `unhealthy` wechseln; gemessen wurden rund 60 Sekunden. Solange der Wechsel
+   aussteht, wird der zweite Befehl wiederholt. `pnpm container:health` muss in
+   diesem Zustand mit Exit-Code `1` enden.
+
+3. Die Laufzeit fortsetzen und die Erholung prüfen:
+
+   ```sh
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T worker node -e 'process.kill(<WORKER_PID>,"SIGCONT")'
+   pnpm container:health
+   ```
+
+   Erwartet wird ein Wechsel zurück auf `healthy` innerhalb eines Intervalls und
+   danach Exit-Code `0`. Es ist keine `restart`-Policy gesetzt; der Container
+   wird also nicht neu gestartet und der Zustandswechsel bleibt beobachtbar.
 
 ## Kontrolliert stoppen und verifizieren
 

@@ -124,6 +124,63 @@ describe('server runtime configuration', () => {
     }
   });
 
+  it('exposes only a port for worker health, never a bind address', () => {
+    const config = loadWorkerRuntimeConfig({ SOSEBAMA_ENVIRONMENT: 'DEV' });
+
+    expect(config).toEqual({ environment: 'DEV', health: { port: 3001 } });
+
+    // The bind address is not part of the configuration surface at all, so no
+    // variable and no caller can widen it. It is a constant at the network
+    // sink in the worker itself.
+    expect(Object.keys(config.health)).toEqual(['port']);
+  });
+
+  it('accepts an explicit worker health port and treats a blank value as unset', () => {
+    expect(
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: '4311',
+      }).health,
+    ).toEqual({ port: 4311 });
+
+    expect(
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: '   ',
+      }).health.port,
+    ).toBe(3001);
+  });
+
+  it('rejects a malformed worker health port without echoing its value', () => {
+    for (const port of ['0', '65536', '1e3', '0x50', '04310']) {
+      expect(() =>
+        loadWorkerRuntimeConfig({
+          SOSEBAMA_ENVIRONMENT: 'DEV',
+          SOSEBAMA_WORKER_HEALTH_PORT: port,
+        }),
+      ).toThrow(ConfigurationError);
+    }
+
+    expect(() =>
+      loadWorkerRuntimeConfig({
+        SOSEBAMA_ENVIRONMENT: 'DEV',
+        SOSEBAMA_WORKER_HEALTH_PORT: 'private-value',
+      }),
+    ).toThrowError(/SOSEBAMA_WORKER_HEALTH_PORT(?!.*private-value)/u);
+  });
+
+  it('never lets the environment turn the worker into a reachable network service', () => {
+    // No variable, however plausibly named, may introduce a bind address.
+    const config = loadWorkerRuntimeConfig({
+      SOSEBAMA_API_HOST: '0.0.0.0',
+      SOSEBAMA_ENVIRONMENT: 'DEV',
+      SOSEBAMA_WORKER_HEALTH_HOST: '0.0.0.0',
+    });
+
+    expect(config.health).toEqual({ port: 3001 });
+    expect(JSON.stringify(config)).not.toContain('0.0.0.0');
+  });
+
   it('rejects missing and malformed values without echoing their contents', () => {
     expect(() => loadWorkerRuntimeConfig({})).toThrow(
       'Invalid configuration variable SOSEBAMA_ENVIRONMENT',

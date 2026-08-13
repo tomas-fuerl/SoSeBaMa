@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { type WorkerRuntimeConfig } from '@sobama/config';
 
 import { WorkerModule } from './app.module.js';
+import { WorkerHealthServer } from './health-server.js';
 import { WorkerRuntimeHealth } from './runtime-health.js';
 
 export interface StartedWorker {
@@ -17,6 +18,10 @@ export async function startWorker(config: WorkerRuntimeConfig): Promise<StartedW
   try {
     const health = app.get(WorkerRuntimeHealth);
     healthForCleanup = health;
+    // Serve the probes before announcing readiness so that a successful
+    // readiness response always implies a reachable endpoint. A busy port
+    // fails the start instead of leaving an unobservable worker running.
+    await app.get(WorkerHealthServer).listen(config.health.port);
     health.markReady();
     return { app, environment: config.environment, health };
   } catch (error: unknown) {
