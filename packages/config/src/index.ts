@@ -12,6 +12,8 @@ export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
 }
 
+export type TelemetryRuntimeConfig = { exporter: 'none' } | { endpoint: string; exporter: 'otlp' };
+
 export type ApiRuntimeContext = 'container' | 'local';
 
 export class ConfigurationError extends Error {
@@ -75,6 +77,62 @@ function readApiPort(environment: EnvironmentSource): number {
     );
   }
   return port;
+}
+
+function readOtlpEndpoint(environment: EnvironmentSource): string {
+  const value = readRequired(environment, 'OTEL_EXPORTER_OTLP_ENDPOINT');
+  const expectation =
+    'expected an absolute loopback HTTP or HTTPS URL without credentials, query, or fragment';
+  let endpoint: URL;
+  try {
+    endpoint = new URL(value);
+  } catch {
+    throw new ConfigurationError('OTEL_EXPORTER_OTLP_ENDPOINT', expectation);
+  }
+  const loopbackHosts = new Set(['127.0.0.1', '[::1]', 'localhost']);
+  if (
+    !['http:', 'https:'].includes(endpoint.protocol) ||
+    !loopbackHosts.has(endpoint.hostname) ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  ) {
+    throw new ConfigurationError('OTEL_EXPORTER_OTLP_ENDPOINT', expectation);
+  }
+  return `${endpoint.origin}${endpoint.pathname.replace(/\/+$/u, '')}`;
+}
+
+function rejectUnsupportedOtlpEnvironment(environment: EnvironmentSource): void {
+  const supportedVariable = 'OTEL_EXPORTER_OTLP_ENDPOINT';
+  const hasUnsupportedVariable = Object.keys(environment).some((variable) => {
+    const normalizedVariable = variable.toUpperCase();
+    return (
+      normalizedVariable.startsWith('OTEL_EXPORTER_OTLP_') &&
+      normalizedVariable !== supportedVariable
+    );
+  });
+  if (hasUnsupportedVariable) {
+    throw new ConfigurationError(
+      'OTEL_EXPORTER_OTLP_*',
+      'only OTEL_EXPORTER_OTLP_ENDPOINT is supported for local DEV',
+    );
+  }
+}
+
+export function loadTelemetryRuntimeConfig(environment: EnvironmentSource): TelemetryRuntimeConfig {
+  const exporter = environment.SOSEBAMA_TELEMETRY_EXPORTER?.trim() || 'none';
+  if (exporter === 'none') {
+    return { exporter };
+  }
+  if (exporter === 'otlp') {
+    rejectUnsupportedOtlpEnvironment(environment);
+    return { endpoint: readOtlpEndpoint(environment), exporter };
+  }
+  throw new ConfigurationError(
+    'SOSEBAMA_TELEMETRY_EXPORTER',
+    'expected none or otlp for this runtime',
+  );
 }
 
 export function loadApiRuntimeConfig(

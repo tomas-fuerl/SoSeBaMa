@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ConfigurationError, loadApiRuntimeConfig, loadWorkerRuntimeConfig } from '../src/index.js';
+import {
+  ConfigurationError,
+  loadApiRuntimeConfig,
+  loadTelemetryRuntimeConfig,
+  loadWorkerRuntimeConfig,
+} from '../src/index.js';
 
 describe('server runtime configuration', () => {
   it('accepts an explicit local development API configuration', () => {
@@ -132,4 +137,65 @@ describe('server runtime configuration', () => {
       }),
     ).toThrowError(/SOSEBAMA_API_PORT(?!.*private-value)/u);
   });
+
+  it('keeps telemetry export disabled by default', () => {
+    expect(loadTelemetryRuntimeConfig({})).toEqual({ exporter: 'none' });
+  });
+
+  it.each([
+    ['http://127.0.0.1:4318/base/', 'http://127.0.0.1:4318/base'],
+    ['https://[::1]:4318/base/', 'https://[::1]:4318/base'],
+    ['http://localhost:4318/', 'http://localhost:4318'],
+  ])('accepts the local OTLP base endpoint %s', (input, expected) => {
+    expect(
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT: input,
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+      }),
+    ).toEqual({ endpoint: expected, exporter: 'otlp' });
+  });
+
+  it('rejects unsafe telemetry exporters and endpoints without echoing their values', () => {
+    expect(() =>
+      loadTelemetryRuntimeConfig({ SOSEBAMA_TELEMETRY_EXPORTER: 'private-exporter' }),
+    ).toThrowError(/SOSEBAMA_TELEMETRY_EXPORTER(?!.*private-exporter)/u);
+    expect(() =>
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT:
+          'https://private-user:private-value@external.invalid/path?token=x',
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+      }),
+    ).toThrowError(
+      /OTEL_EXPORTER_OTLP_ENDPOINT(?!.*(?:private-user|private-value|external|token))/u,
+    );
+  });
+
+  it.each([
+    'OTEL_EXPORTER_OTLP_HEADERS',
+    'OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY',
+    'OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE',
+    'OTEL_EXPORTER_OTLP_TIMEOUT',
+    'otel_exporter_otlp_headers',
+    'Otel_Exporter_Otlp_Traces_Client_Key',
+  ])('rejects unsupported OTLP environment input %s without echoing its value', (variable) => {
+    expect(() =>
+      loadTelemetryRuntimeConfig({
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:4318',
+        SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+        [variable]: 'private-otel-value',
+      }),
+    ).toThrowError(/OTEL_EXPORTER_OTLP_\*(?!.*private-otel-value)/u);
+  });
+
+  it.each(['http://collector:4318', 'https://external.invalid/v1', 'http://192.168.1.5:4318'])(
+    'rejects the non-loopback OTLP endpoint %s without echoing it',
+    (endpoint) => {
+      expect(() =>
+        loadTelemetryRuntimeConfig({
+          OTEL_EXPORTER_OTLP_ENDPOINT: endpoint,
+          SOSEBAMA_TELEMETRY_EXPORTER: 'otlp',
+        }),
+      ).toThrowError(new RegExp(`OTEL_EXPORTER_OTLP_ENDPOINT(?!.*${endpoint})`, 'u'));
+    },
+  );
 });

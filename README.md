@@ -38,6 +38,7 @@ Repository-spezifische Arbeitsregeln stehen in [AGENTS.md](AGENTS.md).
 - [Lokale Entwicklungsumgebung einrichten und prüfen](docs/development/LOCAL-DEVELOPMENT.md)
 - [Lokale Web-, API- und Worker-Rollen starten](docs/development/RUNTIME-ROLES.md)
 - [Lokalen DEV-Containerrahmen starten und zurückbauen](docs/development/DEV-CONTAINERS.md)
+- [DEV-Telemetriegrundlage prüfen und sicher verwenden](docs/development/OBSERVABILITY.md)
 - [Workspace- und Importgrenzen](docs/architecture/MONOREPO-BOUNDARIES.md)
 - [Hauptversions- und Kompatibilitätsnachweis](docs/architecture/AP-01-COMPATIBILITY.md)
 

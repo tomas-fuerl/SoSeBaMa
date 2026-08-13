@@ -6,6 +6,7 @@ const help = `Usage: node tools/check-dev-containers.mjs <command>
 
 Commands:
   smoke    Verify gateway, web, and API through the local DEV host ingress.
+  logs     Verify bounded JSON startup logs from API and worker.
   cleanup  Fail if sosebama-dev containers or networks remain.
   --help   Show this help.
 
@@ -74,14 +75,57 @@ function verifyCleanup() {
   }
 }
 
+function verifyRuntimeLogs() {
+  try {
+    const output = execFileSync(
+      'docker',
+      [
+        'compose',
+        '-f',
+        'compose.yaml',
+        '-f',
+        'compose.dev.yaml',
+        'logs',
+        '--no-color',
+        '--no-log-prefix',
+        'api',
+        'worker',
+      ],
+      { encoding: 'utf8' },
+    );
+    const records = output
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    for (const role of ['api', 'worker']) {
+      const record = records.find((candidate) => candidate.role === role);
+      if (
+        record?.environment !== 'DEV' ||
+        record.event !== 'runtime.started' ||
+        record.service !== `sobama-${role}` ||
+        Object.hasOwn(record, 'hostname') ||
+        Object.hasOwn(record, 'pid')
+      ) {
+        fail(`DEV ${role} startup log does not match the bounded JSON contract.`, 1);
+        return;
+      }
+    }
+  } catch {
+    fail('DEV runtime log verification failed.', 1);
+  }
+}
+
 const command = process.argv[2];
 if (command === '--help' || command === '-h') {
   process.stdout.write(help);
 } else if (command === 'smoke') {
   await verifyHostIngress();
+} else if (command === 'logs') {
+  verifyRuntimeLogs();
 } else if (command === 'cleanup') {
   verifyCleanup();
 } else {
   process.stderr.write(help);
-  fail('Expected one command: smoke or cleanup.', 2);
+  fail('Expected one command: smoke, logs, or cleanup.', 2);
 }

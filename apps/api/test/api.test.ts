@@ -11,8 +11,8 @@ describe('API runtime', () => {
   });
 
   it('starts, exposes distinct health states, and stops cleanly', async () => {
-    startedApi = await startApi({ environment: 'DEV', host: 'localhost', port: 0 });
-    const baseUrl = `http://localhost:${startedApi.port}`;
+    startedApi = await startApi({ environment: 'DEV', host: '127.0.0.1', port: 0 });
+    const baseUrl = `http://127.0.0.1:${startedApi.port}`;
 
     const startup = await fetch(`${baseUrl}/health/startup`);
     expect(startup.status).toBe(200);

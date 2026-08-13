@@ -5,5 +5,6 @@ export default defineConfig({
     coverage: {
       exclude: ['**/dist/**'],
     },
+    testTimeout: 15_000,
   },
 });

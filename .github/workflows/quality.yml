@@ -45,6 +45,8 @@ jobs:
         run: pnpm container:up
       - name: Verify DEV host ingress
         run: pnpm container:smoke
+      - name: Verify DEV structured logs
+        run: pnpm container:logs
       - name: Stop DEV containers
         if: always()
         run: pnpm container:down

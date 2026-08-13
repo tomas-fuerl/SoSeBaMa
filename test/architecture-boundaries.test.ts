@@ -30,7 +30,12 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
   },
   '@sobama/api': {
     development: new Set(['@sobama/testing']),
-    runtime: new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
+    runtime: new Set([
+      '@sobama/config',
+      '@sobama/contracts',
+      '@sobama/observability',
+      '@sobama/validation',
+    ]),
   },
   '@sobama/config': {
     development: new Set(['@sobama/testing']),
@@ -41,6 +46,7 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
     runtime: new Set(),
   },
   '@sobama/eslint-config': { development: new Set(), runtime: new Set() },
+  '@sobama/observability': { development: new Set(['@sobama/testing']), runtime: new Set() },
   '@sobama/testing': {
     development: new Set(),
     runtime: new Set(['@sobama/contracts', '@sobama/validation']),
@@ -56,7 +62,12 @@ const workspacePolicies: Readonly<Record<string, WorkspacePolicy>> = {
   },
   '@sobama/worker': {
     development: new Set(['@sobama/testing']),
-    runtime: new Set(['@sobama/config', '@sobama/contracts', '@sobama/validation']),
+    runtime: new Set([
+      '@sobama/config',
+      '@sobama/contracts',
+      '@sobama/observability',
+      '@sobama/validation',
+    ]),
   },
 };
 
@@ -359,6 +370,8 @@ function importViolations(
         specifier.startsWith('@sobama/api/') ||
         specifier === '@sobama/config' ||
         specifier.startsWith('@sobama/config/') ||
+        specifier === '@sobama/observability' ||
+        specifier.startsWith('@sobama/observability/') ||
         specifier === '@sobama/worker' ||
         specifier.startsWith('@sobama/worker/'))
     ) {
@@ -500,7 +513,21 @@ describe('architecture boundaries', () => {
     );
   });
 
-  it.each(['@sobama/config', '@prisma/adapter-pg'])(
+  it('keeps observability test overrides behind the package-internal runtime module', async () => {
+    const workspaces = await readWorkspaces();
+    const api = requireWorkspace(workspaces, '@sobama/api');
+    const observability = requireWorkspace(workspaces, '@sobama/observability');
+    const file = resolve(api.directory, 'src/example.ts');
+
+    expect(isPublicExport(observability.manifest, '/runtime')).toBe(false);
+    expect(
+      importViolations(file, "import '@sobama/observability/runtime';", api, workspaces),
+    ).toContain(
+      'apps/api/src/example.ts: @sobama/observability/runtime is not a public export of @sobama/observability.',
+    );
+  });
+
+  it.each(['@sobama/config', '@sobama/observability', '@prisma/adapter-pg'])(
     'reports forbidden %s imports in browser code',
     async (specifier) => {
       const workspaces = await readWorkspaces();

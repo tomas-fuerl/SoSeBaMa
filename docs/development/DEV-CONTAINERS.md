@@ -14,9 +14,9 @@ technischen Webansicht sowie den secretfreien Gateway-, Web- und API-Health-
 Antworten.
 
 Dieser Schnitt erstellt oder erreicht weder TST noch PRD. Er enthält keine
-Datenbank, Fachroute, produktiven Werte, Secrets, persistenten Daten oder
-Telemetriespeicher. Pino und OpenTelemetry folgen in einem getrennten Schnitt
-von Issue #15.
+Datenbank, Fachroute, produktiven Werte, Secrets, persistenten Daten,
+Collector oder Telemetriespeicher. API und Worker verwenden die getrennt
+dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
 
 ## Sicherheitsgrenzen
 
@@ -114,7 +114,17 @@ von Issue #15.
    `127.0.0.1:<LOCAL_GATEWAY_PORT>` und damit denselben Hostpfad wie ein lokaler
    Client.
 
-4. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
+4. Die strukturierten API- und Worker-Startlogs prüfen:
+
+   ```sh
+   pnpm container:logs
+   ```
+
+   Erwartet wird Exit-Code `0`. Beide Rollen liefern begrenztes Pino-JSON für
+   `runtime.started`; PID und Hostname fehlen. Der vollständige Datenvertrag
+   steht in der [DEV-Telemetrieanleitung](OBSERVABILITY.md).
+
+5. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
 
    ```sh
    curl --fail --silent --show-error "http://127.0.0.1:<LOCAL_GATEWAY_PORT>/health/gateway"
@@ -125,7 +135,7 @@ von Issue #15.
    Erwartet werden die Rollen `gateway`, `web` und `api` jeweils mit Status
    `ready`. Andere Antworten, Weiterleitungen oder Fachinhalte sind Fehler.
 
-5. Containerstatus und veröffentlichte Ports prüfen:
+6. Containerstatus und veröffentlichte Ports prüfen:
 
    ```sh
    pnpm container:status
@@ -158,7 +168,7 @@ von Issue #15.
    bleiben für den nächsten Buildcache erhalten und enthalten keine Daten oder
    Secrets.
 
-Die beiden maschinellen Nachweise verwenden das vorhandene Node.js über
+Die maschinellen Nachweise verwenden das vorhandene Node.js über
 `tools/check-dev-containers.mjs`. `--help` beschreibt Eingabe und Kommandos.
 Exit-Code `1` kennzeichnet einen fehlgeschlagenen Nachweis, Exit-Code `2` eine
 fehlende oder ungültige Eingabe. Der Cleanup-Nachweis verändert keine
