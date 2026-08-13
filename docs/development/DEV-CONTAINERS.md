@@ -28,10 +28,11 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
 - API, Web und Worker besitzen keine Hostports. Nur Caddy verbindet das
   `edge`- mit dem internen `application`-Netz.
 - Der Worker beantwortet seine Health-Endpunkte ausschließlich auf dem
-  containerinternen Loopback `127.0.0.1`. Der Bind-Host ist im Code eine
-  Konstante; keine Umgebungsvariable kann ihn erweitern. Der Endpunkt ist weder
-  aus dem `application`-Netz noch vom Host erreichbar und besitzt keinen
-  Hostport.
+  containerinternen Loopback `127.0.0.1`. Die Bindeadresse ist eine Konstante
+  unmittelbar am Listener; die Konfiguration kennt nur einen Port, sodass weder
+  eine Umgebungsvariable noch ein Programmaufruf die Adresse erweitern kann. Der
+  Endpunkt ist weder aus dem `application`-Netz noch vom Host erreichbar und
+  besitzt keinen Hostport.
 - Alle Container laufen als Nicht-Root, mit read-only Root-Dateisystem, ohne
   hinzugefügte Capabilities und mit `no-new-privileges`. Docker-Socket,
   Host-PID/-IPC, Geräte, Hostnetz und persistente Volumes fehlen.

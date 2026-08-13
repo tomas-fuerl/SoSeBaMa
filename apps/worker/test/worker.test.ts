@@ -2,6 +2,7 @@ import { createServer, type AddressInfo } from 'node:net';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { WorkerHealthServer, WORKER_HEALTH_HOST } from '../src/health-server.js';
 import { startWorker, type StartedWorker } from '../src/start-worker.js';
 
 async function findFreeLoopbackPort(): Promise<number> {
@@ -21,7 +22,7 @@ async function findFreeLoopbackPort(): Promise<number> {
 }
 
 async function startTestWorker(port: number): Promise<StartedWorker> {
-  return await startWorker({ environment: 'DEV', health: { host: '127.0.0.1', port } });
+  return await startWorker({ environment: 'DEV', health: { port } });
 }
 
 describe('worker runtime', () => {
@@ -80,7 +81,7 @@ describe('worker runtime', () => {
     });
   });
 
-  it('exposes nothing but the three probes and rejects other methods', async () => {
+  it('exposes nothing but the three probes and rejects unsafe methods', async () => {
     const port = await findFreeLoopbackPort();
     worker = await startTestWorker(port);
 
@@ -91,8 +92,40 @@ describe('worker runtime', () => {
     const rootPath = await fetch(`http://127.0.0.1:${port}/`);
     expect(rootPath.status).toBe(404);
 
-    const post = await fetch(`http://127.0.0.1:${port}/health/ready`, { method: 'POST' });
-    expect(post.status).toBe(405);
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']) {
+      const response = await fetch(`http://127.0.0.1:${port}/health/ready`, { method });
+      expect(response.status, method).toBe(405);
+      expect(response.headers.get('allow'), method).toBe('GET, HEAD');
+    }
+  });
+
+  it('answers HEAD with the same status and headers but no body', async () => {
+    const port = await findFreeLoopbackPort();
+    worker = await startTestWorker(port);
+
+    const get = await fetch(`http://127.0.0.1:${port}/health/ready`);
+    const head = await fetch(`http://127.0.0.1:${port}/health/ready`, { method: 'HEAD' });
+
+    expect(head.status).toBe(get.status);
+    expect(head.headers.get('content-type')).toBe(get.headers.get('content-type'));
+    expect(head.headers.get('content-length')).toBe(get.headers.get('content-length'));
+    expect(await head.text()).toBe('');
+
+    // HEAD must reflect the lifecycle exactly like GET.
+    worker.health.markNotReady();
+    const headNotReady = await fetch(`http://127.0.0.1:${port}/health/ready`, { method: 'HEAD' });
+    expect(headNotReady.status).toBe(503);
+  });
+
+  it('binds the health listener to loopback without accepting a host', async () => {
+    const port = await findFreeLoopbackPort();
+    worker = await startTestWorker(port);
+    const server = worker.app.get(WorkerHealthServer);
+
+    // The public API carries no host parameter, so no caller can widen the
+    // bind address. The sink itself uses the module constant.
+    expect(server.listen).toHaveLength(1);
+    expect(WORKER_HEALTH_HOST).toBe('127.0.0.1');
   });
 
   it('closes the health endpoint when the application shuts down', async () => {

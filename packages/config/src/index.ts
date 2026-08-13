@@ -8,8 +8,12 @@ export interface ApiRuntimeConfig {
   port: number;
 }
 
+/**
+ * The worker health endpoint is a container-internal diagnostic surface. Only
+ * its port is configurable; the bind address is a constant at the network sink
+ * in the worker itself, so no configuration value can widen it.
+ */
 export interface WorkerHealthConfig {
-  host: string;
   port: number;
 }
 
@@ -17,13 +21,6 @@ export interface WorkerRuntimeConfig {
   environment: RuntimeEnvironment;
   health: WorkerHealthConfig;
 }
-
-/**
- * The worker health endpoint is a container-internal diagnostic surface. Its
- * bind address is a constant rather than a configuration value so that no
- * environment variable can turn the worker into a reachable network service.
- */
-const WORKER_HEALTH_HOST = '127.0.0.1';
 
 const DEFAULT_WORKER_HEALTH_PORT = 3001;
 
@@ -173,7 +170,6 @@ export function loadWorkerRuntimeConfig(environment: EnvironmentSource): WorkerR
   return {
     environment: readRuntimeEnvironment(environment),
     health: {
-      host: WORKER_HEALTH_HOST,
       port: readWorkerHealthPort(environment),
     },
   };

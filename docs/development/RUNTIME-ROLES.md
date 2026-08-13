@@ -126,9 +126,11 @@ Platzhalter; sie wird nicht automatisch geladen.
 ## Worker starten, Health prüfen und stoppen
 
 Der Worker besitzt keine Fachroute. Er beantwortet ausschließlich drei
-technische Health-Endpunkte auf einem eigenen lokalen Port. Der Bind-Host ist
-fest auf `127.0.0.1` gesetzt und kann nicht über die Umgebung geändert werden;
-damit wird der Worker durch keine Konfiguration zu einem Netzwerkdienst.
+technische Health-Endpunkte auf einem eigenen lokalen Port. Die Bindeadresse
+`127.0.0.1` ist eine Konstante unmittelbar am Listener und weder über die
+Umgebung noch über einen Programmaufruf beeinflussbar; konfigurierbar ist allein
+der Port. Damit wird der Worker durch keine Konfiguration zu einem
+Netzwerkdienst.
 
 1. In einem eigenen Terminal die Umgebung setzen und den gebauten Worker
    starten. Der Portplatzhalter ist optional; ohne ihn gilt `3001`:
@@ -160,8 +162,10 @@ damit wird der Worker durch keine Konfiguration zu einem Netzwerkdienst.
    Ein nicht bereiter Zustand liefert HTTP `503` mit `not-ready`, ein
    technischer Fehler HTTP `503` mit `error`. Beim ersten Shutdown-Signal
    wechselt der Worker vor dem Schließen auf `not-ready`. Jeder andere Pfad
-   liefert HTTP `404` ohne Inhalt, jede andere Methode HTTP `405`. Die Antworten
-   enthalten weder Umgebungswerte noch Diagnose- oder Fachdaten.
+   liefert HTTP `404` ohne Inhalt. Zulässig sind ausschließlich `GET` und
+   `HEAD`; `HEAD` liefert Status und Header wie `GET`, aber keinen Rumpf. Jede
+   andere Methode liefert HTTP `405` mit dem Header `Allow: GET, HEAD`. Die
+   Antworten enthalten weder Umgebungswerte noch Diagnose- oder Fachdaten.
 
 3. `Ctrl-C` drücken. Der direkte Node-Prozess meldet `runtime.stopped`; danach
    muss der Worker beendet und der Health-Port geschlossen sein. pnpm kann den

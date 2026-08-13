@@ -21,7 +21,7 @@ export async function startWorker(config: WorkerRuntimeConfig): Promise<StartedW
     // Serve the probes before announcing readiness so that a successful
     // readiness response always implies a reachable endpoint. A busy port
     // fails the start instead of leaving an unobservable worker running.
-    await app.get(WorkerHealthServer).listen(config.health.host, config.health.port);
+    await app.get(WorkerHealthServer).listen(config.health.port);
     health.markReady();
     return { app, environment: config.environment, health };
   } catch (error: unknown) {

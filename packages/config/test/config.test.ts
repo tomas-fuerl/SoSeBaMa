@@ -124,11 +124,15 @@ describe('server runtime configuration', () => {
     }
   });
 
-  it('serves worker health on a constant loopback host with a default port', () => {
-    expect(loadWorkerRuntimeConfig({ SOSEBAMA_ENVIRONMENT: 'DEV' })).toEqual({
-      environment: 'DEV',
-      health: { host: '127.0.0.1', port: 3001 },
-    });
+  it('exposes only a port for worker health, never a bind address', () => {
+    const config = loadWorkerRuntimeConfig({ SOSEBAMA_ENVIRONMENT: 'DEV' });
+
+    expect(config).toEqual({ environment: 'DEV', health: { port: 3001 } });
+
+    // The bind address is not part of the configuration surface at all, so no
+    // variable and no caller can widen it. It is a constant at the network
+    // sink in the worker itself.
+    expect(Object.keys(config.health)).toEqual(['port']);
   });
 
   it('accepts an explicit worker health port and treats a blank value as unset', () => {
@@ -137,7 +141,7 @@ describe('server runtime configuration', () => {
         SOSEBAMA_ENVIRONMENT: 'DEV',
         SOSEBAMA_WORKER_HEALTH_PORT: '4311',
       }).health,
-    ).toEqual({ host: '127.0.0.1', port: 4311 });
+    ).toEqual({ port: 4311 });
 
     expect(
       loadWorkerRuntimeConfig({
@@ -166,15 +170,15 @@ describe('server runtime configuration', () => {
   });
 
   it('never lets the environment turn the worker into a reachable network service', () => {
-    // The bind address is a constant, so no variable, however plausibly named,
-    // may widen it beyond container-internal loopback.
+    // No variable, however plausibly named, may introduce a bind address.
     const config = loadWorkerRuntimeConfig({
       SOSEBAMA_API_HOST: '0.0.0.0',
       SOSEBAMA_ENVIRONMENT: 'DEV',
       SOSEBAMA_WORKER_HEALTH_HOST: '0.0.0.0',
     });
 
-    expect(config.health.host).toBe('127.0.0.1');
+    expect(config.health).toEqual({ port: 3001 });
+    expect(JSON.stringify(config)).not.toContain('0.0.0.0');
   });
 
   it('rejects missing and malformed values without echoing their contents', () => {
