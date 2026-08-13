@@ -17,12 +17,13 @@ patch.sh
 *.cer
 *.kdbx
 
-# Editor- und Betriebssystemdateien
+# Editor-, Werkzeug- und Betriebssystemdateien
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
 *~
+.claude/
 .idea/
 .vscode/
 
