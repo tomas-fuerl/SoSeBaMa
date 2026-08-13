@@ -210,7 +210,7 @@ describe('built runtime processes', { timeout: PROCESS_TIMEOUT_MS + 5_000 }, () 
     });
   }
 
-  it('answers the worker health probes on loopback only and closes them on shutdown', async () => {
+  it('answers the worker health probes and closes them on shutdown', async () => {
     const healthPort = await findFreeLoopbackPort();
     const runtimeProcess = startProcess('apps/worker/dist/main.js', {
       SOSEBAMA_ENVIRONMENT: 'DEV',
@@ -228,21 +228,12 @@ describe('built runtime processes', { timeout: PROCESS_TIMEOUT_MS + 5_000 }, () 
       expect(response.status, path).toBe(200);
     }
 
-    // Bound to loopback only: a wildcard bind on the same port must therefore
-    // still be possible. If the worker had taken 0.0.0.0, this would fail with
-    // EADDRINUSE. This is deterministic and does not depend on the host's
-    // network interfaces.
-    const wildcard = createServer();
-    await expect(
-      new Promise<void>((resolve, reject) => {
-        wildcard.once('error', reject);
-        wildcard.listen(healthPort, '0.0.0.0', resolve);
-      }),
-    ).resolves.toBeUndefined();
-    await new Promise<void>((resolve, reject) => {
-      wildcard.close((error) => (error ? reject(error) : resolve()));
-    });
-
+    // The bind address itself is not asserted here. Whether a wildcard bind on
+    // the same port still succeeds differs between Linux and BSD, so any such
+    // probe would be platform-dependent rather than evidence. The loopback
+    // guarantee is covered where it is decided: @sobama/config pins the host to
+    // a constant no environment variable can widen, and the container policy
+    // test keeps the worker without ports or expose entries.
     expect(runtimeProcess.signal('SIGTERM')).toBe(true);
     await expect(runtimeProcess.waitForExit()).resolves.toEqual({ code: 0, signal: null });
     await expect(fetch(`http://127.0.0.1:${healthPort}/health/ready`)).rejects.toThrow();
