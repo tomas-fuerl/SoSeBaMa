@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
-import { resolveHealthResponse, type HealthProbe } from '@sobama/contracts';
+import { resolveHealthResponse, type HealthProbe } from '@sobama/runtime-health';
 
 import { WorkerRuntimeHealth } from './runtime-health.js';
 
@@ -10,6 +10,15 @@ const probesByPath: ReadonlyMap<string, HealthProbe> = new Map([
   ['/health/live', 'live'],
   ['/health/ready', 'ready'],
 ]);
+
+/**
+ * The bind address of the worker health listener.
+ *
+ * This is a module constant rather than a parameter or configuration value: it
+ * is the network sink itself, so neither an environment variable nor a
+ * programmatic caller can widen it beyond container-internal loopback.
+ */
+export const WORKER_HEALTH_HOST = '127.0.0.1';
 
 /**
  * Minimal diagnostic listener for the worker.
@@ -30,7 +39,7 @@ export class WorkerHealthServer implements OnApplicationShutdown {
 
   constructor(private readonly runtimeHealth: WorkerRuntimeHealth) {}
 
-  async listen(host: string, port: number): Promise<void> {
+  async listen(port: number): Promise<void> {
     if (this.server) {
       return;
     }
@@ -48,7 +57,7 @@ export class WorkerHealthServer implements OnApplicationShutdown {
       };
       server.once('error', onError);
       server.once('listening', onListening);
-      server.listen(port, host);
+      server.listen(port, WORKER_HEALTH_HOST);
     });
     this.server = server;
   }

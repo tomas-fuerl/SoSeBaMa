@@ -25,6 +25,7 @@ Starts; fachlicher Quellcode bleibt ausgeschlossen.
 | `packages/validation` | Validierung öffentlicher Verträge | Browser, API, Worker |
 | `packages/config` | validierte Umgebungs- und Laufzeitkonfiguration | nur API und Worker |
 | `packages/observability` | redigierte Logs, Backendtraces und niedrig kardinale Metriken | nur API und Worker |
+| `packages/runtime-health` | serverinterner Health-Lebenszyklus und Probe-Abbildung auf HTTP | nur API und Worker |
 | `packages/testing` | Testfabriken und Testhilfen | nur Tests |
 | `packages/eslint-config` | gemeinsame statische Regeln | Entwicklungswerkzeug |
 | `packages/typescript-config` | gemeinsame TypeScript-Basis | Entwicklungswerkzeug |
@@ -47,10 +48,11 @@ Build- und Coverage-Dateien beeinflussen das Ergebnis daher nicht.
 | --- | --- | --- |
 | Root-Projekt | keine | `packages/eslint-config`, `packages/testing`, `packages/typescript-config` |
 | `apps/web` | `packages/contracts`, `packages/validation` | `packages/testing` |
-| `apps/api` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/validation` | `packages/testing` |
-| `apps/worker` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/validation` | `packages/testing` |
+| `apps/api` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/runtime-health`, `packages/validation` | `packages/testing` |
+| `apps/worker` | `packages/config`, `packages/contracts`, `packages/observability`, `packages/runtime-health`, `packages/validation` | `packages/testing` |
 | `packages/config` | `packages/validation` | `packages/testing` |
 | `packages/observability` | keine | `packages/testing` |
+| `packages/runtime-health` | `packages/contracts` | `packages/testing` |
 | `packages/contracts` | keine | `packages/testing` |
 | `packages/validation` | `packages/contracts` | `packages/testing` |
 | `packages/testing` | `packages/contracts`, `packages/validation` | keine |
@@ -68,10 +70,13 @@ reviewbar.
 
 1. `apps/web` darf öffentliche Verträge und deren Validierung importieren.
 2. `apps/web` darf weder `apps/api`, `apps/worker`, `packages/config`,
-   `packages/observability`, Prisma noch interne Unterpfade anderer Pakete
-   importieren.
+   `packages/observability`, `packages/runtime-health`, Prisma noch interne
+   Unterpfade anderer Pakete importieren.
 3. Serverinterne Modelle, Autorisierungslogik, Auditdetails und Secrets werden
-   niemals über Clientpakete exportiert.
+   niemals über Clientpakete exportiert. `packages/contracts` führt deshalb
+   ausschließlich extern sichtbare Wire-Typen. Der interne
+   Health-Lebenszyklus und dessen Abbildung auf HTTP-Status liegen in
+   `packages/runtime-health` und sind für den Browser nicht erreichbar.
 4. API und Worker dürfen gemeinsame öffentliche Verträge und serverseitige
    Konfiguration verwenden, aber nicht über internes HTTP miteinander
    kommunizieren.

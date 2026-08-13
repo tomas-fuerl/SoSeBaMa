@@ -1,93 +1,49 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  resolveHealthResponse,
-  type HealthLifecycleStatus,
-  type HealthProbe,
-  type HealthReportedStatus,
-  type HealthRole,
-} from '../src/index.js';
+import type { HealthReportedStatus, HealthResponseBody, HealthRole } from '../src/index.js';
 
-type Expectation = readonly [httpStatus: 200 | 503, status: HealthReportedStatus];
+/** Fails to compile if the two type arguments stop being identical. */
+type AssertExact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
-/**
- * The complete externally observable contract. Every lifecycle state is listed
- * for every probe so that a behaviour change cannot pass unnoticed.
- */
-const matrix: Readonly<Record<HealthLifecycleStatus, Readonly<Record<HealthProbe, Expectation>>>> =
-  {
-    error: {
-      live: [503, 'error'],
-      ready: [503, 'error'],
-      startup: [503, 'error'],
-    },
-    'not-ready': {
-      live: [200, 'alive'],
-      ready: [503, 'not-ready'],
-      startup: [200, 'started'],
-    },
-    ready: {
-      live: [200, 'alive'],
-      ready: [200, 'ready'],
-      startup: [200, 'started'],
-    },
-    starting: {
-      live: [200, 'alive'],
-      ready: [503, 'not-ready'],
-      startup: [200, 'started'],
-    },
-    stopped: {
-      live: [503, 'error'],
-      ready: [503, 'not-ready'],
-      startup: [200, 'started'],
-    },
-  };
+const reportedStatuses = [
+  'alive',
+  'error',
+  'not-ready',
+  'ready',
+  'started',
+] as const satisfies readonly HealthReportedStatus[];
 
-const roles: readonly HealthRole[] = ['api', 'worker'];
-const probes: readonly HealthProbe[] = ['startup', 'live', 'ready'];
-const lifecycleStatuses = Object.keys(matrix) as HealthLifecycleStatus[];
+const roles = ['api', 'worker'] as const satisfies readonly HealthRole[];
 
-describe('health response contract', () => {
-  for (const role of roles) {
-    for (const status of lifecycleStatuses) {
-      for (const probe of probes) {
-        const [httpStatus, reported] = matrix[status][probe];
+const statusVocabularyIsExhaustive: AssertExact<
+  HealthReportedStatus,
+  (typeof reportedStatuses)[number]
+> = true;
 
-        it(`maps ${role} ${probe} in state ${status} to ${httpStatus} ${reported}`, () => {
-          expect(resolveHealthResponse(role, probe, status)).toEqual({
-            body: { role, status: reported },
-            httpStatus,
-          });
-        });
-      }
-    }
-  }
+const roleVocabularyIsExhaustive: AssertExact<HealthRole, (typeof roles)[number]> = true;
 
-  it('never reports a status outside the published vocabulary', () => {
-    const allowed = new Set<HealthReportedStatus>([
-      'alive',
-      'error',
-      'not-ready',
-      'ready',
-      'started',
-    ]);
-
-    for (const role of roles) {
-      for (const status of lifecycleStatuses) {
-        for (const probe of probes) {
-          const response = resolveHealthResponse(role, probe, status);
-          expect(allowed.has(response.body.status)).toBe(true);
-          expect(Object.keys(response.body).toSorted()).toEqual(['role', 'status']);
-          expect(response.body.role).toBe(role);
-        }
-      }
-    }
+describe('health wire contract', () => {
+  it('pins the published status vocabulary', () => {
+    expect(statusVocabularyIsExhaustive).toBe(true);
+    expect([...reportedStatuses]).toEqual(['alive', 'error', 'not-ready', 'ready', 'started']);
   });
 
-  it('reports readiness only in the ready state', () => {
-    for (const status of lifecycleStatuses) {
-      const response = resolveHealthResponse('worker', 'ready', status);
-      expect(response.httpStatus === 200, status).toBe(status === 'ready');
-    }
+  it('pins the published role vocabulary', () => {
+    expect(roleVocabularyIsExhaustive).toBe(true);
+    expect([...roles]).toEqual(['api', 'worker']);
+  });
+
+  it('describes a body of exactly role and status', () => {
+    const body: HealthResponseBody = { role: 'api', status: 'ready' };
+
+    expect(Object.keys(body).toSorted()).toEqual(['role', 'status']);
+  });
+
+  it('exports no server-internal lifecycle or transport detail', async () => {
+    // The lifecycle state and the HTTP mapping belong to @sobama/runtime-health.
+    // Browser code may import this package, so neither may reappear here.
+    const contracts = await import('../src/index.js');
+
+    expect(Object.keys(contracts)).toEqual([]);
   });
 });

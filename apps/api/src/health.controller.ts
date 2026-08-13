@@ -1,9 +1,6 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import {
-  resolveHealthResponse,
-  type HealthProbe,
-  type HealthResponseBody,
-} from '@sobama/contracts';
+import { type HealthResponseBody } from '@sobama/contracts';
+import { resolveHealthResponse, type HealthProbe } from '@sobama/runtime-health';
 
 import { RuntimeHealth } from './runtime-health.js';
 

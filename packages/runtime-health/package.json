@@ -1,0 +1,24 @@
+{
+  "name": "@sobama/runtime-health",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-only health lifecycle state and probe response mapping",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@sobama/contracts": "workspace:*"
+  }
+}

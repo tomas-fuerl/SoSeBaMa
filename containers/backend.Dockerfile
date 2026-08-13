@@ -12,6 +12,7 @@ COPY packages/config/package.json packages/config/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
 COPY packages/observability/package.json packages/observability/package.json
+COPY packages/runtime-health/package.json packages/runtime-health/package.json
 COPY packages/testing/package.json packages/testing/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/validation/package.json packages/validation/package.json
@@ -25,11 +26,15 @@ COPY apps/worker apps/worker
 COPY packages/config packages/config
 COPY packages/contracts packages/contracts
 COPY packages/observability packages/observability
+COPY packages/runtime-health packages/runtime-health
 COPY packages/typescript-config packages/typescript-config
 COPY packages/validation packages/validation
 
+# @sobama/runtime-health ships an executable mapping, so unlike the type-only
+# contracts package it must be built before API and worker consume it.
 RUN pnpm --filter @sobama/config run build \
     && pnpm --filter @sobama/observability run build \
+    && pnpm --filter @sobama/runtime-health run build \
     && pnpm --filter @sobama/api run build \
     && pnpm --filter @sobama/worker run build
 RUN pnpm --filter @sobama/api deploy --prod --legacy /output/api
