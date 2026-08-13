@@ -14,33 +14,34 @@ type Expectation = readonly [httpStatus: 200 | 503, status: HealthReportedStatus
  * The complete externally observable contract. Every lifecycle state is listed
  * for every probe so that a behaviour change cannot pass unnoticed.
  */
-const matrix: Readonly<Record<HealthLifecycleStatus, Readonly<Record<HealthProbe, Expectation>>>> = {
-  error: {
-    live: [503, 'error'],
-    ready: [503, 'error'],
-    startup: [503, 'error'],
-  },
-  'not-ready': {
-    live: [200, 'alive'],
-    ready: [503, 'not-ready'],
-    startup: [200, 'started'],
-  },
-  ready: {
-    live: [200, 'alive'],
-    ready: [200, 'ready'],
-    startup: [200, 'started'],
-  },
-  starting: {
-    live: [200, 'alive'],
-    ready: [503, 'not-ready'],
-    startup: [200, 'started'],
-  },
-  stopped: {
-    live: [503, 'error'],
-    ready: [503, 'not-ready'],
-    startup: [200, 'started'],
-  },
-};
+const matrix: Readonly<Record<HealthLifecycleStatus, Readonly<Record<HealthProbe, Expectation>>>> =
+  {
+    error: {
+      live: [503, 'error'],
+      ready: [503, 'error'],
+      startup: [503, 'error'],
+    },
+    'not-ready': {
+      live: [200, 'alive'],
+      ready: [503, 'not-ready'],
+      startup: [200, 'started'],
+    },
+    ready: {
+      live: [200, 'alive'],
+      ready: [200, 'ready'],
+      startup: [200, 'started'],
+    },
+    starting: {
+      live: [200, 'alive'],
+      ready: [503, 'not-ready'],
+      startup: [200, 'started'],
+    },
+    stopped: {
+      live: [503, 'error'],
+      ready: [503, 'not-ready'],
+      startup: [200, 'started'],
+    },
+  };
 
 const roles: readonly HealthRole[] = ['api', 'worker'];
 const probes: readonly HealthProbe[] = ['startup', 'live', 'ready'];

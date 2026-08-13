@@ -55,8 +55,8 @@ services:
         - node
         - -e
         - >-
-          fetch('http://127.0.0.1:8080/health.json').then(async(response)=>{const
-          body=await response.json();if(!response.ok||body.role!=='web'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+          fetch('http://127.0.0.1:8080/health.json').then(async(response)=>{const body=await
+          response.json();if(!response.ok||body.role!=='web'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
       interval: 2s
       timeout: 2s
       retries: 15
@@ -74,8 +74,8 @@ services:
         - node
         - -e
         - >-
-          fetch('http://127.0.0.1:3000/health/ready').then(async(response)=>{const
-          body=await response.json();if(!response.ok||body.role!=='api'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+          fetch('http://127.0.0.1:3000/health/ready').then(async(response)=>{const body=await
+          response.json();if(!response.ok||body.role!=='api'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
       interval: 2s
       timeout: 2s
       retries: 15
@@ -94,8 +94,8 @@ services:
         - node
         - -e
         - >-
-          fetch('http://127.0.0.1:3001/health/ready').then(async(response)=>{const
-          body=await response.json();if(!response.ok||body.role!=='worker'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+          fetch('http://127.0.0.1:3001/health/ready').then(async(response)=>{const body=await
+          response.json();if(!response.ok||body.role!=='worker'||body.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
       interval: 2s
       timeout: 2s
       retries: 15

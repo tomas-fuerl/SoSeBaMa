@@ -82,7 +82,11 @@ export class WorkerHealthServer implements OnApplicationShutdown {
       return;
     }
 
-    const { body, httpStatus } = resolveHealthResponse('worker', probe, this.runtimeHealth.current());
+    const { body, httpStatus } = resolveHealthResponse(
+      'worker',
+      probe,
+      this.runtimeHealth.current(),
+    );
     const payload = JSON.stringify(body);
     response.writeHead(httpStatus, {
       'cache-control': 'no-store',

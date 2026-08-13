@@ -77,7 +77,10 @@ function verifyContainerHealth() {
     const trimmed = output.trim();
     const records = trimmed.startsWith('[')
       ? JSON.parse(trimmed)
-      : trimmed.split('\n').filter(Boolean).map((line) => JSON.parse(line));
+      : trimmed
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line));
 
     for (const service of ['api', 'gateway', 'web', 'worker']) {
       const record = records.find((candidate) => candidate.Service === service);
