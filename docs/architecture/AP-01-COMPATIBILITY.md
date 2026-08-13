@@ -2,8 +2,13 @@
 
 - Status: Bestanden
 - Prüfstand: 2026-08-02
+- Letzte Durchsicht: 2026-08-13
 - Bezogenes Issue: [#9](https://github.com/tomas-fuerl/SoSeBaMa/issues/9)
 - Geltungsbereich: AP-01 in lokaler isolierter DEV-Probe
+
+Der Prüfstand nennt das Datum der ausgeführten Probe. Die Durchsicht bewertet
+ausschließlich, welche der damals offenen Punkte inzwischen durch eigene
+Teilschnitte erbracht sind; der geprüfte Versionskorridor bleibt unverändert.
 
 ## Ziel und Ergebnis
 
@@ -175,18 +180,28 @@ Die Probe lief mit dem offiziellen Image
 
 ## Noch nicht nachgewiesen
 
-Dieser Teilschnitt ersetzt keine späteren G1- bis G3-Nachweise. Offen bleiben:
+Dieser Teilschnitt ersetzt keine späteren G1- bis G3-Nachweise.
 
-- tatsächliche Web-, API- und Worker-Builds und -Starts,
+Seit dem Prüfstand durch eigene Teilschnitte erbracht:
+
+- tatsächliche Web-, API- und Worker-Builds und -Starts über #20, #23 und #24,
+- native Containerbuilds über #23.
+
+Offen bleiben:
+
 - Prisma-Client-Erzeugung, Treiberadapter und Migration gegen PostgreSQL 18,
 - Testcontainers-Start auf GitHub-hosted Runnern,
-- Playwright-Browserinstallation und Browsermatrix,
-- native und mehrarchitekturfähige Containerbuilds,
+- Playwright-Browserlaufzeit und Browsermatrix,
+- mehrarchitekturfähige Containerbuilds,
 - Zielhost-, TST- und PRD-Eignung,
 - Schwachstellen-, Lizenz-, SBOM- und Provenienzprüfung.
 
-Diese Punkte blockieren nicht den Monorepo-Aufbau, bleiben aber blockierende
-Gates der jeweils zugehörigen AP-01-Teilschnitte beziehungsweise AP-11.
+Diese Punkte blockieren nicht den Monorepo-Aufbau. Sie sind den zugehörigen
+Teilschnitten beziehungsweise späteren Arbeitspaketen zugeordnet:
+Browserlaufzeit und Browsermatrix in #26, Schwachstellen- und Lizenzprüfung in
+#25, Prisma und Testcontainers ab AP-04 sowie Mehrarchitektur, Zielhosteignung,
+SBOM und Provenienz in AP-11. Der kumulative G1- bis G3-Nachweis für AP-01
+entsteht in #27.
 
 ## Fehlerbehandlung und sichere Abbruchbedingungen
 
