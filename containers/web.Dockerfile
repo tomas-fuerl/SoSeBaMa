@@ -31,6 +31,16 @@ FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9
 ENV XDG_CONFIG_HOME=/tmp/caddy-config
 ENV XDG_DATA_HOME=/tmp/caddy-data
 
+# Die Runtime startet Caddy; `node` bleibt ausschliesslich fuer die
+# Compose-Healthchecks erhalten. npm und corepack werden nicht benoetigt,
+# bringen aber ein eigenes gebuendeltes Abhaengigkeitsset mit.
+RUN rm -rf \
+    /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm \
+    /usr/local/bin/npx \
+    /usr/local/bin/corepack
+
 COPY --from=caddy /usr/bin/caddy /tmp/caddy-with-file-capability
 RUN cp /tmp/caddy-with-file-capability /usr/bin/caddy \
     && rm /tmp/caddy-with-file-capability \

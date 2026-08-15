@@ -25,14 +25,51 @@ AP-11 und hier bewusst nicht enthalten.
 | --- | --- | --- |
 | Dependency Review | neu hinzukommende Abhängigkeiten im Pull Request | Schweregrad `high` |
 | Lizenzprüfung | Lizenz jeder aufgelösten Abhängigkeit | jeder nicht zugelassenen Lizenz |
-| Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` |
-| Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH` |
+| Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` mit verfügbarem Fix |
+| Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH`, auch ohne Fix |
 | Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
 | CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Befunde in der Code-Scanning-Ansicht |
 | Secret Scanning | Secrets im Repository und beim Push | jedem erkannten Secret |
 
 Die Lizenzprüfung ist getrennt dokumentiert in der
 [Lizenzrichtlinie](LICENSE-POLICY.md).
+
+## Entscheidung zu Befunden ohne verfügbaren Fix
+
+Die Image-Scans melden ausschließlich Befunde, für die ein Fix existiert. Der
+Abhängigkeitsscan über das Lockfile tut das bewusst **nicht** und meldet auch
+Befunde ohne Fix.
+
+**Begründung.** Der erste Lauf dieser Prüfungen ergab im Backendimage 22
+Befunde, davon 5 kritische, sämtlich aus dem Debian-Unterbau des gepinnten
+Node-Images und sämtlich ohne verfügbaren Fix (`affected`, `fix_deferred`,
+`will_not_fix`). Solche Befunde bieten keine Handlungsoption außer einer
+Ausnahme. Eine Prüfung, die dauerhaft rot steht, ohne dass jemand sie grün
+bekommen kann, wird erfahrungsgemäß abgeschaltet oder mit pauschalen Ausnahmen
+umgangen. Beides ist schlechter als eine bewusst gezogene und dokumentierte
+Grenze.
+
+Für die eigenen Abhängigkeiten gilt das nicht: Dort sind Fixes in aller Regel
+verfügbar, und der Fall aus
+[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) hat gezeigt, dass sie
+auch tatsächlich eingespielt werden können. Deshalb bleibt dieser Scan streng.
+
+**Der Preis dieser Entscheidung.** Ein kritischer Befund ohne Fix blockiert
+nicht mehr. Im ersten Lauf betraf das unter anderem `zlib1g` mit
+CVE-2023-45853, von Debian als `will_not_fix` geführt. Damit solche Befunde
+nicht unsichtbar werden, läuft ein zusätzlicher, ausdrücklich nicht
+blockierender Scan, der sie weiterhin in das Joblog schreibt.
+
+**Ergänzende Maßnahme.** Die Runtime-Stages beider Images enthalten weder npm
+noch corepack. Beide werden zur Laufzeit nicht benötigt, bringen aber ein
+eigenes gebündeltes Abhängigkeitsset mit, das im ersten Lauf sieben weitere
+Befunde erzeugte. Das Entfernen reduziert Angriffsfläche und Scanfläche
+gleichermaßen und beseitigt diese Befunde, statt sie per Ausnahme zu
+akzeptieren.
+
+Diese Festlegung ist eine Entscheidung des Projekteigentümers. Sie wird mit dem
+Merge des zugehörigen Pull Requests bestätigt und ist bei jeder Änderung der
+Scanner oder der Basisimages erneut zu bewerten.
 
 ## Zusammenspiel mit Dependabot
 
