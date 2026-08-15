@@ -1,3 +1,20 @@
 packages:
   - apps/*
   - packages/*
+
+# Sicherheitsbedingte Auflösung einer transitiven Abhängigkeit.
+#
+# nanoid < 3.3.17 ist über GHSA-2v37-7h3g-55p8 (CVE-2026-67213) verwundbar und
+# wird ausschließlich transitiv über postcss aus der Buildkette von Vite und
+# Vitest gezogen.
+#
+# Bewusst ein Convergence-Override (`nanoid@` ohne Range) statt eines regulären
+# Range-Overrides: Er greift nur dort, wo die Semver-Range des Consumers 3.3.17
+# ohnehin zulässt, und erzwingt die Version nicht gegen einen künftigen
+# Consumer, der eine ältere Linie benötigt. postcss 8.5.25 deklariert ^3.3.16
+# und erfüllt diese Bedingung.
+#
+# Entfernen, sobald postcss auf mindestens 8.5.26 angehoben ist; diese Version
+# deklariert bereits ^3.3.17 und macht das Override überflüssig.
+overrides:
+  'nanoid@': '3.3.17'
