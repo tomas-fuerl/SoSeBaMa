@@ -75,9 +75,11 @@ vulnerabilities:
     paths:
       - usr/bin/caddy
     statement: >-
-      net/http, unverschluesseltes HTTP/2. KEIN Denial of Service, sondern ein Transportproblem.
-      Nicht erreichbar: Der Caddy-Startlog meldet "HTTP/2 skipped because it requires TLS", HTTP/2
-      ist also nicht aktiv. Restrisiko gering; bei Einfuehrung von TLS neu zu bewerten.
+      net/http bei unverschluesseltem HTTP/2 (h2c). Wirkung ist Denial of Service: ReadHeaderTimeout
+      greift waehrend des Lesens des Preface nicht. Die fruehere Einordnung als reines
+      Transportproblem war falsch. Nicht erreichbar: Der Caddy-Startlog meldet "HTTP/2 skipped
+      because it requires TLS", h2c ist nicht konfiguriert. Bei Einfuehrung von TLS oder h2c neu zu
+      bewerten.
     expired_at: 2026-11-16
 
   # --- Als nicht erreichbar bewertet: Funktion nicht konfiguriert --------
@@ -101,21 +103,32 @@ vulnerabilities:
     paths:
       - usr/bin/caddy
     statement: >-
-      google.golang.org/grpc, xDS RBAC und HTTP/2. KEIN Denial of Service, sondern ein
-      Autorisierungsproblem. Nicht erreichbar: Es ist kein xDS-Client und keine gRPC-Schnittstelle
-      konfiguriert; Caddy dient hier als HTTP-Reverse-Proxy und Dateiserver. Restrisiko gering.
+      google.golang.org/grpc. Mehrere Wirkungsklassen: ein Autorisierungsfehler in xDS RBAC sowie
+      Denial-of-Service-Szenarien, darunter HTTP/2 Rapid Reset und ein Panic im xDS-RBAC-Pfad. Die
+      fruehere Einordnung als ausschliesslich Autorisierungsproblem war zu absolut. Nicht
+      erreichbar: kein xDS-Client, keine gRPC-Schnittstelle, und h2c ist nicht aktiv; Caddy dient
+      hier als HTTP-Reverse-Proxy und Dateiserver.
     expired_at: 2026-11-16
 
   # --- Als potenziell erreichbar bewertet --------------------------------
+  # ACHTUNG, ABWEICHENDE SCHWEREGRADE: Trivy meldet diesen Befund als HIGH.
+  # Die GitHub Advisory Database fuehrt ihn unter GHSA-w2q5-6q6x-x959 als
+  # CRITICAL mit CVSS 10.0. Diese Ausnahme ist deshalb ausdruecklich eine
+  # Eigentuemerentscheidung; siehe den entsprechenden Abschnitt in
+  # docs/development/SUPPLY-CHAIN-CHECKS.md.
   - id: CVE-2026-39821
     paths:
       - usr/bin/caddy
     statement: >-
-      golang.org/x/net/idna im net/http-Pfad. KEIN reiner Denial of Service; das Advisory nennt bei
-      entsprechender Verwendung eine Umgehung von Autorisierungsentscheidungen. Potenziell
-      erreichbar, weil Hostnamen bei jeder Anfrage verarbeitet werden. In DEV durch die reine
-      Loopback-Bindung mitigiert. Hoechste Prioritaet dieser Gruppe bei einer TST- oder
-      PRD-Bewertung.
+      golang.org/x/net/idna: ToASCII und ToUnicode akzeptieren Punycode-Labels fehlerhaft, wodurch
+      Autorisierungsentscheidungen auf Basis von Hostnamen umgangen werden koennen. KEIN Denial of
+      Service. Schweregrad abweichend: Trivy HIGH, GitHub Advisory Database CRITICAL mit CVSS 10.0.
+      Erreichbarkeit: Beide Caddyfiles definieren die Site als ':8080' ohne Hostnamen; es gibt weder
+      Host-Matcher noch hostbasierte Routing- oder Autorisierungsentscheidungen. Es existiert hier
+      also keine Entscheidung, die umgangen werden koennte. Hostnamen werden gleichwohl beim Parsen
+      verarbeitet, weshalb der Pfad nicht vollstaendig ausgeschlossen ist. In DEV zusaetzlich durch
+      die reine Loopback-Bindung mitigiert. Hoechste Prioritaet dieser Gruppe; vor einer TST- oder
+      PRD-Freigabe zwingend neu zu bewerten.
     expired_at: 2026-11-16
   - id: CVE-2026-39822
     paths:

@@ -77,11 +77,15 @@ Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: 13 Go-Befunde
 im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH`. Davon tragen 12
 eine CVE-Kennung und einer eine GHSA-Kennung.
 
-**Nicht alle sind Denial of Service.** Fünf betreffen andere Wirkungen:
-`CVE-2026-39821` eine mögliche Umgehung von Autorisierungsentscheidungen,
-`CVE-2026-39822` das Verlassen einer Wurzelgrenze über Symlinks,
-`CVE-2026-56858` Cross-Site Scripting, `CVE-2026-56853` unverschlüsseltes
-HTTP/2 und `GHSA-hrxh-6v49-42gf` xDS-RBAC. Jede Ausnahme in
+**Nicht alle sind Denial of Service.** Drei betreffen ausschließlich andere
+Wirkungen: `CVE-2026-39821` eine mögliche Umgehung von
+Autorisierungsentscheidungen über fehlerhaft akzeptierte Punycode-Labels,
+`CVE-2026-39822` das Verlassen einer Wurzelgrenze über Symlinks und
+`CVE-2026-56858` Cross-Site Scripting. `GHSA-hrxh-6v49-42gf` vereint mehrere
+Wirkungsklassen, nämlich einen Autorisierungsfehler in xDS RBAC und
+Denial-of-Service-Szenarien. `CVE-2026-56853` ist entgegen einer früheren
+Fassung dieses Dokuments sehr wohl ein Denial of Service: `ReadHeaderTimeout`
+greift beim Lesen des h2c-Preface nicht. Jede Ausnahme in
 [`.trivyignore.yaml`](../../.trivyignore.yaml) trägt deshalb eine eigene
 Bewertung aus Wirkung, Erreichbarkeit in der tatsächlichen Caddy-Konfiguration
 und Restrisiko, statt einer pauschalen Einstufung.
@@ -101,6 +105,30 @@ sind nicht konfiguriert. Der Caddy-Startlog bestätigt zusätzlich
 „HTTP/2 skipped because it requires TLS". Das ist eine Bewertung auf
 Konfigurationsebene und kein Nachweis auf Codeebene; Erreichbarkeit über einen
 nicht betrachteten internen Pfad ist damit nicht ausgeschlossen.
+
+### Abweichender Schweregrad bei CVE-2026-39821
+
+Trivy meldet diesen Befund als `HIGH`. Die GitHub Advisory Database führt ihn
+unter `GHSA-w2q5-6q6x-x959` als **`CRITICAL` mit CVSS 10.0**.
+
+Das ist kein Nebenaspekt: Diese Anleitung hält an anderer Stelle fest, dass für
+einen kritischen Befund keine Ausnahme vorgesehen ist. Nach der Trivy-Einstufung
+greift diese Regel nicht, nach der Advisory-Einstufung schon. Die Ausnahme wird
+deshalb ausdrücklich als **Entscheidung des Projekteigentümers** geführt und
+nicht als Routinefall.
+
+Tragende Gründe für die befristete Annahme:
+
+- Beide Caddyfiles definieren die Site als `:8080` ohne Hostnamen. Es gibt weder
+  Host-Matcher noch hostbasierte Routing- oder Autorisierungsentscheidungen; es
+  existiert also keine Entscheidung, die umgangen werden könnte.
+- Der Reparaturweg ist ausgeschöpft, siehe oben.
+- In DEV ist der Eingang ausschließlich über Loopback erreichbar.
+
+Nicht tragend wäre die Trivy-Einstufung allein. **Vor einer TST- oder
+PRD-Freigabe ist dieser Befund zwingend und vorrangig neu zu bewerten**; dort
+entfällt die Loopback-Mitigation, und eine spätere hostbasierte Konfiguration
+würde die Erreichbarkeitsbewertung umkehren.
 
 Die Ausnahmen laufen am 2026-11-16 ab. Caddy ist der einzige
 Anwendungseingang, die Befunde sind also nicht folgenlos; in DEV besteht
