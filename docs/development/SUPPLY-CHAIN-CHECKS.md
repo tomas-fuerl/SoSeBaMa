@@ -71,6 +71,26 @@ Diese Festlegung ist eine Entscheidung des Projekteigentümers. Sie wird mit dem
 Merge des zugehörigen Pull Requests bestätigt und ist bei jeder Änderung der
 Scanner oder der Basisimages erneut zu bewerten.
 
+## Bestehende Ausnahmen
+
+Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: zwölf
+Go-Befunde im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH` und
+sämtlich als Denial of Service eingestuft.
+
+Der Weg über ein Update ist ausgeschöpft. Caddy 2.11.4 ist die neueste
+veröffentlichte Version. Das offizielle Image wurde seit dem ursprünglichen Pin
+neu gebaut, nachweislich aber mit derselben Go-Toolchain: Nach dem Digestwechsel
+meldet Trivy unverändert `stdlib v1.26.3`, `x/net v0.55.0` und `x/text v0.37.0`.
+Das Binary wird als offizielles Image übernommen und nicht selbst gebaut; die
+einzige Abhilfe ist ein Upstream-Release mit neuerer Go-Version. Dependabot
+überwacht das Docker-Ökosystem und meldet einen solchen Rebuild.
+
+Die Ausnahmen laufen am 2026-11-16 ab. Caddy ist der einzige
+Anwendungseingang, die Befunde sind also nicht folgenlos; in DEV besteht
+allerdings kein Zugriff von außerhalb des Loopback. **Vor einer TST- oder
+PRD-Freigabe ist diese Gruppe neu zu bewerten und nicht ungeprüft zu
+verlängern.**
+
 ## Zusammenspiel mit Dependabot
 
 Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet

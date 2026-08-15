@@ -1,28 +1,121 @@
 # Befristete, dokumentierte Ausnahmen für Trivy nach ADR-0013.
 #
-# Diese Datei ist bewusst leer. Ein Befund wird zuerst behoben; eine Ausnahme
-# ist die Rückfallposition, nicht der Regelfall. Das Verfahren steht in
-# docs/development/SUPPLY-CHAIN-CHECKS.md.
+# Ein Befund wird zuerst behoben; eine Ausnahme ist die Rückfallposition, nicht
+# der Regelfall. Das Verfahren steht in docs/development/SUPPLY-CHAIN-CHECKS.md.
 #
 # Jeder Eintrag benötigt:
-#   id          die Kennung des Befunds, etwa CVE-2026-12345 oder AVD-DS-0002
+#   id          die Kennung des Befunds
 #   statement   Begründung, Einbindungsart und geprüfte Alternativen
 #   expired_at  Ablaufdatum; danach schlägt der Befund wieder fehl
 #
 # `expired_at` ist keine Formalie: Trivy lässt die Ausnahme danach automatisch
 # verfallen, sodass eine vergessene Ausnahme sichtbar wird, statt dauerhaft zu
 # gelten. Ein Eintrag ohne Ablaufdatum ist nach dieser Richtlinie unzulässig.
-#
-# Beispiel:
-#
-# vulnerabilities:
-#   - id: CVE-2026-12345
-#     statement: >-
-#       Nur über ein Build-Werkzeug erreichbar, nicht im ausgelieferten Artefakt.
-#       Kein Patch verfügbar; Eigentümerentscheidung in Issue #123.
-#     expired_at: 2026-12-31
 
-vulnerabilities: []
+vulnerabilities:
+  # Go-Standardbibliothek und Go-Module im vorkompilierten Caddy-Binary.
+  #
+  # Caddy 2.11.4 ist die neueste veröffentlichte Version; ein Versionssprung
+  # steht nicht zur Verfügung. Das offizielle Image wurde seit dem ursprünglichen
+  # Pin neu gebaut, jedoch nachweislich mit derselben Go-Toolchain: Nach dem
+  # Digestwechsel meldet Trivy unverändert `stdlib v1.26.3`, `x/net v0.55.0`
+  # und `x/text v0.37.0`.
+  #
+  # Das Binary wird als offizielles Image übernommen und nicht selbst gebaut.
+  # Die einzige Abhilfe ist ein Upstream-Release, das gegen eine neuere
+  # Go-Version gebaut wurde. Dependabot überwacht das Docker-Ökosystem und meldet
+  # einen solchen Rebuild.
+  #
+  # Bewertung: Caddy ist der einzige Anwendungseingang, die Befunde sind daher
+  # nicht folgenlos. Sie sind sämtlich als Denial of Service eingestuft, keiner
+  # als kritisch. Für DEV besteht kein Zugriff von außerhalb des Loopback. Vor
+  # einer TST- oder PRD-Freigabe ist diese Ausnahme neu zu bewerten und nicht
+  # ungeprüft zu verlängern.
+  - id: CVE-2026-27145
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      crypto/x509 in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-33818
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      encoding/asn1 in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
+      mit neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-39821
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/net/idna im Caddy-Binary. Nur durch ein Upstream-Release mit neuerer Go-Version
+      behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-39822
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      os.Root in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-42504
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      mime in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-46600
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/net/dns/dnsmessage im Caddy-Binary, gemeldet für das Modul und für die
+      Standardbibliothek. Nur durch ein Upstream-Release mit neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56852
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/text im Caddy-Binary. Nur durch ein Upstream-Release mit neuerer Go-Version
+      behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56853
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      net/http in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56858
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      html/template in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
+      mit neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56859
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      encoding/xml in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
+      mit neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56860
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      net/url in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56862
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      crypto/tls in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
+      neuerer Go-Version behebbar.
+    expired_at: 2026-11-16
+
 misconfigurations: []
 secrets: []
 licenses: []
