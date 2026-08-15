@@ -1,0 +1,28 @@
+# Befristete, dokumentierte Ausnahmen für Trivy nach ADR-0013.
+#
+# Diese Datei ist bewusst leer. Ein Befund wird zuerst behoben; eine Ausnahme
+# ist die Rückfallposition, nicht der Regelfall. Das Verfahren steht in
+# docs/development/SUPPLY-CHAIN-CHECKS.md.
+#
+# Jeder Eintrag benötigt:
+#   id          die Kennung des Befunds, etwa CVE-2026-12345 oder AVD-DS-0002
+#   statement   Begründung, Einbindungsart und geprüfte Alternativen
+#   expired_at  Ablaufdatum; danach schlägt der Befund wieder fehl
+#
+# `expired_at` ist keine Formalie: Trivy lässt die Ausnahme danach automatisch
+# verfallen, sodass eine vergessene Ausnahme sichtbar wird, statt dauerhaft zu
+# gelten. Ein Eintrag ohne Ablaufdatum ist nach dieser Richtlinie unzulässig.
+#
+# Beispiel:
+#
+# vulnerabilities:
+#   - id: CVE-2026-12345
+#     statement: >-
+#       Nur über ein Build-Werkzeug erreichbar, nicht im ausgelieferten Artefakt.
+#       Kein Patch verfügbar; Eigentümerentscheidung in Issue #123.
+#     expired_at: 2026-12-31
+
+vulnerabilities: []
+misconfigurations: []
+secrets: []
+licenses: []

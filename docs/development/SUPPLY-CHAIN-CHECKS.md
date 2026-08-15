@@ -1,0 +1,122 @@
+# Prüfungen der Software-Lieferkette
+
+- Eigentümer: Projekteigentümer
+- Letzter Prüfstand: 2026-08-16
+- Bezogenes Issue: [#25](https://github.com/tomas-fuerl/SoSeBaMa/issues/25)
+- Geltungsbereich: Pull-Request-Stufe in GitHub-hosted CI
+
+## Ziel
+
+Jede Änderung durchläuft vor dem Merge dieselben automatisierten
+Lieferkettenprüfungen. Neue kritische und hohe Befunde blockieren; eine Ausnahme
+ist nur befristet und dokumentiert zulässig.
+
+## Geltungsbereich und Abgrenzung
+
+Diese Anleitung beschreibt ausschließlich die Pull-Request-Stufe.
+[ADR-0013](../architecture/decisions/ADR-0013-teststrategie-und-software-lieferkette.md)
+nennt drei CI-Stufen; die nächtliche Stufe und der Releasekandidat gehören zu
+späteren Arbeitspaketen. SBOM, Provenienz und Attestierung sind Gegenstand von
+AP-11 und hier bewusst nicht enthalten.
+
+## Welche Prüfung was abdeckt
+
+| Prüfung | Gegenstand | Blockiert bei |
+| --- | --- | --- |
+| Dependency Review | neu hinzukommende Abhängigkeiten im Pull Request | Schweregrad `high` |
+| Lizenzprüfung | Lizenz jeder aufgelösten Abhängigkeit | jeder nicht zugelassenen Lizenz |
+| Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` |
+| Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH` |
+| Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
+| CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Befunde in der Code-Scanning-Ansicht |
+| Secret Scanning | Secrets im Repository und beim Push | jedem erkannten Secret |
+
+Die Lizenzprüfung ist getrennt dokumentiert in der
+[Lizenzrichtlinie](LICENSE-POLICY.md).
+
+## Zusammenspiel mit Dependabot
+
+Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet
+Sicherheitsaktualisierungen. Auto-Merge ist nach ADR-0013 nicht eingerichtet;
+jede Aktualisierung durchläuft denselben Pflichtcheck wie jede andere Änderung.
+
+**Bekannte Einschränkung.** GitHub verwirft mit der voreingestellten
+Auto-Triage-Regel Befunde in `development`-scoped Abhängigkeiten automatisch.
+Ein solcher Befund erscheint dann als `auto_dismissed`, und es entsteht keine
+Sicherheitsaktualisierung. Beim Befund aus
+[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) ist das zweimal
+eingetreten; beide Male wurde er nur durch manuelle Durchsicht bemerkt.
+
+Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
+Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
+Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
+Eigentümerentscheidung und in #25 vermerkt.
+
+## Ausnahmeverfahren
+
+Ein Befund wird zuerst behoben. Eine Ausnahme ist die Rückfallposition.
+
+1. Prüfen, ob ein Patch verfügbar ist. Wenn ja, wird aktualisiert. Zielversion
+   ist der Kopf der betroffenen Patchlinie, nicht die im Advisory genannte
+   Mindestversion: Ein Advisory kann revidiert werden, wenn sich ein Patch als
+   unvollständig erweist.
+2. Prüfen, ob eine gleichwertige Alternative ohne den Befund existiert.
+3. Erst danach eine Ausnahme in [`.trivyignore.yaml`](../../.trivyignore.yaml)
+   eintragen. Jeder Eintrag benötigt `id`, `statement` und `expired_at`.
+4. Die Entscheidung des Projekteigentümers im zugehörigen Issue oder Pull
+   Request verlinken; sie enthält die Angaben aus der
+   [Projekt-Governance](../GOVERNANCE.md).
+
+`expired_at` ist verpflichtend. Trivy lässt die Ausnahme danach automatisch
+verfallen, sodass ein vergessener Eintrag wieder sichtbar wird. Ein Eintrag ohne
+Ablaufdatum ist nach dieser Richtlinie unzulässig.
+
+Kritische Befunde werden nach ADR-0013 nie ungeklärt weitergereicht. Eine
+Ausnahme für einen kritischen Befund ist nicht vorgesehen.
+
+## Verifikation
+
+1. Den Pull Request öffnen und den Pflichtcheck `quality` abwarten. Er fasst
+   `repository`, `containers`, `dependencies` und `code-scanning` zusammen.
+
+2. Bei Bedarf einen Scan lokal wiederholen. Der folgende Befehl benötigt eine
+   laufende lokale Docker-Engine und verändert nichts:
+
+   ```sh
+   docker run --rm --volume "$PWD:/repo:ro" --workdir /repo \
+     aquasec/trivy:0.74.0 fs --scanners vuln \
+     --severity CRITICAL,HIGH --exit-code 1 --ignorefile .trivyignore.yaml .
+   ```
+
+   Erwartet wird Exit-Code `0`. Ein Befund nennt Paket, Version und Kennung.
+
+3. CodeQL-Ergebnisse stehen ausschließlich in der Code-Scanning-Ansicht des
+   Repositorys. Sie werden nicht lokal reproduziert.
+
+## Fehlerbehandlung
+
+- **Neuer CRITICAL- oder HIGH-Befund:** Nach dem Verfahren oben vorgehen. Der
+  Schweregrad wird nicht herabgesetzt und die Prüfung nicht übersprungen, um
+  einen Lauf grün zu bekommen.
+- **Trivy-Datenbank nicht erreichbar:** Der Lauf endet mit einem Fehler. Der
+  unveränderte Lauf wird wiederholt. Ein Netzwerkfehler ist kein bestandener
+  Scan; die Prüfung wird dafür nicht abgeschaltet.
+- **CodeQL meldet einen Befund:** Vor dem Merge bewerten. Ein Fehlbefund wird in
+  der Code-Scanning-Ansicht mit Begründung geschlossen, nicht durch Entfernen
+  der Sprache aus der Matrix.
+- **Abgelaufene Ausnahme:** Der Befund schlägt wieder fehl. Das ist beabsichtigt.
+  Die Ausnahme wird neu bewertet, nicht ohne Prüfung verlängert.
+- **Sichere Abbruchbedingung:** Bei unklarer Lage wird nicht gemergt und die
+  Bewertung dem Projekteigentümer vorgelegt.
+
+## Rollback
+
+Die Prüfungen erzeugen keine Daten- oder Laufzeitfolgen. Ein Rückbau besteht aus
+dem Revert der Workflow-, Ausnahme- und Dokumentationsänderung. Bereits
+aufgelöste Abhängigkeiten und gebaute Images bleiben davon unberührt.
+
+## Pflege
+
+Der Projekteigentümer prüft diese Anleitung bei jeder Änderung der Scanner, der
+Schweregradgrenzen, des Ausnahmeverfahrens und bei der Einführung der nächtlichen
+oder der Releasekandidatenstufe.
