@@ -67,6 +67,13 @@ jobs:
         run: pnpm container:smoke
       - name: Verify DEV structured logs
         run: pnpm container:logs
+      # Ohne diesen Schritt ist eine fehlgeschlagene Rolle nur als Exit-Code
+      # sichtbar; der eigentliche Startfehler bleibt im Container verborgen.
+      - name: Show DEV container state and logs on failure
+        if: failure()
+        run: |
+          docker compose -f compose.yaml -f compose.dev.yaml ps --all
+          docker compose -f compose.yaml -f compose.dev.yaml logs --no-color --tail 200
       - name: Stop DEV containers
         if: always()
         run: pnpm container:down
