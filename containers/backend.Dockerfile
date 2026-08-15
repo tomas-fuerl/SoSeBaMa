@@ -30,9 +30,12 @@ COPY packages/runtime-health packages/runtime-health
 COPY packages/typescript-config packages/typescript-config
 COPY packages/validation packages/validation
 
-# @sobama/runtime-health ships an executable mapping, so unlike the type-only
-# contracts package it must be built before API and worker consume it.
+# Every deployed workspace package is built here. `pnpm deploy` copies each
+# dependency with its `exports` entry pointing at `dist`, so a package without a
+# build produces a deployed artifact whose entry point does not exist, whether
+# or not anything imports it at runtime.
 RUN pnpm --filter @sobama/config run build \
+    && pnpm --filter @sobama/contracts run build \
     && pnpm --filter @sobama/observability run build \
     && pnpm --filter @sobama/runtime-health run build \
     && pnpm --filter @sobama/api run build \

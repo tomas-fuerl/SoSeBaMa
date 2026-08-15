@@ -1,6 +1,6 @@
 import { createServer, type ViteDevServer } from 'vite';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { type AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 

@@ -1,5 +1,5 @@
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
-import { type HealthLifecycleStatus } from '@sobama/runtime-health';
+import type { HealthLifecycleStatus } from '@sobama/runtime-health';
 
 export type WorkerHealthStatus = HealthLifecycleStatus;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type HealthReportedStatus, type HealthRole } from '@sobama/contracts';
+import type { HealthReportedStatus, HealthRole } from '@sobama/contracts';
 
 import {
   resolveHealthResponse,
