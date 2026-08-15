@@ -1,7 +1,7 @@
-import { type INestApplication } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { type ApiRuntimeConfig } from '@sobama/config';
-import { type AddressInfo } from 'node:net';
+import type { ApiRuntimeConfig } from '@sobama/config';
+import type { AddressInfo } from 'node:net';
 
 import { ApiModule } from './app.module.js';
 import { RuntimeHealth } from './runtime-health.js';

@@ -1,6 +1,6 @@
-import { type INestApplicationContext } from '@nestjs/common';
+import type { INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { type WorkerRuntimeConfig } from '@sobama/config';
+import type { WorkerRuntimeConfig } from '@sobama/config';
 
 import { WorkerModule } from './app.module.js';
 import { WorkerHealthServer } from './health-server.js';

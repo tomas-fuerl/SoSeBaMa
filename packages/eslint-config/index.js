@@ -38,6 +38,26 @@ const clientOnlyRestrictions = {
   ],
 };
 
+/**
+ * Verbietet Importe, die nur wegen Inline-Typspezifizierern bestehen bleiben.
+ *
+ * Mit `verbatimModuleSyntax` emittiert `import { type X } from 'y'` ein
+ * `import {} from 'y'` und damit eine echte Modulaufloesung zur Laufzeit. Fuer
+ * ein rein typseitig genutztes Paket entsteht so eine Abhaengigkeit, die im
+ * Containerimage fehlschlaegt. `import type { X } from 'y'` wird dagegen
+ * vollstaendig geloescht.
+ *
+ * Bewusst nicht `consistent-type-imports`: Diese Regel wuerde auch reine
+ * Wertimporte umschreiben. `apps/api` und `apps/worker` setzen
+ * `emitDecoratorMetadata`, sodass NestJS injizierte Klassen ueber
+ * `design:paramtypes` zur Laufzeit referenziert. Ein `import type` wuerde die
+ * Bindung loeschen und Dependency Injection brechen.
+ */
+/** @type {import('eslint').Linter.RulesRecord} */
+const typeImportRules = {
+  '@typescript-eslint/no-import-type-side-effects': 'error',
+};
+
 export const sobamaConfig = tseslint.config(
   {
     ignores: [
@@ -56,6 +76,10 @@ export const sobamaConfig = tseslint.config(
     languageOptions: {
       globals: globals.node,
     },
+  },
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    rules: typeImportRules,
   },
   {
     files: ['apps/web/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],

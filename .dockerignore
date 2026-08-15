@@ -1,13 +1,18 @@
 .git
 .github
 .vscode
+.claude
 .env
 .env.*
 !.env.example
-*.log
-coverage
-dist
-node_modules
+# Verschachtelte Treffer sind hier entscheidend: Ein blosses `dist` trifft nur
+# die oberste Ebene. Ohne `**/` gelangen Buildausgaben und Abhaengigkeiten des
+# Hosts in den Build-Kontext, und das Image haengt unbemerkt am Zustand der
+# Entwicklermaschine statt sich selbst zu bauen.
+**/*.log
+**/coverage
+**/dist
+**/node_modules
+**/tmp
+**/temp
 TASK-RESULT.md
-tmp
-temp
