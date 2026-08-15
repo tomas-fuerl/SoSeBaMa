@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import { argv, stderr, stdout } from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 const help = `Usage: node tools/check-licenses.mjs [command]
 
 Verifies that every resolved dependency carries a licence allowed by
-docs/development/LICENSE-POLICY.md. Unknown licences fail by default.
+docs/development/LICENSE-POLICY.md. Unknown licences and unexpected report
+shapes fail by default.
 
 Commands:
   (none)   Verify all resolved dependency licences.
@@ -14,7 +17,7 @@ Commands:
 
 Exit codes:
   0  Every dependency carries an allowed licence.
-  1  A disallowed or unknown licence was found.
+  1  A disallowed or unknown licence, or an unusable licence report.
   2  Usage or input error.
 `;
 
@@ -25,7 +28,7 @@ Exit codes:
  * reach the code of this repository. Everything else, in particular the GPL,
  * LGPL, AGPL and SSPL families, needs a documented owner decision first.
  */
-const allowed = new Set([
+export const allowedLicenses = new Set([
   '0BSD',
   'Apache-2.0',
   'BSD-2-Clause',
@@ -36,21 +39,17 @@ const allowed = new Set([
   'MPL-2.0',
 ]);
 
-function fail(message, exitCode) {
-  process.stderr.write(`${message}\n`);
-  process.exitCode = exitCode;
-}
+/**
+ * @typedef {{ name: string, versions: string[] }} LicensePackage
+ * @typedef {Record<string, LicensePackage[]>} LicenseReport
+ */
 
-function readLicenses() {
-  const output = execFileSync('pnpm', ['licenses', 'list', '--json'], {
-    encoding: 'utf8',
-    maxBuffer: 32 * 1024 * 1024,
-  });
-  const parsed = JSON.parse(output);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('pnpm did not report a licence object.');
+export class LicenseReportError extends Error {
+  /** @param {string} message */
+  constructor(message) {
+    super(message);
+    this.name = 'LicenseReportError';
   }
-  return parsed;
 }
 
 /**
@@ -59,8 +58,14 @@ function readLicenses() {
  * `OR` passes when any operand is allowed, `AND` only when all are. Anything
  * that is not a plain identifier or one of these two forms fails closed, so an
  * unparsed expression can never silently pass.
+ *
+ * @param {unknown} expression
+ * @returns {boolean}
  */
-function isAllowed(expression) {
+export function isAllowed(expression) {
+  if (typeof expression !== 'string') {
+    return false;
+  }
   const normalized = expression
     .trim()
     .replace(/^\((.*)\)$/su, '$1')
@@ -74,55 +79,131 @@ function isAllowed(expression) {
   if (/\sAND\s/iu.test(normalized) && !/\sOR\s/iu.test(normalized)) {
     return normalized.split(/\sAND\s/iu).every((part) => isAllowed(part));
   }
-  return allowed.has(normalized.replace(/\+$/u, ''));
+  return allowedLicenses.has(normalized.replace(/\+$/u, ''));
 }
 
-function main() {
-  const command = process.argv[2];
+/**
+ * Rejects any report whose shape is not exactly what the violation scan relies
+ * on.
+ *
+ * Without this the scan would iterate an empty list for a malformed bucket and
+ * report success for a disallowed licence, which would defeat the purpose of a
+ * default-deny gate.
+ *
+ * @param {unknown} report
+ * @returns {LicenseReport}
+ */
+export function assertLicenseReport(report) {
+  if (report === null || typeof report !== 'object' || Array.isArray(report)) {
+    throw new LicenseReportError('The licence report is not an object.');
+  }
+  for (const [license, packages] of Object.entries(
+    /** @type {Record<string, unknown>} */ (report),
+  )) {
+    if (license.trim() === '') {
+      throw new LicenseReportError('The licence report contains an empty licence name.');
+    }
+    if (!Array.isArray(packages)) {
+      throw new LicenseReportError(`The licence report entry for ${license} is not a list.`);
+    }
+    if (packages.length === 0) {
+      throw new LicenseReportError(`The licence report entry for ${license} is empty.`);
+    }
+    for (const candidate of packages) {
+      if (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) {
+        throw new LicenseReportError(`The licence report entry for ${license} is malformed.`);
+      }
+      const entry = /** @type {{ name?: unknown, versions?: unknown }} */ (candidate);
+      if (typeof entry.name !== 'string' || entry.name.trim() === '') {
+        throw new LicenseReportError(`A package under ${license} has no usable name.`);
+      }
+      if (!Array.isArray(entry.versions) || entry.versions.length === 0) {
+        throw new LicenseReportError(`Package ${entry.name} under ${license} has no versions.`);
+      }
+    }
+  }
+  return /** @type {LicenseReport} */ (report);
+}
+
+/**
+ * Returns one sorted line per package whose licence is not allowed.
+ *
+ * @param {unknown} report
+ * @returns {string[]}
+ */
+export function collectViolations(report) {
+  const validated = assertLicenseReport(report);
+  /** @type {string[]} */
+  const violations = [];
+  for (const [license, packages] of Object.entries(validated)) {
+    if (isAllowed(license)) {
+      continue;
+    }
+    for (const entry of packages) {
+      violations.push(`  ${entry.name}@${entry.versions.join(', ')}: ${license}`);
+    }
+  }
+  return violations.toSorted();
+}
+
+/**
+ * @param {string} message
+ * @param {number} exitCode
+ */
+function fail(message, exitCode) {
+  stderr.write(`${message}\n`);
+  process.exitCode = exitCode;
+}
+
+/** @returns {LicenseReport} */
+function readLicenseReport() {
+  const output = execFileSync('pnpm', ['licenses', 'list', '--json'], {
+    encoding: 'utf8',
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return assertLicenseReport(JSON.parse(output));
+}
+
+/** @param {string | undefined} command */
+export function main(command) {
   if (command === '--help' || command === '-h') {
-    process.stdout.write(help);
+    stdout.write(help);
     return;
   }
   if (command !== undefined && command !== '--list') {
-    process.stderr.write(help);
+    stderr.write(help);
     fail('Expected no command, --list, or --help.', 2);
     return;
   }
 
-  let licenses;
+  let report;
   try {
-    licenses = readLicenses();
-  } catch {
-    fail('Licence verification could not read the resolved dependency tree.', 1);
+    report = readLicenseReport();
+  } catch (error) {
+    const detail = error instanceof LicenseReportError ? ` ${error.message}` : '';
+    fail(`Licence verification could not read the resolved dependency tree.${detail}`, 1);
     return;
   }
 
   if (command === '--list') {
-    const rows = Object.entries(licenses)
-      .map(([license, packages]) => [license, Array.isArray(packages) ? packages.length : 0])
+    const rows = Object.entries(report)
+      .map(
+        ([license, packages]) =>
+          /** @type {[license: string, count: number]} */ ([license, packages.length]),
+      )
       .toSorted((left, right) => right[1] - left[1]);
     for (const [license, count] of rows) {
-      process.stdout.write(`${String(count).padStart(5)}  ${license}\n`);
+      stdout.write(`${String(count).padStart(5)}  ${license}\n`);
     }
     return;
   }
 
-  const violations = [];
-  for (const [license, packages] of Object.entries(licenses)) {
-    if (isAllowed(license)) {
-      continue;
-    }
-    for (const entry of Array.isArray(packages) ? packages : []) {
-      const versions = Array.isArray(entry?.versions) ? entry.versions.join(', ') : 'unknown';
-      violations.push(`  ${entry?.name ?? 'unknown'}@${versions}: ${license}`);
-    }
-  }
-
+  const violations = collectViolations(report);
   if (violations.length > 0) {
     fail(
       [
         'Disallowed dependency licences found:',
-        ...violations.toSorted(),
+        ...violations,
         '',
         'See docs/development/LICENSE-POLICY.md. A new licence needs a documented',
         'owner decision before it may be added to the allowlist.',
@@ -132,4 +213,8 @@ function main() {
   }
 }
 
-main();
+// Only run as a command line tool, so that the pure helpers above stay
+// importable from the regression tests.
+if (argv[1] && import.meta.url === pathToFileURL(argv[1]).href) {
+  main(argv[2]);
+}
