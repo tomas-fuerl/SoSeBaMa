@@ -38,6 +38,15 @@ Alles, was oben nicht aufgeführt ist, gilt als nicht zugelassen. Die Prüfung
 arbeitet mit Default-Deny; auch eine unbekannte, fehlende oder nicht
 auswertbare Lizenzangabe schlägt fehl.
 
+Die Tabelle nennt exakte SPDX-Kennungen. Eine Variante mit angehängtem `+` wie
+`MIT+` ist eine eigene Kennung und damit nicht zugelassen, solange sie nicht
+ausdrücklich in die Tabelle aufgenommen wurde. Die Prüfung normalisiert das `+`
+bewusst nicht weg.
+
+Ebenso gilt ein Bericht ohne jede Abhängigkeit nicht als bestanden, sondern als
+nicht lesbar: Er würde sonst alle Abhängigkeiten auf einmal als geprüft
+ausweisen.
+
 Ausdrücklich ausgeschlossen sind:
 
 - `AGPL` in allen Fassungen und `SSPL`. Beide dehnen ihre Pflichten auf die

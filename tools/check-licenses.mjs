@@ -79,7 +79,10 @@ export function isAllowed(expression) {
   if (/\sAND\s/iu.test(normalized) && !/\sOR\s/iu.test(normalized)) {
     return normalized.split(/\sAND\s/iu).every((part) => isAllowed(part));
   }
-  return allowedLicenses.has(normalized.replace(/\+$/u, ''));
+  // No normalisation beyond trimming and one outer parenthesis pair. A trailing
+  // `+` marks a different SPDX identifier such as `MIT+`, and the policy table
+  // lists exact identifiers only, so it must not silently resolve to `MIT`.
+  return allowedLicenses.has(normalized);
 }
 
 /**
@@ -97,9 +100,13 @@ export function assertLicenseReport(report) {
   if (report === null || typeof report !== 'object' || Array.isArray(report)) {
     throw new LicenseReportError('The licence report is not an object.');
   }
-  for (const [license, packages] of Object.entries(
-    /** @type {Record<string, unknown>} */ (report),
-  )) {
+  const entries = Object.entries(/** @type {Record<string, unknown>} */ (report));
+  // An empty report is not a clean tree, it is a tree that could not be read.
+  // Accepting it would report success for every dependency at once.
+  if (entries.length === 0) {
+    throw new LicenseReportError('The licence report lists no dependencies at all.');
+  }
+  for (const [license, packages] of entries) {
     if (license.trim() === '') {
       throw new LicenseReportError('The licence report contains an empty licence name.');
     }
@@ -119,6 +126,13 @@ export function assertLicenseReport(report) {
       }
       if (!Array.isArray(entry.versions) || entry.versions.length === 0) {
         throw new LicenseReportError(`Package ${entry.name} under ${license} has no versions.`);
+      }
+      for (const version of entry.versions) {
+        if (typeof version !== 'string' || version.trim() === '') {
+          throw new LicenseReportError(
+            `Package ${entry.name} under ${license} has an unusable version entry.`,
+          );
+        }
       }
     }
   }

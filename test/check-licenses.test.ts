@@ -77,6 +77,17 @@ describe('SPDX expressions', () => {
       expect(isAllowed(value as unknown as string)).toBe(false);
     }
   });
+
+  /**
+   * A trailing `+` marks a different SPDX identifier. The policy table lists
+   * exact identifiers, so `MIT+` must not resolve to `MIT`.
+   */
+  it.each(['MIT+', 'Apache-2.0+', 'ISC+', 'GPL-3.0+', 'AGPL-3.0+'])(
+    'does not normalise the or-later form %s onto the allowlist',
+    (license) => {
+      expect(isAllowed(license)).toBe(false);
+    },
+  );
 });
 
 describe('report validation', () => {
@@ -110,6 +121,25 @@ describe('report validation', () => {
   it('rejects a malformed bucket even when the licence itself is allowed', () => {
     expect(() => assertLicenseReport({ MIT: 'unexpected' })).toThrow(LicenseReportError);
   });
+
+  /**
+   * An empty report is not a clean tree but a tree that could not be read.
+   * Accepting it would report success for every dependency at once.
+   */
+  it('rejects a report without any dependency', () => {
+    expect(() => assertLicenseReport({})).toThrow(LicenseReportError);
+  });
+
+  it.each([
+    ['a null version', { MIT: [{ name: 'x', versions: [null] }] }],
+    ['an object version', { MIT: [{ name: 'x', versions: [{}] }] }],
+    ['an empty version string', { MIT: [{ name: 'x', versions: [''] }] }],
+    ['a blank version string', { MIT: [{ name: 'x', versions: ['   '] }] }],
+    ['a numeric version', { MIT: [{ name: 'x', versions: [1] }] }],
+    ['one bad version among good ones', { MIT: [{ name: 'x', versions: ['1.0.0', null] }] }],
+  ] as const)('rejects %s even under an allowed licence', (_label, value) => {
+    expect(() => assertLicenseReport(value)).toThrow(LicenseReportError);
+  });
 });
 
 describe('violation collection', () => {
@@ -132,6 +162,8 @@ describe('violation collection', () => {
     ['a string bucket', { 'GPL-3.0': 'unexpected' }],
     ['an empty bucket', { 'GPL-3.0': [] }],
     ['a null bucket', { 'GPL-3.0': null }],
+    ['an entirely empty report', {}],
+    ['an unusable version under an allowed licence', { MIT: [{ name: 'x', versions: [null] }] }],
   ] as const)('fails closed instead of passing silently for %s', (_label, value) => {
     expect(() => collectViolations(value)).toThrow(LicenseReportError);
   });
