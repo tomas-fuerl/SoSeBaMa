@@ -72,11 +72,14 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    ```
 
    Format, ESLint, TypeScript, die drei Laufzeitbuilds, die automatisierten
-   Architektur-, Prozess- und Laufzeittests sowie die Prüfung relativer
-   Markdown-Dateiziele müssen jeweils mit Exit-Code `0` enden. Die
-   Architekturtests nennen bei einem Grenzverstoß Datei und Regel. Die
-   Prozesstests senden reale lokale Signale und räumen fehlgeschlagene Child
-   Processes mit harten Timeouts auf.
+   Architektur-, Prozess- und Laufzeittests, die Lizenzprüfung der
+   Abhängigkeiten sowie die Prüfung relativer Markdown-Dateiziele müssen jeweils
+   mit Exit-Code `0` enden. Die Architekturtests nennen bei einem Grenzverstoß
+   Datei und Regel. Die Prozesstests senden reale lokale Signale und räumen
+   fehlgeschlagene Child Processes mit harten Timeouts auf. Die Lizenzprüfung
+   arbeitet mit Default-Deny; die zugelassenen Lizenzen und das
+   Ausnahmeverfahren stehen in der
+   [Lizenzrichtlinie](LICENSE-POLICY.md).
 
 6. Nur wenn die Rollen lokal interaktiv benötigt werden, der
    [Anleitung für Web, API und Worker](RUNTIME-ROLES.md) folgen. Die dortigen
@@ -127,8 +130,12 @@ Markdown-Syntax gehören nicht zu ihrem Umfang.
   Keine private Registry oder Zugangsdaten in Repositorydateien eintragen.
 - **Lockfileabweichung:** Abbrechen und Ursache prüfen. Das Lockfile nur in
   einem eigenen, reviewten Abhängigkeitsupdate neu erzeugen.
+- **Nicht zugelassene Abhängigkeitslizenz:** Abbrechen. Die Allowlist wird nicht
+  angepasst, um einen fehlgeschlagenen Lauf zu beenden; das Verfahren steht in
+  der [Lizenzrichtlinie](LICENSE-POLICY.md).
 - **Erforderliches Installationsskript:** Abbrechen. `--ignore-scripts` ist für
-  den aktuellen Laufzeitschnitt geprüft. Spätere Werkzeuge mit notwendigen
+  den aktuellen Laufzeitschnitt geprüft und zusätzlich in `.npmrc` verankert,
+  sodass die Policy auch ohne das Kommandozeilenflag gilt. Spätere Werkzeuge mit notwendigen
   Installations- oder Generierungsschritten benötigen zuerst einen eigenen
   kontrollierten Supply-Chain-Nachweis.
 - **Prüfungsfehler:** Den ersten fehlgeschlagenen Schritt beheben. Prüfregeln

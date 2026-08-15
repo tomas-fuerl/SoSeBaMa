@@ -1,0 +1,35 @@
+version: 2
+
+# Versionsupdates nach ADR-0013. Ausdruecklich ohne Auto-Merge: Jede
+# Aktualisierung durchlaeuft denselben Review- und Pflichtcheck wie jede andere
+# Aenderung. Sicherheitsupdates sind davon getrennt und in den
+# Repositoryeinstellungen aktiviert.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    groups:
+      development-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: docker
+    directories:
+      - /containers
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
