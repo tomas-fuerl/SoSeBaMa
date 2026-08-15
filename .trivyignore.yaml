@@ -4,125 +4,156 @@
 # der Regelfall. Das Verfahren steht in docs/development/SUPPLY-CHAIN-CHECKS.md.
 #
 # Jeder Eintrag benötigt:
-#   id          die Kennung des Befunds
-#   statement   Begründung, Einbindungsart und geprüfte Alternativen
+#   id          die Kennung des Befunds, CVE oder GHSA
+#   statement   Wirkung, Erreichbarkeit in dieser Konfiguration und Restrisiko
 #   expired_at  Ablaufdatum; danach schlägt der Befund wieder fehl
 #
 # `expired_at` ist keine Formalie: Trivy lässt die Ausnahme danach automatisch
 # verfallen, sodass eine vergessene Ausnahme sichtbar wird, statt dauerhaft zu
 # gelten. Ein Eintrag ohne Ablaufdatum ist nach dieser Richtlinie unzulässig.
+#
+# Das YAML-Format der Ignoredatei ist bei Trivy als experimentell
+# gekennzeichnet. Die Trivy-Version ist deshalb exakt gepinnt; ein Upgrade des
+# Scanners muss diese Datei ausdrücklich erneut prüfen.
+
+# ---------------------------------------------------------------------------
+# Gruppe: Go-Befunde im vorkompilierten Caddy-Binary des Web-Images
+#
+# Reparaturweg ausgeschöpft: Caddy 2.11.4 ist die neueste veröffentlichte
+# Version. Das offizielle Image wurde seit dem ursprünglichen Pin neu gebaut,
+# nachweislich aber mit derselben Go-Toolchain: Trivy meldet danach unverändert
+# `stdlib v1.26.3`, `x/net v0.55.0` und `x/text v0.37.0`. Das Binary wird als
+# offizielles Image übernommen und nicht selbst gebaut; nur ein
+# Upstream-Release mit neuerer Go-Version hilft. Dependabot überwacht das
+# Docker-Ökosystem.
+#
+# Grundlage der Erreichbarkeitsbewertung ist die tatsächliche Konfiguration in
+# containers/caddy/. Beide Caddyfiles setzen `admin off` und `auto_https off`.
+# Es sind konfiguriert: `respond`, `handle_path`, `reverse_proxy`, `root`,
+# `try_files`, `file_server` und `header`. Nicht konfiguriert sind
+# insbesondere TLS-Terminierung, `templates`, `browse`, XML-Verarbeitung und
+# ein xDS-Client. Der Startlog von Caddy bestätigt zusätzlich:
+# "HTTP/2 skipped because it requires TLS".
+#
+# Das ist eine Bewertung auf Konfigurationsebene, kein Nachweis auf Codeebene.
+# Sie schließt Erreichbarkeit über einen nicht betrachteten internen Pfad nicht
+# aus.
+#
+# Mitigation in DEV: Caddy ist ausschließlich über einen lokalen
+# Loopback-Hostport erreichbar, das Anwendungsnetz ist `internal`.
+#
+# VOR EINER TST- ODER PRD-FREIGABE IST DIESE GRUPPE NEU ZU BEWERTEN. Dort
+# entfällt die Loopback-Mitigation, und die als erreichbar eingestuften Befunde
+# wirken gegen einen von außen erreichbaren Eingang.
+# ---------------------------------------------------------------------------
 
 vulnerabilities:
-  # Go-Standardbibliothek und Go-Module im vorkompilierten Caddy-Binary.
-  #
-  # Caddy 2.11.4 ist die neueste veröffentlichte Version; ein Versionssprung
-  # steht nicht zur Verfügung. Das offizielle Image wurde seit dem ursprünglichen
-  # Pin neu gebaut, jedoch nachweislich mit derselben Go-Toolchain: Nach dem
-  # Digestwechsel meldet Trivy unverändert `stdlib v1.26.3`, `x/net v0.55.0`
-  # und `x/text v0.37.0`.
-  #
-  # Das Binary wird als offizielles Image übernommen und nicht selbst gebaut.
-  # Die einzige Abhilfe ist ein Upstream-Release, das gegen eine neuere
-  # Go-Version gebaut wurde. Dependabot überwacht das Docker-Ökosystem und meldet
-  # einen solchen Rebuild.
-  #
-  # Bewertung: Caddy ist der einzige Anwendungseingang, die Befunde sind daher
-  # nicht folgenlos. Sie sind sämtlich als Denial of Service eingestuft, keiner
-  # als kritisch. Für DEV besteht kein Zugriff von außerhalb des Loopback. Vor
-  # einer TST- oder PRD-Freigabe ist diese Ausnahme neu zu bewerten und nicht
-  # ungeprüft zu verlängern.
+  # --- Als nicht erreichbar bewertet: TLS ist abgeschaltet ---------------
   - id: CVE-2026-27145
     paths:
       - usr/bin/caddy
     statement: >-
-      crypto/x509 in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
+      crypto/x509, Denial of Service beim Zertifikatsparsing. Nicht erreichbar: `auto_https off` und
+      keine `tls`-Direktive, es findet keine TLS-Terminierung und kein Zertifikatsparsing statt.
+      Restrisiko gering.
     expired_at: 2026-11-16
   - id: CVE-2026-33818
     paths:
       - usr/bin/caddy
     statement: >-
-      encoding/asn1 in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
-      mit neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-39821
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      golang.org/x/net/idna im Caddy-Binary. Nur durch ein Upstream-Release mit neuerer Go-Version
-      behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-39822
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      os.Root in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-42504
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      mime in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-46600
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      golang.org/x/net/dns/dnsmessage im Caddy-Binary, gemeldet für das Modul und für die
-      Standardbibliothek. Nur durch ein Upstream-Release mit neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-56852
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      golang.org/x/text im Caddy-Binary. Nur durch ein Upstream-Release mit neuerer Go-Version
-      behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-56853
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      net/http in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-56858
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      html/template in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
-      mit neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-56859
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      encoding/xml in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release
-      mit neuerer Go-Version behebbar.
-    expired_at: 2026-11-16
-  - id: CVE-2026-56860
-    paths:
-      - usr/bin/caddy
-    statement: >-
-      net/url in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
+      encoding/asn1, Denial of Service. Erreichbar praktisch nur über X.509-Parsing, das mangels
+      TLS-Terminierung nicht stattfindet. Restrisiko gering.
     expired_at: 2026-11-16
   - id: CVE-2026-56862
     paths:
       - usr/bin/caddy
     statement: >-
-      crypto/tls in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
-      neuerer Go-Version behebbar.
+      crypto/tls, Denial of Service beim Handshake. Nicht erreichbar, da Caddy hier ausschliesslich
+      Klartext-HTTP bedient. Restrisiko gering.
     expired_at: 2026-11-16
-  # Nicht jeder Befund traegt eine CVE-Kennung. Dieser Eintrag wurde beim
-  # ersten Erfassen uebersehen, weil nur nach CVE-Kennungen gesucht wurde.
+  - id: CVE-2026-56853
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      net/http, unverschluesseltes HTTP/2. KEIN Denial of Service, sondern ein Transportproblem.
+      Nicht erreichbar: Der Caddy-Startlog meldet "HTTP/2 skipped because it requires TLS", HTTP/2
+      ist also nicht aktiv. Restrisiko gering; bei Einfuehrung von TLS neu zu bewerten.
+    expired_at: 2026-11-16
+
+  # --- Als nicht erreichbar bewertet: Funktion nicht konfiguriert --------
+  - id: CVE-2026-56858
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      html/template, Cross-Site Scripting durch Content Injection. KEIN Denial of Service. Nicht
+      erreichbar: Das `templates`-Modul ist nicht konfiguriert, und `file_server` laeuft ohne
+      `browse`, erzeugt also keine generierten HTML-Seiten. Restrisiko gering, aber bei Aktivierung
+      von `templates` oder `browse` sofort neu zu bewerten.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56859
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      encoding/xml, Denial of Service beim Dekodieren. Nicht erreichbar: In dieser Konfiguration
+      wird kein XML verarbeitet. Restrisiko gering.
+    expired_at: 2026-11-16
   - id: GHSA-hrxh-6v49-42gf
     paths:
       - usr/bin/caddy
     statement: >-
-      google.golang.org/grpc im Caddy-Binary, xDS RBAC und HTTP/2. Caddy nutzt gRPC nicht als
-      Anwendungseingang; behebbar nur durch ein Upstream-Release mit aktualisierter Abhaengigkeit.
+      google.golang.org/grpc, xDS RBAC und HTTP/2. KEIN Denial of Service, sondern ein
+      Autorisierungsproblem. Nicht erreichbar: Es ist kein xDS-Client und keine gRPC-Schnittstelle
+      konfiguriert; Caddy dient hier als HTTP-Reverse-Proxy und Dateiserver. Restrisiko gering.
+    expired_at: 2026-11-16
+
+  # --- Als potenziell erreichbar bewertet --------------------------------
+  - id: CVE-2026-39821
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/net/idna im net/http-Pfad. KEIN reiner Denial of Service; das Advisory nennt bei
+      entsprechender Verwendung eine Umgehung von Autorisierungsentscheidungen. Potenziell
+      erreichbar, weil Hostnamen bei jeder Anfrage verarbeitet werden. In DEV durch die reine
+      Loopback-Bindung mitigiert. Hoechste Prioritaet dieser Gruppe bei einer TST- oder
+      PRD-Bewertung.
+    expired_at: 2026-11-16
+  - id: CVE-2026-39822
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      os.Root, Verlassen der Wurzelgrenze ueber Symlinks. KEIN Denial of Service. Potenziell
+      erreichbar ueber `file_server` mit `root * /srv`. Mitigation: /srv enthaelt ausschliesslich
+      das gebaute Web-Bundle ohne Symlinks, das Image ist read-only, und der Container laeuft als
+      Nicht-Root ohne Capabilities. Restrisiko gering, aber nicht null.
+    expired_at: 2026-11-16
+  - id: CVE-2026-42504
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      mime, Denial of Service. Erreichbar, weil `file_server` den Content-Type bestimmt. In DEV
+      durch die Loopback-Bindung mitigiert.
+    expired_at: 2026-11-16
+  - id: CVE-2026-46600
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/net/dns/dnsmessage, gemeldet fuer das Modul und fuer die Standardbibliothek.
+      Erreichbar, weil `reverse_proxy` die Namen `api` und `web` aufloest. Die Aufloesung erfolgt
+      ausschliesslich im internen Compose-Netz gegen den Docker-DNS. Restrisiko gering.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56852
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      golang.org/x/text, Denial of Service. Potenziell erreichbar ueber Header- und
+      Pfadverarbeitung. In DEV durch die Loopback-Bindung mitigiert.
+    expired_at: 2026-11-16
+  - id: CVE-2026-56860
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      net/url, Denial of Service beim Parsen. Erreichbar, weil jede Anfrage eine URL traegt. In DEV
+      durch die Loopback-Bindung mitigiert.
     expired_at: 2026-11-16
 
 misconfigurations: []

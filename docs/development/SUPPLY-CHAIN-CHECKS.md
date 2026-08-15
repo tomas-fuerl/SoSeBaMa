@@ -73,9 +73,18 @@ Scanner oder der Basisimages erneut zu bewerten.
 
 ## Bestehende Ausnahmen
 
-Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: zwölf
-Go-Befunde im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH` und
-sämtlich als Denial of Service eingestuft.
+Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: 13 Go-Befunde
+im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH`. Davon tragen 12
+eine CVE-Kennung und einer eine GHSA-Kennung.
+
+**Nicht alle sind Denial of Service.** Fünf betreffen andere Wirkungen:
+`CVE-2026-39821` eine mögliche Umgehung von Autorisierungsentscheidungen,
+`CVE-2026-39822` das Verlassen einer Wurzelgrenze über Symlinks,
+`CVE-2026-56858` Cross-Site Scripting, `CVE-2026-56853` unverschlüsseltes
+HTTP/2 und `GHSA-hrxh-6v49-42gf` xDS-RBAC. Jede Ausnahme in
+[`.trivyignore.yaml`](../../.trivyignore.yaml) trägt deshalb eine eigene
+Bewertung aus Wirkung, Erreichbarkeit in der tatsächlichen Caddy-Konfiguration
+und Restrisiko, statt einer pauschalen Einstufung.
 
 Der Weg über ein Update ist ausgeschöpft. Caddy 2.11.4 ist die neueste
 veröffentlichte Version. Das offizielle Image wurde seit dem ursprünglichen Pin
@@ -85,11 +94,30 @@ Das Binary wird als offizielles Image übernommen und nicht selbst gebaut; die
 einzige Abhilfe ist ein Upstream-Release mit neuerer Go-Version. Dependabot
 überwacht das Docker-Ökosystem und meldet einen solchen Rebuild.
 
+Grundlage der Erreichbarkeitsbewertung ist die tatsächliche Konfiguration in
+`containers/caddy/`: Beide Caddyfiles setzen `admin off` und `auto_https off`;
+TLS-Terminierung, `templates`, `browse`, XML-Verarbeitung und ein xDS-Client
+sind nicht konfiguriert. Der Caddy-Startlog bestätigt zusätzlich
+„HTTP/2 skipped because it requires TLS". Das ist eine Bewertung auf
+Konfigurationsebene und kein Nachweis auf Codeebene; Erreichbarkeit über einen
+nicht betrachteten internen Pfad ist damit nicht ausgeschlossen.
+
 Die Ausnahmen laufen am 2026-11-16 ab. Caddy ist der einzige
 Anwendungseingang, die Befunde sind also nicht folgenlos; in DEV besteht
 allerdings kein Zugriff von außerhalb des Loopback. **Vor einer TST- oder
 PRD-Freigabe ist diese Gruppe neu zu bewerten und nicht ungeprüft zu
-verlängern.**
+verlängern.** Dort entfällt die Loopback-Mitigation. Höchste Priorität hat
+dabei `CVE-2026-39821`, weil Hostnamen bei jeder Anfrage verarbeitet werden.
+
+## Hinweis zum Format der Ignoredatei
+
+Das YAML-Format der Trivy-Ignoredatei ist vom Hersteller als experimentell
+gekennzeichnet und kann sich ohne Rückwärtskompatibilität ändern. Die
+Trivy-Version ist deshalb exakt gepinnt. **Ein Upgrade des Scanners muss
+`.trivyignore.yaml` ausdrücklich erneut prüfen**: Eine nicht mehr gelesene
+Ignoredatei würde die Ausnahmen stillschweigend unwirksam machen und den Lauf
+rot färben, eine anders interpretierte Datei könnte umgekehrt zu viel
+unterdrücken.
 
 ## Zusammenspiel mit Dependabot
 

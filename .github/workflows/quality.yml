@@ -82,6 +82,7 @@ jobs:
       - name: Scan web image for vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           version: v0.74.0
           scan-type: image
           image-ref: sosebama-web:dev
@@ -92,6 +93,7 @@ jobs:
       - name: Scan resolved dependencies for vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           version: v0.74.0
           scan-type: fs
           scan-ref: .
@@ -103,6 +105,7 @@ jobs:
       - name: Scan Dockerfiles and Compose for misconfiguration
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           version: v0.74.0
           scan-type: config
           scan-ref: .
@@ -112,13 +115,26 @@ jobs:
       # Bewusst nicht blockierend: Diese Befunde haben keinen Fix und koennen
       # nicht behoben werden. Sie bleiben aber sichtbar, damit die Entscheidung
       # ueber `ignore-unfixed` nicht dazu fuehrt, dass niemand sie mehr kennt.
-      - name: Report unfixed image findings without blocking
+      - name: Report unfixed backend image findings without blocking
         continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           version: v0.74.0
           scan-type: image
           image-ref: sosebama-backend:dev
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
+      - name: Report unfixed web image findings without blocking
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: sosebama-web:dev
           exit-code: '0'
           severity: CRITICAL,HIGH
           ignore-unfixed: false
