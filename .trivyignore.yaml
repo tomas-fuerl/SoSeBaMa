@@ -115,6 +115,15 @@ vulnerabilities:
       crypto/tls in der Go-Standardbibliothek des Caddy-Binarys. Nur durch ein Upstream-Release mit
       neuerer Go-Version behebbar.
     expired_at: 2026-11-16
+  # Nicht jeder Befund traegt eine CVE-Kennung. Dieser Eintrag wurde beim
+  # ersten Erfassen uebersehen, weil nur nach CVE-Kennungen gesucht wurde.
+  - id: GHSA-hrxh-6v49-42gf
+    paths:
+      - usr/bin/caddy
+    statement: >-
+      google.golang.org/grpc im Caddy-Binary, xDS RBAC und HTTP/2. Caddy nutzt gRPC nicht als
+      Anwendungseingang; behebbar nur durch ein Upstream-Release mit aktualisierter Abhaengigkeit.
+    expired_at: 2026-11-16
 
 misconfigurations: []
 secrets: []
