@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +18,20 @@ const policySettings = [
 
 function read(relativePath: string): string {
   return readFileSync(resolve(repositoryRoot, relativePath), 'utf8');
+}
+
+/**
+ * Paths matching `pathspec` that git currently tracks.
+ *
+ * An ignore rule alone proves nothing about a file that was committed before
+ * the rule existed — git keeps tracking it. Only the index answers that.
+ */
+function trackedPaths(pathspec: string): string[] {
+  const output = execFileSync('git', ['ls-files', '--', pathspec], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+  });
+  return output.split('\n').filter((line) => line.length > 0);
 }
 
 /** Non-empty, non-comment lines of an ignore file. */
@@ -83,6 +98,11 @@ describe('installation policy', () => {
     // it to be gitignored. A policy line placed there would be inert anyway,
     // so the invariant worth enforcing is that credentials cannot be committed
     // or shipped into a build context by accident.
+    //
+    // The index is checked as well as the ignore rules: git keeps tracking a
+    // file that was committed before its ignore rule existed, so the rules on
+    // their own would not carry the claim this test makes.
+    expect(trackedPaths('.npmrc'), '.npmrc liegt im Git-Index').toEqual([]);
     expect(ignorePatterns('.gitignore'), '.gitignore').toContain('.npmrc');
     expect(ignorePatterns('.dockerignore'), '.dockerignore').toContain('.npmrc');
   });
