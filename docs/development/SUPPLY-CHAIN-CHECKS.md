@@ -163,7 +163,55 @@ eingetreten; beide Male wurde er nur durch manuelle Durchsicht bemerkt.
 Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
 Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
 Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
-Eigentümerentscheidung und in #25 vermerkt.
+Eigentümerentscheidung und in
+[#25](https://github.com/tomas-fuerl/SoSeBaMa/issues/25) vermerkt.
+
+### Warum Hauptversionen nicht gruppiert werden
+
+Die beiden npm-Gruppen sammeln ausschließlich Neben- und Patchstände
+(`update-types: [minor, patch]`). Eine Hauptversion kommt als eigener Pull
+Request.
+
+Der Grund ist eine beobachtete Blockade, kein Vorsichtsprinzip. In
+[#38](https://github.com/tomas-fuerl/SoSeBaMa/pull/38) enthielt die
+Entwicklungsgruppe sechs Aktualisierungen. Vier davon waren verträglich, aber
+`typescript` sprang von `5.9.3` auf `7.0.2`, und `typescript-eslint` bricht
+gegen diese Hauptlinie mit `typescript-eslint does not support TS 7.0` ab. Der
+Pflichtcheck war damit rot, und die vier verträglichen Aktualisierungen ließen
+sich nicht einzeln übernehmen: Eine Gruppe ist genau ein Pull Request.
+
+Hauptversionen werden dadurch **nicht unterdrückt**. Sie werden einzeln
+vorgelegt und einzeln entschieden — passend dazu, dass ein Hauptversionswechsel
+nach [AP-01-COMPATIBILITY.md](../architecture/AP-01-COMPATIBILITY.md) einen
+eigenen Kompatibilitätsnachweis benötigt.
+
+### Bewusst ignorierte Hauptversionen
+
+Zwei Abhängigkeiten sind an die fixierte Node-Hauptversion gekoppelt und
+erhalten deshalb in `.github/dependabot.yml` eine `ignore`-Regel für
+`version-update:semver-major`:
+
+| Abhängigkeit | Ökosystem | Gekoppelt an |
+| --- | --- | --- |
+| `@types/node` | npm | `.node-version`, `engines.node` |
+| `node` (Basisimage) | docker | `.node-version`, beide Dockerfiles |
+
+Beide bewegen sich nur gemeinsam mit der Laufzeit. Ein isolierter Sprung wäre
+entweder wirkungslos oder falsch: Typdefinitionen einer höheren Node-Linie
+lassen Code gegen APIs typprüfen, die zur Laufzeit nicht existieren, ohne dass
+eine Prüfung anschlägt.
+
+**Bewusst in Kauf genommene Nebenwirkung.** Eine `ignore`-Regel gilt bei
+Dependabot auch für Sicherheitsaktualisierungen. Hier ist das ohne Folge:
+`@types/node` liefert ausschließlich Typdeklarationen und keinen ausgeführten
+Code, und für Dockerfile-Basisimages erzeugt Dependabot ohnehin keine
+Sicherheitsaktualisierungen. Beide bleiben zusätzlich durch die Trivy-Scans
+abgedeckt, die diese Regel nicht kennen. Für andere Abhängigkeiten wäre eine
+solche Regel nicht zulässig.
+
+Ein gewollter Wechsel der Node-Hauptlinie ändert `.node-version`, die
+`engines`-Angaben, beide Dockerfiles, `@types/node` und diese beiden
+`ignore`-Regeln in einem Vorgang mit eigenem Nachweis.
 
 ## Ausnahmeverfahren
 

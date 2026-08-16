@@ -11,11 +11,36 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     versioning-strategy: increase
+    # Gruppen sammeln ausschliesslich Neben- und Patchstaende. Hauptversionen
+    # bleiben ungruppiert und kommen als einzelner Pull Request. Grund: In einer
+    # gemeinsamen Gruppe blockiert eine einzige unvertraegliche Hauptversion
+    # alle uebrigen Aktualisierungen mit. Genau das ist in
+    # https://github.com/tomas-fuerl/SoSeBaMa/pull/38 eingetreten. Eine
+    # Hauptversion braucht ausserdem eine eigene Entscheidung und einen eigenen
+    # Kompatibilitaetsnachweis; sie wird hier nicht unterdrueckt, sondern
+    # einzeln vorgelegt.
     groups:
       development-dependencies:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
       production-dependencies:
         dependency-type: production
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Die Node-Typdefinitionen muessen der fixierten Node-Hauptversion folgen.
+      # Eine hoehere Hauptlinie liesse Code gegen APIs typpruefen, die zur
+      # Laufzeit nicht existieren, ohne dass eine Pruefung anschlaegt. Der Pin
+      # wandert bewusst gemeinsam mit `.node-version`, den `engines`-Angaben und
+      # den Basisimages. Das Paket enthaelt ausschliesslich Typdeklarationen und
+      # keinen ausgelieferten Code; die Regel unterdrueckt deshalb keine
+      # erreichbare Schwachstelle.
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
@@ -33,3 +58,15 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    ignore:
+      # Das Node-Basisimage ist an dieselbe Hauptversion gebunden wie
+      # `.node-version`, die `engines`-Angaben und `@types/node`. Ein Wechsel
+      # der Hauptlinie ist eine Stackentscheidung mit eigenem
+      # Kompatibilitaetsnachweis nach
+      # docs/architecture/AP-01-COMPATIBILITY.md und kein Routineupdate; als
+      # einzelnes Bumpangebot faellt er nur wiederkehrend rot aus. Patch- und
+      # Nebenstaende derselben Linie kommen weiterhin, ebenso alle Updates der
+      # uebrigen Images.
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
