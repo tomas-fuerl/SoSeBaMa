@@ -132,7 +132,7 @@ wäre für sich konsistent.
 | Stelle | Geforderte Gleichheit |
 | --- | --- |
 | `.node-version` | Referenz für lokale Shell und `actions/setup-node` |
-| `engines.node` in `package.json` | exakt gleich, damit `engineStrict` den Patchstand erfasst |
+| `engines.node` in `package.json` | **Linie** `^<Version>`, am Pin verankert — nicht exakt, siehe unten |
 | `FROM node:…` in beiden Dockerfiles | exakt gleich |
 | `@types/node` | **nur Hauptversion gleich** |
 
@@ -142,6 +142,49 @@ Forderung nach voller Gleichheit wäre sachlich falsch und dauerhaft rot.
 Maßgeblich ist die Hauptversion, weil sie entscheidet, welche APIs deklariert
 sind. `.github/dependabot.yml` hält sie über eine `ignore`-Regel für
 Hauptversionen in der Linie.
+
+#### Warum `engines.node` eine Linie nennt und keine exakte Version
+
+`engines.node` stand zunächst exakt auf dem Pin. Das war falsch, und der Fehler
+war teuer: **`engines` gilt auch für fremde Umgebungen, die ihr eigenes Node
+mitbringen.** Dependabots Updater-Container läuft auf einem anderen Patchstand
+als der hier fixierte. Seit `engineStrict` wirksam ist, brach seine
+npm-Aktualisierung deshalb ab:
+
+```
+| typescript | tool_version_not_supported | {
+|            |   "tool-name": "Node",
+|            |   "detected-version": "24.18.1",
+|            |   "supported-versions": "v24.19.0" }
+```
+
+Die Folge war nicht kosmetisch: Dependabot konnte keine npm-Aktualisierungen
+mehr erzeugen, **einschließlich Sicherheitsaktualisierungen**.
+
+Nachgemessen unter Node 24.19.0, also genau dem Stand des Updaters:
+
+| `engines.node` | Ergebnis |
+| --- | --- |
+| `24.18.1` | Exit `1`, `ERR_PNPM_UNSUPPORTED_ENGINE` |
+| `^24.18.1` | Exit `0` |
+
+Die Rollenteilung lautet daher:
+
+- **`engines.node`** deklariert die *unterstützte* Linie.
+- **`.node-version` und die Dockerfile-Basen** legen fest, was tatsächlich
+  läuft — beide weiterhin exakt.
+
+`engineStrict` setzt die Linie weiterhin hart durch; gemessen brechen
+`^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1 jeweils ab. Der
+Driftschutz hängt ohnehin nicht an `engines`, sondern an der
+Deklarationsgleichheit, die `test/toolchain-policy.test.ts` erzwingt: Der Caret
+bleibt am Pin verankert, ein Anheben von `.node-version` zieht diesen Eintrag
+also mit.
+
+**Warum `engines.pnpm` exakt bleibt:** Für pnpm bringt keine fremde Umgebung
+eine eigene Version mit. Corepack aktiviert überall genau den Stand aus
+`packageManager`; es gibt hier also keinen Fall, den eine Linienangabe retten
+müsste.
 
 **pnpm**
 

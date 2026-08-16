@@ -154,10 +154,17 @@ describe('pinned Node version', () => {
     expect(pinnedNodeVersion).toMatch(/^\d+\.\d+\.\d+$/u);
   });
 
-  it('requires that exact version through an exact engines entry', () => {
-    // A range would let `engineStrict` accept a drifting patch level and would
-    // silently defeat the stage assertion below.
-    expect(readRootManifest().engines?.node).toBe(pinnedNodeVersion);
+  it('declares the supported line anchored at that version', () => {
+    // `engines.node` states which runtimes are *supported*; `.node-version` and
+    // the Dockerfile bases state which one is actually used. Keeping the two
+    // apart is not cosmetic: an exact `engines.node` also applies to foreign
+    // environments that bring their own Node, and it broke Dependabot's npm
+    // updater, whose container runs a different patch level.
+    //
+    // The caret keeps the range anchored at the pinned version, so raising
+    // `.node-version` still forces this entry to move with it. What no longer
+    // fails is a foreign tool one patch level ahead within the same line.
+    expect(readRootManifest().engines?.node).toBe(`^${pinnedNodeVersion}`);
   });
 
   it('builds every Node stage on exactly that version', () => {
