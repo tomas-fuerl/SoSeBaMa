@@ -2,7 +2,7 @@
 
 - Status: Bestanden
 - Prüfstand: 2026-08-02
-- Letzte Durchsicht: 2026-08-13
+- Letzte Durchsicht: 2026-08-16
 - Bezogenes Issue: [#9](https://github.com/tomas-fuerl/SoSeBaMa/issues/9)
 - Geltungsbereich: AP-01 in lokaler isolierter DEV-Probe
 
@@ -236,3 +236,9 @@ dem ersten verbindlichen `pnpm-lock.yaml`, bei jeder Änderung einer genannten
 Hauptversion sowie bei geänderten Node-, Prisma-, Vite- oder pnpm-Grenzen
 wiederholt. Abweichende Patchstände werden im zugehörigen Pull Request
 dokumentiert.
+
+Damit dieser Korridor nicht durch ein Routineupdate unbemerkt verlassen wird,
+legt Dependabot Hauptversionen einzeln statt gruppiert vor; `@types/node` und
+das Node-Basisimage sind zusätzlich an die hier fixierte Node-Hauptlinie
+gebunden. Die Regeln und ihre Nebenwirkungen stehen in den
+[Prüfungen der Software-Lieferkette](../development/SUPPLY-CHAIN-CHECKS.md).
