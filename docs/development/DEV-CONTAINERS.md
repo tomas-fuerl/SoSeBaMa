@@ -1,7 +1,7 @@
 # Lokalen DEV-Containerrahmen starten und zurückbauen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-13
+- Letzter Prüfstand: 2026-08-16
 - Bezogenes Issue: [#15](https://github.com/tomas-fuerl/SoSeBaMa/issues/15)
 - Geltungsbereich: ausschließlich lokales DEV
 
@@ -131,7 +131,27 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    internen Netz, ist also über den Hosteingang aus `pnpm container:smoke`
    grundsätzlich nicht erreichbar.
 
-5. Die strukturierten API- und Worker-Startlogs prüfen:
+5. Die tatsächliche Auslieferung der Einzelseitenanwendung in Chromium prüfen:
+
+   ```sh
+   pnpm browser:smoke
+   ```
+
+   Erwartet werden Exit-Code `0` und zwei bestandene Prüfungen. Der Befehl
+   startet die in der [Browserlaufzeit](BROWSER-RUNTIME.md) gepinnte
+   Browserlaufzeit **im internen Anwendungsnetz** und ruft den Gateway unter
+   `http://gateway:8080` auf — ohne Hostnetz, ohne Hostport und ohne
+   zusätzliche Rechte. Das Arbeitsverzeichnis ist schreibgeschützt eingehängt.
+
+   Dies ist der einzige Nachweis, dass die Anwendung wirklich ausgeliefert wird
+   und rendert. Schritt 3 und 4 blieben auch dann grün, wenn das Bundle kaputt
+   wäre: Sie prüfen ausschließlich Healthpfade.
+
+   Beim ersten Lauf wird die Browserlaufzeit einmalig bezogen; das dauert
+   spürbar. Ein Lauf ohne gestarteten Stack bricht mit dem Hinweis ab, dass kein
+   internes Anwendungsnetz gefunden wurde.
+
+6. Die strukturierten API- und Worker-Startlogs prüfen:
 
    ```sh
    pnpm container:logs
@@ -141,7 +161,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    `runtime.started`; PID und Hostname fehlen. Der vollständige Datenvertrag
    steht in der [DEV-Telemetrieanleitung](OBSERVABILITY.md).
 
-6. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
+7. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
 
    ```sh
    curl --fail --silent --show-error "http://127.0.0.1:<LOCAL_GATEWAY_PORT>/health/gateway"
@@ -152,7 +172,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    Erwartet werden die Rollen `gateway`, `web` und `api` jeweils mit Status
    `ready`. Andere Antworten, Weiterleitungen oder Fachinhalte sind Fehler.
 
-7. Containerstatus und veröffentlichte Ports prüfen:
+8. Containerstatus und veröffentlichte Ports prüfen:
 
    ```sh
    pnpm container:status

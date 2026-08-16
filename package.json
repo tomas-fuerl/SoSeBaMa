@@ -10,6 +10,7 @@
     "pnpm": "11.18.0"
   },
   "scripts": {
+    "browser:smoke": "node tools/check-dev-containers.mjs browser",
     "build": "pnpm --recursive --if-present run build",
     "check": "pnpm format && pnpm lint && pnpm typecheck && pnpm test && pnpm licenses:check && pnpm docs:links",
     "container:build": "docker compose -f compose.yaml -f compose.dev.yaml build",

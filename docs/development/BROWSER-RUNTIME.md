@@ -88,6 +88,26 @@ und `arm64` auf. Das ist keine Bequemlichkeit, sondern notwendig: CI läuft auf
 `amd64`, Entwicklungsmaschinen häufig auf `arm64`. Ein Plattformdigest würde auf
 der jeweils anderen Architektur fehlschlagen.
 
+## Warum die Chromium-Sandbox abgeschaltet ist
+
+Das Image läuft ab Werk als `root`; der Smoke startet es dagegen bewusst als
+`1000:1000` mit `--cap-drop ALL` und `no-new-privileges`. Genau diese Härtung
+nimmt Chromium die Mittel, seine eigene Sandbox aufzubauen — sie braucht dafür
+Capabilities beziehungsweise User-Namespaces.
+
+Die Entscheidung lautet deshalb: **Sandbox aus, Härtung an.** Sie umzudrehen
+hieße, dem Browser die Rechte zurückzugeben, die die Containerpolicy gerade
+entfernt. Der Container ist stattdessen die Isolationsgrenze — ephemer,
+read-only, ohne Capabilities, unprivilegiert, im `internal`-Netz ohne Route nach
+außen. Der Smoke lädt ausschließlich Inhalte, die dieses Repository erzeugt hat.
+
+Nachgewiesen wurde die Netzgrenze aus dem Browsercontainer heraus: weder
+`https://example.com` noch der veröffentlichte Hostport waren erreichbar, der
+Gateway dagegen mit HTTP 200.
+
+Die Einstellung steht in `playwright.config.ts` mit derselben Begründung, damit
+sie nicht ohne Kenntnis dieser Abwägung geändert wird.
+
 ## Voraussetzungen
 
 - Node und pnpm in den fixierten Versionen, siehe

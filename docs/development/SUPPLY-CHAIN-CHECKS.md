@@ -26,6 +26,7 @@ AP-11 und hier bewusst nicht enthalten.
 | Dependency Review | neu hinzukommende Abhängigkeiten im Pull Request | Schweregrad `high` |
 | Lizenzprüfung | Lizenz jeder aufgelösten Abhängigkeit | jeder nicht zugelassenen Lizenz |
 | Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` mit verfügbarem Fix |
+| Trivy `image` (Browserlaufzeit) | das gepinnte Playwright-Testimage | **nichts** — nur Sichtbarkeit, siehe unten |
 | Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH`, auch ohne Fix |
 | Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
 | CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Sicherheitsbefunden ab `HIGH`, über die Ruleset-Regel |
@@ -285,6 +286,45 @@ Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
 Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
 Eigentümerentscheidung und in
 [#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46) verfolgt.
+
+## Warum die Browserlaufzeit nicht blockierend gescannt wird
+
+Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
+Eigentümerentscheidung, keine Nachlässigkeit.
+
+Gemessen am 2026-08-16 gegen
+`mcr.microsoft.com/playwright:v1.62.1-noble`, Schweregrad `CRITICAL,HIGH`, nur
+Befunde **mit** verfügbarem Fix:
+
+| Paket | Befunde |
+| --- | --- |
+| `tar` | 1 × CRITICAL, 1 × HIGH |
+| `brace-expansion` | 3 × HIGH |
+| `ip-address` | 1 × HIGH |
+| `undici` | 1 × HIGH |
+
+Alle sieben liegen im **gebündelten npm** des Images — dieselbe Klasse wie beim
+Node-Basisimage. Dort war die Abhilfe, npm aus dem Runtime-Image zu entfernen;
+hier ist sie nicht verfügbar, weil das Image vom Hersteller kommt und nur dieser
+es neu bauen kann.
+
+Die Entscheidung stützt sich auf vier Punkte:
+
+1. Das Image ist ein **reines Testartefakt** und in keinem ausgelieferten
+   Container enthalten. Weder `backend.Dockerfile` noch `web.Dockerfile`
+   beziehen sich darauf.
+2. Der Smoke ruft `node_modules/.bin/playwright` direkt auf. **npm wird nicht
+   ausgeführt**, das gebündelte Abhängigkeitsset also nicht erreicht.
+3. Der Container läuft unprivilegiert, mit read-only Root-Dateisystem, ohne
+   Capabilities, im `internal`-Netz ohne Route nach außen. Nachgewiesen:
+   Weder das Internet noch ein Hostport ist von dort erreichbar.
+4. Ein blockierendes Gate wäre ohne Handlungsoption dauerhaft rot — genau die
+   Lage, in der ein Check abgeschaltet statt beachtet wird.
+
+Der Scan bleibt trotzdem im Lauf, damit die Befunde sichtbar sind und eine
+Verschlechterung auffällt. **Auslöser für eine Neubewertung:** ein Befund
+außerhalb des npm-Bundles, ein Befund in einer Browserbibliothek oder jede
+Verwendung des Images außerhalb des Tests.
 
 ### Warum Hauptversionen nicht gruppiert werden
 

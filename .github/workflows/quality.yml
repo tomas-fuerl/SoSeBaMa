@@ -145,6 +145,29 @@ jobs:
         run: pnpm container:health
       - name: Verify DEV host ingress
         run: pnpm container:smoke
+      # Bewusst nicht blockierend, und das ist eine Eigentuemerentscheidung.
+      # Das Playwright-Image ist ein reines Testartefakt: Es wird nie
+      # ausgeliefert, laeuft unprivilegiert im internen Netz ohne Route nach
+      # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
+      # liegen im gebuendelten npm des Images -- derselbe Fall wie beim
+      # Node-Basisimage, dort aber entfernbar, hier nicht: Nur der Hersteller
+      # kann das Image neu bauen. Ein blockierendes Gate waere dauerhaft rot
+      # und wuerde abgeschaltet statt beachtet. Begruendung und Stand:
+      # docs/development/SUPPLY-CHAIN-CHECKS.md
+      - name: Report browser image findings without blocking
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+      - name: Verify SPA delivery in Chromium
+        run: pnpm browser:smoke
       - name: Verify DEV structured logs
         run: pnpm container:logs
       # Ohne diesen Schritt ist eine fehlgeschlagene Rolle nur als Exit-Code
