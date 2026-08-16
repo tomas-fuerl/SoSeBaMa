@@ -1,4 +1,4 @@
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS dependencies
+FROM node:26.7.0-bookworm-slim@sha256:cd565714d4da3e84bfd341e31448f81d47c6362198f152345297c9c1154e6341 AS dependencies
 
 WORKDIR /workspace
 
@@ -43,7 +43,7 @@ RUN pnpm --filter @sobama/config run build \
 RUN pnpm --filter @sobama/api deploy --prod --legacy /output/api
 RUN pnpm --filter @sobama/worker deploy --prod --legacy /output/worker
 
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS runtime
+FROM node:26.7.0-bookworm-slim@sha256:cd565714d4da3e84bfd341e31448f81d47c6362198f152345297c9c1154e6341 AS runtime
 
 ENV NODE_ENV=production
 
