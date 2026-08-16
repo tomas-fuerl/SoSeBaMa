@@ -28,7 +28,7 @@ AP-11 und hier bewusst nicht enthalten.
 | Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` mit verfügbarem Fix |
 | Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH`, auch ohne Fix |
 | Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
-| CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Befunde in der Code-Scanning-Ansicht |
+| CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Sicherheitsbefunden ab `HIGH`, über die Ruleset-Regel |
 | Secret Scanning | Secrets im Repository und beim Push | jedem erkannten Secret |
 
 Die Lizenzprüfung ist getrennt dokumentiert in der
@@ -187,10 +187,40 @@ Ablaufdatum ist nach dieser Richtlinie unzulässig.
 Kritische Befunde werden nach ADR-0013 nie ungeklärt weitergereicht. Eine
 Ausnahme für einen kritischen Befund ist nicht vorgesehen.
 
+## Wie CodeQL den Merge blockiert
+
+Der Workflow analysiert lediglich; ein Sicherheitsbefund lässt den
+Analysejob **nicht** fehlschlagen und erscheint deshalb auch nicht im
+zusammenfassenden Pflichtcheck `quality`. GitHub führt Befunde in einem eigenen
+Status `Code scanning results / CodeQL`.
+
+Die Durchsetzung erfolgt daher über eine eigene Ruleset-Regel. Stand
+2026-08-16 ist im Ruleset `Protect main` konfiguriert:
+
+| Parameter | Wert |
+| --- | --- |
+| Regeltyp | `code_scanning` |
+| Werkzeug | `CodeQL` |
+| `security_alerts_threshold` | `high_or_higher` |
+| `alerts_threshold` | `errors` |
+| `enforcement` | `active`, ohne Bypass-Actors |
+
+**Diese Regel ist nicht Teil des Repositoryinhalts.** Sie lässt sich nicht über
+einen Pull Request wiederherstellen und geht bei einem Revert nicht mit
+verloren, kann aber ebenso unbemerkt entfernt werden. Der Zustand ist deshalb
+bei jeder Änderung der Rulesets zu prüfen:
+
+```sh
+gh api repos/tomas-fuerl/SoSeBaMa/rulesets/20240280 \
+  -q '.rules[] | select(.type=="code_scanning") | .parameters.code_scanning_tools[]'
+```
+
 ## Verifikation
 
 1. Den Pull Request öffnen und den Pflichtcheck `quality` abwarten. Er fasst
    `repository`, `containers`, `dependencies` und `code-scanning` zusammen.
+   CodeQL-Sicherheitsbefunde wirken getrennt davon über die oben genannte
+   Ruleset-Regel.
 
 2. Bei Bedarf einen Scan lokal wiederholen. Der folgende Befehl benötigt eine
    laufende lokale Docker-Engine und verändert nichts:
