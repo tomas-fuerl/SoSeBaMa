@@ -59,6 +59,86 @@ jobs:
         run: pnpm container:policy
       - name: Build DEV container images
         run: pnpm container:build
+      # Die Scans laufen vor dem Start: geprueft wird das gerade gebaute
+      # Artefakt, bevor es verwendet wird. Die Trivy-Version ist wie jede andere
+      # Abhaengigkeit fixiert; die Ausnahmen stehen in .trivyignore.yaml.
+      #
+      # Die Image-Scans verwenden `ignore-unfixed: true`, der Abhaengigkeitsscan
+      # bewusst nicht. Begruendung und Eigentuemerentscheidung stehen in
+      # docs/development/SUPPLY-CHAIN-CHECKS.md. Kurz: Ein Debian-Befund ohne
+      # Fix bietet keine Handlungsoption ausser einer Ausnahme; ein dauerhaft
+      # roter Job wird abgeschaltet statt beachtet. Der nachfolgende
+      # Sichtbarkeitsscan haelt diese Befunde trotzdem im Log.
+      - name: Scan backend image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          scan-type: image
+          image-ref: sosebama-backend:dev
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+      - name: Scan web image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: sosebama-web:dev
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+      - name: Scan resolved dependencies for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
+      - name: Scan Dockerfiles and Compose for misconfiguration
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: config
+          scan-ref: .
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore.yaml
+      # Bewusst nicht blockierend: Diese Befunde haben keinen Fix und koennen
+      # nicht behoben werden. Sie bleiben aber sichtbar, damit die Entscheidung
+      # ueber `ignore-unfixed` nicht dazu fuehrt, dass niemand sie mehr kennt.
+      - name: Report unfixed backend image findings without blocking
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: sosebama-backend:dev
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
+      - name: Report unfixed web image findings without blocking
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: sosebama-web:dev
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
       - name: Start and health-check DEV containers
         run: pnpm container:up
       - name: Verify DEV container health
@@ -99,6 +179,38 @@ jobs:
           fail-on-severity: high
           comment-summary-in-pr: false
 
+  # CodeQL prueft nach ADR-0013 TypeScript/JavaScript und GitHub Actions. Der
+  # Job braucht als einziger erweiterte Rechte, um Ergebnisse als SARIF in die
+  # Code-Scanning-Ansicht zu schreiben; alle uebrigen Jobs bleiben bei
+  # `contents: read` aus der Workflowvorgabe.
+  code-scanning:
+    name: code-scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+          - actions
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@c16c0f3f2812ec4bb3750a5ed64873fe2ce0fbef # codeql-bundle-v2.26.3
+        with:
+          languages: ${{ matrix.language }}
+      - name: Analyse with CodeQL
+        uses: github/codeql-action/analyze@c16c0f3f2812ec4bb3750a5ed64873fe2ce0fbef # codeql-bundle-v2.26.3
+        with:
+          category: /language:${{ matrix.language }}
+
   # Zusammenfassender Pflichtstatus nach ADR-0013. Der Kontextname `quality`
   # bleibt unveraendert, damit das bestehende Branch-Ruleset weiter greift.
   # `if: always()` stellt sicher, dass der Job auch dann laeuft und fehlschlaegt,
@@ -111,6 +223,7 @@ jobs:
       - repository
       - containers
       - dependencies
+      - code-scanning
     if: always()
     steps:
       - name: Verify that every required job succeeded

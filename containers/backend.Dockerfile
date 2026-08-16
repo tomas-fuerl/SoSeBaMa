@@ -47,6 +47,17 @@ FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9
 
 ENV NODE_ENV=production
 
+# Die Runtime startet ausschliesslich `node`; die Healthchecks nutzen ebenfalls
+# nur `node -e`. npm und corepack werden nicht benoetigt, bringen aber ein
+# eigenes gebuendeltes Abhaengigkeitsset mit. Das Entfernen reduziert sowohl die
+# Angriffsflaeche als auch die Scanflaeche des Images.
+RUN rm -rf \
+    /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm \
+    /usr/local/bin/npx \
+    /usr/local/bin/corepack
+
 WORKDIR /opt/sobama
 
 COPY --from=build --chown=node:node /output/api ./api

@@ -40,6 +40,7 @@ Repository-spezifische Arbeitsregeln stehen in [AGENTS.md](AGENTS.md).
 - [Lokalen DEV-Containerrahmen starten und zurückbauen](docs/development/DEV-CONTAINERS.md)
 - [DEV-Telemetriegrundlage prüfen und sicher verwenden](docs/development/OBSERVABILITY.md)
 - [Lizenzrichtlinie für Abhängigkeiten](docs/development/LICENSE-POLICY.md)
+- [Prüfungen der Software-Lieferkette](docs/development/SUPPLY-CHAIN-CHECKS.md)
 - [Workspace- und Importgrenzen](docs/architecture/MONOREPO-BOUNDARIES.md)
 - [Hauptversions- und Kompatibilitätsnachweis](docs/architecture/AP-01-COMPATIBILITY.md)
 
