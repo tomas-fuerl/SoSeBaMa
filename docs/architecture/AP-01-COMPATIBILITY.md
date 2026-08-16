@@ -237,6 +237,10 @@ Hauptversion sowie bei geänderten Node-, Prisma-, Vite- oder pnpm-Grenzen
 wiederholt. Abweichende Patchstände werden im zugehörigen Pull Request
 dokumentiert.
 
+Dieses Dokument belegt die **Verträglichkeit der Hauptversionen**. Ob die
+Abnahmegates von AP-01 bestanden sind, beantwortet getrennt der
+[AP-01-Abnahmenachweis](AP-01-ACCEPTANCE.md).
+
 Damit dieser Korridor nicht durch ein Routineupdate unbemerkt verlassen wird,
 legt Dependabot Hauptversionen einzeln statt gruppiert vor; `@types/node` und
 das Node-Basisimage sind zusätzlich an die hier fixierte Node-Hauptlinie
