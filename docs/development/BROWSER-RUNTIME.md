@@ -29,8 +29,18 @@ wurde ein solcher Schritt angenommen — die Annahme trägt nicht:
 2026-08-16 mit Version `1.62.1` in einem leeren Verzeichnis, mit `npm` und
 **aktivierten** Lifecycle-Skripten sowie isoliertem `PLAYWRIGHT_BROWSERS_PATH`:
 Die Installation endete mit Exit-Code `0` und einem leeren Browserverzeichnis.
-Die veröffentlichten Pakete `@playwright/test`, `playwright` und
-`playwright-core` deklarieren in dieser Version kein Installationsskript.
+
+Das ist kein Zufall dieser Version, sondern eine Umstellung des Herstellers.
+Das veröffentlichte Paket `playwright` deklarierte bis einschließlich `1.37.1`
+`"scripts": {"install": "node install.js"}` und ab `1.38.0` kein Skript mehr:
+
+| Version | deklariertes Skript |
+| --- | --- |
+| `playwright@1.37.1` | `install: node install.js` |
+| `playwright@1.38.0` und später | keines |
+
+Seither lädt ausschließlich der ausdrückliche Aufruf `playwright install`
+Browser nach.
 
 Damit ist `--ignore-scripts` an dieser Stelle **nicht** die wirksame Schranke.
 Die Installationsrichtlinie in
@@ -99,22 +109,31 @@ der jeweils anderen Architektur fehlschlagen.
 
 ## Nummerierte Schritte
 
-1. Playwright als Entwicklungsabhängigkeit im Wurzelmanifest halten:
+1. Ein leeres Browserverzeichnis anlegen und die Installation ausschließlich
+   dorthin lenken:
 
    ```bash
-   pnpm install --frozen-lockfile --ignore-scripts --strict-peer-dependencies
+   SOSEBAMA_PROBE="$(mktemp -d)" \
+     && PLAYWRIGHT_BROWSERS_PATH="$SOSEBAMA_PROBE" \
+        pnpm install --frozen-lockfile --ignore-scripts --strict-peer-dependencies
    ```
 
    Erwartet: Exit-Code `0`.
 
-2. Belegen, dass kein Browsercache entstanden ist:
+   Die Isolation ist der eigentliche Punkt dieses Schritts. Ein Blick in die
+   Standardpfade unter `$HOME` würde auf einer benutzten Maschine nichts
+   belegen: Ein dort bereits vorhandener Cache erzeugt einen Fehlalarm, und
+   ohne Vorher-Nachher-Bezug bliebe offen, ob diese Installation etwas geladen
+   hat.
+
+2. Belegen, dass kein Browser entstanden ist, und aufräumen:
 
    ```bash
-   ls "$HOME/Library/Caches/ms-playwright" "$HOME/.cache/ms-playwright"
+   find "$SOSEBAMA_PROBE" -mindepth 1 | head; rmdir "$SOSEBAMA_PROBE"
    ```
 
-   Erwartet: Beide Pfade existieren nicht. Auf Linux ist nur der zweite Pfad
-   einschlägig, auf macOS nur der erste.
+   Erwartet: keine Ausgabe von `find` — das Verzeichnis ist leer geblieben —
+   und `rmdir` gelingt.
 
 3. Die gepinnte Browserlaufzeit beziehen:
 

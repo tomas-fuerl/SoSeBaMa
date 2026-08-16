@@ -54,6 +54,19 @@ function readRootManifest(): RootManifest {
   return JSON.parse(read('package.json')) as RootManifest;
 }
 
+/**
+ * The version of a package as actually resolved into `node_modules`.
+ *
+ * The manifest states an intent; the lockfile and the installed tree state the
+ * fact. Only the latter answers what a run would really use.
+ */
+function installedVersion(packageName: string): string | undefined {
+  const manifest = JSON.parse(read(`node_modules/${packageName}/package.json`)) as {
+    version?: string;
+  };
+  return manifest.version;
+}
+
 /** `24.18.1` and `24.13.3` share the major `24`. */
 function major(version: string): string {
   return version.split('.')[0] ?? version;
@@ -229,8 +242,14 @@ describe('pinned browser runtime', () => {
   const declared = JSON.parse(read('containers/browser-runtime.json')) as { image?: string };
   const image = declared.image ?? '';
 
-  it('declares exactly one image reference', () => {
-    expect(image, 'containers/browser-runtime.json: kein "image"').not.toBe('');
+  it('declares a fully formed image reference', () => {
+    // The whole shape is fixed, not just its parts: registry, repository,
+    // `v<semver>` tag, the `-noble` variant this repository has verified, and a
+    // digest. Anything else is a different artefact and has to be decided, not
+    // slipped in.
+    expect(image).toMatch(
+      /^mcr\.microsoft\.com\/playwright:v\d+\.\d+\.\d+-noble@sha256:[a-f\d]{64}$/u,
+    );
   });
 
   it('pins that reference by sha256 digest', () => {
@@ -248,12 +267,18 @@ describe('pinned browser runtime', () => {
   });
 
   it('carries the same version as the installed @playwright/test', () => {
-    // `v1.62.1-noble` -> `1.62.1`
+    // Both the declaration and the resolved installation are compared. The
+    // manifest alone would leave a lockfile drift invisible, which is exactly
+    // what this assertion claims to catch.
     const tag = /:v([^-@]+)-/u.exec(image)?.[1];
-    const installed = readRootManifest().devDependencies?.['@playwright/test'];
+    const declared = readRootManifest().devDependencies?.['@playwright/test'];
+    const installed = installedVersion('@playwright/test');
 
     expect(tag, `keine Version im Tag: ${image}`).toBeDefined();
-    expect(installed, '@playwright/test fehlt in den devDependencies').toBeDefined();
-    expect(tag, `Image ${image} gegen @playwright/test ${installed ?? '—'}`).toBe(installed);
+    expect(declared, '@playwright/test fehlt in den devDependencies').toBeDefined();
+    expect(installed, '@playwright/test ist nicht installiert').toBeDefined();
+
+    expect(installed, `Image ${image} gegen installiertes @playwright/test`).toBe(tag);
+    expect(declared, 'Manifest gegen installierte Version').toBe(installed);
   });
 });
