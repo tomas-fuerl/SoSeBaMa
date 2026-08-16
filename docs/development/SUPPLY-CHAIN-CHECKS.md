@@ -69,23 +69,35 @@ gilt damit auch innerhalb der Images.
 
 ### Gekoppelte Toolchain-Versionen
 
-Hier wirken **zwei getrennte Mechanismen**. Sie werden leicht verwechselt, weil
-beide „die Version festhalten":
+Hier wirken **vier getrennte Mechanismen**. Sie werden leicht verwechselt, weil
+alle „die Version festhalten":
 
-| Mechanismus | Vergleicht | Greift |
+| Mechanismus | Aufgabe |
+| --- | --- |
+| `engineStrict` | erzwingt die **Node**-Engine-Kompatibilität hart statt nur zu warnen |
+| `engines.node` / `engines.pnpm` | deklarieren die unterstützte Laufzeit beziehungsweise den unterstützten Paketmanager |
+| `packageManager` + Corepack | legen die tatsächlich verwendete pnpm-Version fest |
+| `test/toolchain-policy.test.ts` | stellt sicher, dass alle Deklarationen im Repository dieselbe Version nennen |
+
+Zur Abgrenzung der ersten beiden, weil die Fehlermeldung hier irreführt:
+
+| Verletzung | ohne `engineStrict` | mit `engineStrict` |
 | --- | --- | --- |
-| `engineStrict` | die *laufende* Node- und pnpm-Version gegen `engines` in `package.json` | bei jeder Installation, auch im Containerbuild |
-| `test/toolchain-policy.test.ts` | die *Deklarationen* der Repositorydateien untereinander | in `pnpm check` und im CI-Job `repository` |
+| `engines.node` unerfüllbar | Exit `0`, nur `[WARN] Unsupported engine` | Exit `1` |
+| `engines.pnpm` unerfüllbar | Exit `1` | Exit `1` |
 
-`engineStrict` kennt weder `.node-version` noch ein Dockerfile. Es merkt nur,
-dass die gerade laufende Umgebung nicht zu `engines` passt, und bricht dann mit
-`ERR_PNPM_UNSUPPORTED_ENGINE` ab. Die Meldung lautet „bad pnpm **and/or**
-Node.js version" — die Prüfung umfasst also beide, nicht nur Node.
+**`engineStrict` betrifft ausschließlich die Node-Seite.** Ein unerfüllbarer
+pnpm-Bereich bricht ohnehin ab, auch ohne den Schalter. Beide Abbrüche melden
+denselben Text `bad pnpm and/or Node.js version`; er sagt gerade nicht, welche
+Regel gegriffen hat. Ein abweichender pnpm-Stand gegenüber `packageManager`
+wird davon getrennt über `pmOnFail` gesteuert — hier bewusst auf dem Standard
+belassen, weil Corepack die Version bereits festlegt.
 
-Der Test schließt die andere Lücke: Er stellt sicher, dass die Deklarationen
-überhaupt dieselbe Version nennen. Ohne ihn könnten `.node-version` und ein
-Basisimage auseinanderlaufen, ohne dass `engineStrict` etwas bemerkt — jede
-Umgebung wäre für sich konsistent.
+Keiner dieser Mechanismen kennt `.node-version` oder ein Dockerfile. Sie
+vergleichen ausschließlich die *laufende* Umgebung mit `engines`. Der Test
+schließt genau diese Lücke: Ohne ihn könnten `.node-version` und ein
+Basisimage auseinanderlaufen, ohne dass irgendetwas anschlägt — jede Umgebung
+wäre für sich konsistent.
 
 **Node**
 
@@ -107,8 +119,8 @@ Hauptversionen in der Linie.
 
 | Stelle | Geforderte Gleichheit |
 | --- | --- |
-| `packageManager` in `package.json` | Referenz |
-| `engines.pnpm` | exakt gleich, damit `engineStrict` greift |
+| `packageManager` in `package.json` | Referenz; Corepack aktiviert genau diese Version |
+| `engines.pnpm` | exakt gleich; pnpm prüft diese Angabe ohne Zutun von `engineStrict` |
 | `corepack prepare pnpm@…` in beiden Dockerfiles und in `quality.yml` | exakt gleich |
 
 Ein Wechsel einer der beiden Versionen ändert alle zugehörigen Stellen

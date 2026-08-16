@@ -14,17 +14,22 @@ packages:
 # (`containers/*.Dockerfile`). Die Richtlinie gilt damit auch innerhalb der
 # Images und nicht nur auf Host und CI.
 #
-# `engineStrict` macht die `engines`-Angaben in `package.json` durchsetzbar --
-# `node` und `pnpm` gleichermaßen. Eine Abweichung bricht mit
-# `ERR_PNPM_UNSUPPORTED_ENGINE` ab, statt nur `[WARN] Unsupported engine` zu
-# melden; die Meldung selbst nennt beide Möglichkeiten ("bad pnpm and/or
-# Node.js version").
+# `engineStrict` betrifft ausschließlich die Node-Seite: Es macht `engines.node`
+# hart durchsetzbar. Ohne den Schalter meldet eine Abweichung nur
+# `[WARN] Unsupported engine` und der Lauf endet mit Exit-Code 0; mit ihm bricht
+# er ab.
 #
-# Die Einstellung vergleicht ausschließlich die *laufende* Umgebung mit
-# `engines`. Sie kennt weder `.node-version` noch ein Dockerfile. Dass diese
-# Deklarationen untereinander gleich bleiben, ist eine getrennte Zusicherung und
-# wird von `test/toolchain-policy.test.ts` geprüft. Erst beide Mechanismen
-# zusammen machen den Pin belastbar.
+# `engines.pnpm` wird davon unabhängig ohnehin hart geprüft. Gemessen: Ein
+# unerfüllbarer pnpm-Bereich bricht auch ohne `engineStrict` ab, ein
+# unerfüllbarer Node-Bereich nicht. Die Abbruchmeldung lautet in beiden Fällen
+# `bad pnpm and/or Node.js version` und sagt deshalb gerade nicht, welcher
+# Mechanismus gegriffen hat.
+#
+# Die Einstellung vergleicht nur die *laufende* Umgebung mit `engines`. Sie
+# kennt weder `.node-version` noch ein Dockerfile. Dass diese Deklarationen
+# untereinander gleich bleiben, ist eine getrennte Zusicherung und wird von
+# `test/toolchain-policy.test.ts` geprüft. Erst beide Mechanismen zusammen
+# machen den Pin belastbar.
 engineStrict: true
 ignoreScripts: true
 saveExact: true

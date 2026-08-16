@@ -108,8 +108,8 @@ describe('installation policy', () => {
 /**
  * Every place that has to run the identical Node build.
  *
- * `engineStrict` does not produce this equality. It compares the *running*
- * Node and pnpm against `engines` at install time; it cannot see
+ * `engineStrict` does not produce this equality. It hardens `engines.node`
+ * against the *running* interpreter at install time and cannot see
  * `.node-version` or a Dockerfile at all. Keeping the declarations in sync is
  * what these assertions do, and only together do the two mechanisms make the
  * pin real.
@@ -154,9 +154,14 @@ describe('pinned Node version', () => {
 /**
  * The pnpm half of the same problem.
  *
- * `engineStrict` enforces `engines.pnpm` just as it enforces `engines.node` —
- * the abort reads "bad pnpm and/or Node.js version". It still cannot see which
- * version corepack actually activates, so that equality is asserted here.
+ * Unlike the Node side, `engines.pnpm` needs no `engineStrict`: pnpm rejects an
+ * unsatisfiable pnpm range on its own. Measured — with the switch removed, an
+ * unsatisfiable `engines.pnpm` still aborts while an unsatisfiable
+ * `engines.node` only warns. The abort text is `bad pnpm and/or Node.js
+ * version` either way and does not reveal which rule fired.
+ *
+ * What neither mechanism sees is the version corepack actually activates, and
+ * that is what the assertions below cover.
  */
 describe('pinned pnpm version', () => {
   const manifest = readRootManifest();
