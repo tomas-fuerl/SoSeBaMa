@@ -134,10 +134,11 @@ Markdown-Syntax gehören nicht zu ihrem Umfang.
   angepasst, um einen fehlgeschlagenen Lauf zu beenden; das Verfahren steht in
   der [Lizenzrichtlinie](LICENSE-POLICY.md).
 - **Erforderliches Installationsskript:** Abbrechen. `--ignore-scripts` ist für
-  den aktuellen Laufzeitschnitt geprüft und zusätzlich in `.npmrc` verankert,
-  sodass die Policy auch ohne das Kommandozeilenflag gilt. Spätere Werkzeuge mit notwendigen
-  Installations- oder Generierungsschritten benötigen zuerst einen eigenen
-  kontrollierten Supply-Chain-Nachweis.
+  den aktuellen Laufzeitschnitt geprüft und zusätzlich als `ignoreScripts` in
+  `pnpm-workspace.yaml` verankert, sodass die Policy auch ohne das
+  Kommandozeilenflag gilt. Spätere Werkzeuge mit notwendigen Installations- oder
+  Generierungsschritten benötigen zuerst einen eigenen kontrollierten
+  Supply-Chain-Nachweis.
 - **Prüfungsfehler:** Den ersten fehlgeschlagenen Schritt beheben. Prüfregeln
   dürfen nicht zur Umgehung des Fehlers abgeschaltet werden.
 

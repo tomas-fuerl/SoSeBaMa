@@ -2,6 +2,28 @@ packages:
   - apps/*
   - packages/*
 
+# Installationsrichtlinie.
+#
+# Diese Einstellungen standen bis 2026-08-16 in `.npmrc` und waren dort
+# wirkungslos: pnpm 11 liest aus `.npmrc` ausschließlich Auth- und
+# Registry-Einstellungen, alle übrigen ausschließlich aus dieser Datei. Ein
+# `ignore-scripts=true` in `.npmrc` hat Lifecycle-Skripte nachweislich trotzdem
+# ausgeführt. Die Namen sind hier camelCase, nicht kebab-case.
+#
+# `pnpm-workspace.yaml` liegt im Buildkontext beider Container
+# (`containers/*.Dockerfile`). Die Richtlinie gilt damit auch innerhalb der
+# Images und nicht nur auf Host und CI.
+#
+# `engineStrict` macht die exakte `engines`-Angabe in `package.json`
+# durchsetzbar: Ein abweichender Node-Stand bricht mit
+# `ERR_PNPM_UNSUPPORTED_ENGINE` ab, statt nur `[WARN] Unsupported engine` zu
+# melden. Ein Wechsel der Node-Version ändert deshalb `.node-version`,
+# `engines`, beide Dockerfiles und die zugehörige Dokumentation gemeinsam.
+engineStrict: true
+ignoreScripts: true
+saveExact: true
+strictPeerDependencies: true
+
 # Sicherheitsbedingte Auflösung einer transitiven Abhängigkeit.
 #
 # nanoid < 3.3.18 ist über GHSA-2v37-7h3g-55p8 (CVE-2026-67213) verwundbar und
