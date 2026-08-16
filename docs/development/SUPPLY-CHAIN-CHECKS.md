@@ -67,21 +67,53 @@ Flags.
 `pnpm-workspace.yaml` liegt im Buildkontext beider Container. Die Richtlinie
 gilt damit auch innerhalb der Images.
 
-### Gekoppelte Node-Version
+### Gekoppelte Toolchain-Versionen
 
-`engineStrict` macht die exakte `engines`-Angabe durchsetzbar und koppelt damit
-vier Stellen aneinander:
+Hier wirken **zwei getrennte Mechanismen**. Sie werden leicht verwechselt, weil
+beide „die Version festhalten":
 
-| Stelle | Zweck |
+| Mechanismus | Vergleicht | Greift |
+| --- | --- | --- |
+| `engineStrict` | die *laufende* Node- und pnpm-Version gegen `engines` in `package.json` | bei jeder Installation, auch im Containerbuild |
+| `test/toolchain-policy.test.ts` | die *Deklarationen* der Repositorydateien untereinander | in `pnpm check` und im CI-Job `repository` |
+
+`engineStrict` kennt weder `.node-version` noch ein Dockerfile. Es merkt nur,
+dass die gerade laufende Umgebung nicht zu `engines` passt, und bricht dann mit
+`ERR_PNPM_UNSUPPORTED_ENGINE` ab. Die Meldung lautet „bad pnpm **and/or**
+Node.js version" — die Prüfung umfasst also beide, nicht nur Node.
+
+Der Test schließt die andere Lücke: Er stellt sicher, dass die Deklarationen
+überhaupt dieselbe Version nennen. Ohne ihn könnten `.node-version` und ein
+Basisimage auseinanderlaufen, ohne dass `engineStrict` etwas bemerkt — jede
+Umgebung wäre für sich konsistent.
+
+**Node**
+
+| Stelle | Geforderte Gleichheit |
 | --- | --- |
-| `.node-version` | lokale Shell und `actions/setup-node` |
-| `engines.node` in `package.json` | von `engineStrict` durchgesetzt |
-| `FROM node:…` in beiden Dockerfiles | Laufzeit der Container |
-| `@types/node` | Typdefinitionen der Laufzeit |
+| `.node-version` | Referenz für lokale Shell und `actions/setup-node` |
+| `engines.node` in `package.json` | exakt gleich, damit `engineStrict` den Patchstand erfasst |
+| `FROM node:…` in beiden Dockerfiles | exakt gleich |
+| `@types/node` | **nur Hauptversion gleich** |
 
-`test/toolchain-policy.test.ts` prüft diese Gleichheit ohne Docker und läuft
-deshalb in `pnpm check` und im CI-Job `repository`. Ein Wechsel der
-Node-Version ändert alle vier Stellen gemeinsam.
+`@types/node` folgt ausschließlich Nodes Hauptlinie. Minor- und Patchstand sind
+die von DefinitelyTyped und stimmen nie mit der Laufzeit überein; eine
+Forderung nach voller Gleichheit wäre sachlich falsch und dauerhaft rot.
+Maßgeblich ist die Hauptversion, weil sie entscheidet, welche APIs deklariert
+sind. `.github/dependabot.yml` hält sie über eine `ignore`-Regel für
+Hauptversionen in der Linie.
+
+**pnpm**
+
+| Stelle | Geforderte Gleichheit |
+| --- | --- |
+| `packageManager` in `package.json` | Referenz |
+| `engines.pnpm` | exakt gleich, damit `engineStrict` greift |
+| `corepack prepare pnpm@…` in beiden Dockerfiles und in `quality.yml` | exakt gleich |
+
+Ein Wechsel einer der beiden Versionen ändert alle zugehörigen Stellen
+gemeinsam. Der Test läuft ohne Docker und meldet die Abweichung, bevor ein
+Image gebaut wird.
 
 ## Entscheidung zu Befunden ohne verfügbaren Fix
 

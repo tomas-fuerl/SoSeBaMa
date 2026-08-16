@@ -30,8 +30,26 @@ function read(relativePath: string): string {
 const pinnedNodeVersion = read('.node-version').trim();
 
 interface RootManifest {
+  devDependencies?: Record<string, string>;
   engines?: Record<string, string>;
+  packageManager?: string;
 }
+
+function readRootManifest(): RootManifest {
+  return JSON.parse(read('package.json')) as RootManifest;
+}
+
+/** `24.18.1` and `24.13.3` share the major `24`. */
+function major(version: string): string {
+  return version.split('.')[0] ?? version;
+}
+
+/** Every place that activates pnpm through corepack. */
+const corepackSources = [
+  'containers/backend.Dockerfile',
+  'containers/web.Dockerfile',
+  '.github/workflows/quality.yml',
+] as const;
 
 /**
  * Guards the installation policy and the pinned Node version.
@@ -87,6 +105,15 @@ describe('installation policy', () => {
   });
 });
 
+/**
+ * Every place that has to run the identical Node build.
+ *
+ * `engineStrict` does not produce this equality. It compares the *running*
+ * Node and pnpm against `engines` at install time; it cannot see
+ * `.node-version` or a Dockerfile at all. Keeping the declarations in sync is
+ * what these assertions do, and only together do the two mechanisms make the
+ * pin real.
+ */
 describe('pinned Node version', () => {
   it('names one concrete version rather than a range', () => {
     expect(pinnedNodeVersion).toMatch(/^\d+\.\d+\.\d+$/u);
@@ -95,8 +122,7 @@ describe('pinned Node version', () => {
   it('requires that exact version through an exact engines entry', () => {
     // A range would let `engineStrict` accept a drifting patch level and would
     // silently defeat the stage assertion below.
-    const manifest = JSON.parse(read('package.json')) as RootManifest;
-    expect(manifest.engines?.node).toBe(pinnedNodeVersion);
+    expect(readRootManifest().engines?.node).toBe(pinnedNodeVersion);
   });
 
   it('builds every Node stage on exactly that version', () => {
@@ -109,6 +135,50 @@ describe('pinned Node version', () => {
       for (const tag of tags) {
         // `24.18.1-bookworm-slim` traegt die Version vor der Variante.
         expect(tag.split('-')[0], `${dockerfile}: ${tag}`).toBe(pinnedNodeVersion);
+      }
+    }
+  });
+
+  it('types the runtime against the same Node major', () => {
+    // `@types/node` follows Node's major line only. Its minor and patch levels
+    // are DefinitelyTyped's own and never match the runtime, so demanding full
+    // equality here would be wrong and permanently red. The major is the part
+    // that decides which APIs are declared, and `.github/dependabot.yml` keeps
+    // it in line by ignoring major updates for this package.
+    const declared = readRootManifest().devDependencies?.['@types/node'];
+    expect(declared, '@types/node fehlt in den devDependencies').toBeDefined();
+    expect(major(declared ?? ''), `@types/node ${declared ?? ''}`).toBe(major(pinnedNodeVersion));
+  });
+});
+
+/**
+ * The pnpm half of the same problem.
+ *
+ * `engineStrict` enforces `engines.pnpm` just as it enforces `engines.node` —
+ * the abort reads "bad pnpm and/or Node.js version". It still cannot see which
+ * version corepack actually activates, so that equality is asserted here.
+ */
+describe('pinned pnpm version', () => {
+  const manifest = readRootManifest();
+  const pinnedPnpmVersion = manifest.packageManager?.replace(/^pnpm@/u, '') ?? '';
+
+  it('names one concrete version in packageManager', () => {
+    expect(pinnedPnpmVersion).toMatch(/^\d+\.\d+\.\d+$/u);
+  });
+
+  it('requires that exact version through an exact engines entry', () => {
+    expect(manifest.engines?.pnpm).toBe(pinnedPnpmVersion);
+  });
+
+  it('activates exactly that version wherever corepack prepares pnpm', () => {
+    for (const source of corepackSources) {
+      const versions = [...read(source).matchAll(/corepack prepare pnpm@(\S+)\s/gu)]
+        .map((match) => match[1])
+        .filter((version): version is string => version !== undefined);
+
+      expect(versions.length, `${source}: kein 'corepack prepare pnpm@'`).toBeGreaterThan(0);
+      for (const version of versions) {
+        expect(version, source).toBe(pinnedPnpmVersion);
       }
     }
   });

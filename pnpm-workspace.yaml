@@ -14,11 +14,17 @@ packages:
 # (`containers/*.Dockerfile`). Die Richtlinie gilt damit auch innerhalb der
 # Images und nicht nur auf Host und CI.
 #
-# `engineStrict` macht die exakte `engines`-Angabe in `package.json`
-# durchsetzbar: Ein abweichender Node-Stand bricht mit
+# `engineStrict` macht die `engines`-Angaben in `package.json` durchsetzbar --
+# `node` und `pnpm` gleichermaßen. Eine Abweichung bricht mit
 # `ERR_PNPM_UNSUPPORTED_ENGINE` ab, statt nur `[WARN] Unsupported engine` zu
-# melden. Ein Wechsel der Node-Version ändert deshalb `.node-version`,
-# `engines`, beide Dockerfiles und die zugehörige Dokumentation gemeinsam.
+# melden; die Meldung selbst nennt beide Möglichkeiten ("bad pnpm and/or
+# Node.js version").
+#
+# Die Einstellung vergleicht ausschließlich die *laufende* Umgebung mit
+# `engines`. Sie kennt weder `.node-version` noch ein Dockerfile. Dass diese
+# Deklarationen untereinander gleich bleiben, ist eine getrennte Zusicherung und
+# wird von `test/toolchain-policy.test.ts` geprüft. Erst beide Mechanismen
+# zusammen machen den Pin belastbar.
 engineStrict: true
 ignoreScripts: true
 saveExact: true
