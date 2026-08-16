@@ -34,6 +34,13 @@ packages:
 # untereinander gleich bleiben, ist eine getrennte Zusicherung und wird von
 # `test/toolchain-policy.test.ts` geprüft. Erst beide Mechanismen zusammen
 # machen den Pin belastbar.
+#
+# Wichtig dabei: `engines.node` nennt bewusst eine Linie (`^`) und keine exakte
+# Version. `engines` gilt auch fuer fremde Umgebungen, die ihr eigenes Node
+# mitbringen -- eine exakte Angabe hat Dependabots npm-Updater lahmgelegt.
+# Was tatsaechlich laeuft, legen `.node-version` und die Dockerfile-Basen fest,
+# beide weiterhin exakt. Begruendung und Messwerte:
+# docs/development/SUPPLY-CHAIN-CHECKS.md
 engineStrict: true
 ignoreScripts: true
 saveExact: true
