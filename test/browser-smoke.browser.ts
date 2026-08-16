@@ -69,7 +69,11 @@ test('falls back to the application shell on an unknown route', async ({ page })
   const response = await page.goto('/eine-route-die-es-nicht-gibt');
   expect(response?.status(), 'HTTP-Status einer unbekannten Route').toBe(200);
 
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('SoSeBaMa');
+  // Deliberately the technical marker rather than the visible heading: this
+  // test verifies delivery, and a harmless change to the product copy must not
+  // turn an infrastructure check red. The heading is asserted once, in the test
+  // above, where it serves as the proof that the bundle evaluated.
+  await expect(page.locator('[data-runtime-health="ready"]')).toBeVisible();
 
   expect(problems.consoleErrors, 'Konsolenfehler').toEqual([]);
   expect(problems.failedRequests, 'fehlgeschlagene Requests').toEqual([]);

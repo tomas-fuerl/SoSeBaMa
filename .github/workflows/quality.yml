@@ -115,8 +115,14 @@ jobs:
       # Bewusst nicht blockierend: Diese Befunde haben keinen Fix und koennen
       # nicht behoben werden. Sie bleiben aber sichtbar, damit die Entscheidung
       # ueber `ignore-unfixed` nicht dazu fuehrt, dass niemand sie mehr kennt.
+      #
+      # Nicht blockierend heisst `exit-code: '0'` und sonst nichts. Ein
+      # zusaetzliches `continue-on-error: true` wuerde daneben auch technische
+      # Fehlschlaege verschlucken -- nicht bezogenes Image, nicht ladbare
+      # Schwachstellendatenbank, Fehler der Action selbst. Dann waere nicht
+      # etwa ein Befund toleriert, sondern der Scan gar nicht gelaufen, und der
+      # Job trotzdem gruen.
       - name: Report unfixed backend image findings without blocking
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true
@@ -128,7 +134,6 @@ jobs:
           ignore-unfixed: false
           trivyignores: .trivyignore.yaml
       - name: Report unfixed web image findings without blocking
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true
@@ -155,7 +160,6 @@ jobs:
       # und wuerde abgeschaltet statt beachtet. Begruendung und Stand:
       # docs/development/SUPPLY-CHAIN-CHECKS.md
       - name: Report browser image findings without blocking
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true

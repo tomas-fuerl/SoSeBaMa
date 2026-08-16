@@ -141,6 +141,24 @@ function verifyBrowserSmoke() {
     return;
   }
 
+  // The isolation claimed above is a property of the network, not of the label
+  // that found it. Asserting it here makes the guarantee executable instead of
+  // leaving it to the Compose file staying unchanged.
+  try {
+    const internal = execFileSync(
+      'docker',
+      ['network', 'inspect', network, '--format', '{{.Internal}}'],
+      { encoding: 'utf8' },
+    ).trim();
+    if (internal !== 'true') {
+      fail(`DEV network ${network} is not internal; refusing to run the browser there.`, 1);
+      return;
+    }
+  } catch {
+    fail('Browser smoke could not confirm that the DEV network is internal.', 1);
+    return;
+  }
+
   try {
     execFileSync(
       'docker',

@@ -33,8 +33,19 @@ export default defineConfig({
     ...(baseURL === undefined ? {} : { baseURL }),
     browserName: 'chromium',
 
-    // A smoke that passes needs no artefacts, and writing them would require a
-    // writable working tree.
+    /**
+     * No artefacts are produced, and that is a deliberate limitation.
+     *
+     * `outputDir` above is writable, so Playwright could write them — but the
+     * smoke container is started with `--rm`, so anything written there is gone
+     * before it could be inspected. Retaining artefacts would need an extra
+     * writable mount and an upload step, which is not worth it for two
+     * assertions whose failure messages already name the expected and the
+     * received value.
+     *
+     * If this smoke ever turns flaky, that is the moment to add
+     * `screenshot: 'only-on-failure'` together with a mounted output directory.
+     */
     trace: 'off',
     screenshot: 'off',
     video: 'off',
