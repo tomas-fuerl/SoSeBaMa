@@ -2,6 +2,43 @@ packages:
   - apps/*
   - packages/*
 
+# Installationsrichtlinie.
+#
+# Diese Einstellungen standen bis 2026-08-16 in `.npmrc` und waren dort
+# wirkungslos: pnpm 11 liest aus `.npmrc` ausschließlich Auth- und
+# Registry-Einstellungen, alle übrigen ausschließlich aus dieser Datei. Ein
+# `ignore-scripts=true` in `.npmrc` hat Lifecycle-Skripte nachweislich trotzdem
+# ausgeführt. Die Namen sind hier camelCase, nicht kebab-case.
+#
+# `.npmrc` ist deshalb nicht mehr versioniert und steht in `.gitignore` sowie
+# `.dockerignore` -- als reine Auth-Datei gehört sie dorthin. Diese Datei ist
+# der einzige Ort der Installationsrichtlinie.
+#
+# `pnpm-workspace.yaml` liegt im Buildkontext beider Container
+# (`containers/*.Dockerfile`). Die Richtlinie gilt damit auch innerhalb der
+# Images und nicht nur auf Host und CI.
+#
+# `engineStrict` betrifft ausschließlich die Node-Seite: Es macht `engines.node`
+# hart durchsetzbar. Ohne den Schalter meldet eine Abweichung nur
+# `[WARN] Unsupported engine` und der Lauf endet mit Exit-Code 0; mit ihm bricht
+# er ab.
+#
+# `engines.pnpm` wird davon unabhängig ohnehin hart geprüft. Gemessen: Ein
+# unerfüllbarer pnpm-Bereich bricht auch ohne `engineStrict` ab, ein
+# unerfüllbarer Node-Bereich nicht. Die Abbruchmeldung lautet in beiden Fällen
+# `bad pnpm and/or Node.js version` und sagt deshalb gerade nicht, welcher
+# Mechanismus gegriffen hat.
+#
+# Die Einstellung vergleicht nur die *laufende* Umgebung mit `engines`. Sie
+# kennt weder `.node-version` noch ein Dockerfile. Dass diese Deklarationen
+# untereinander gleich bleiben, ist eine getrennte Zusicherung und wird von
+# `test/toolchain-policy.test.ts` geprüft. Erst beide Mechanismen zusammen
+# machen den Pin belastbar.
+engineStrict: true
+ignoreScripts: true
+saveExact: true
+strictPeerDependencies: true
+
 # Sicherheitsbedingte Auflösung einer transitiven Abhängigkeit.
 #
 # nanoid < 3.3.18 ist über GHSA-2v37-7h3g-55p8 (CVE-2026-67213) verwundbar und

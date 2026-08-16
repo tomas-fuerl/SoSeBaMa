@@ -34,6 +34,126 @@ AP-11 und hier bewusst nicht enthalten.
 Die Lizenzprüfung ist getrennt dokumentiert in der
 [Lizenzrichtlinie](LICENSE-POLICY.md).
 
+## Installationsrichtlinie
+
+Die Richtlinie steht in [`pnpm-workspace.yaml`](../../pnpm-workspace.yaml) und
+**nicht** in `.npmrc`:
+
+| Einstellung | Wirkung |
+| --- | --- |
+| `ignoreScripts` | Lifecycle-Skripte von Abhängigkeiten laufen nicht |
+| `engineStrict` | Macht eine inkompatible **Node**-Version zum Installationsfehler statt zur Warnung |
+| `strictPeerDependencies` | Eine unerfüllte Peer-Abhängigkeit bricht ab |
+| `saveExact` | Neue Abhängigkeiten werden exakt festgeschrieben |
+
+Die pnpm-Version gehört nicht in diese Zeile: Ein unerfülltes `engines.pnpm`
+bricht ohnehin ab, unabhängig von `engineStrict`. Welche pnpm-Version läuft,
+legen `packageManager` und Corepack fest. Die Abgrenzung steht unten unter
+[Gekoppelte Toolchain-Versionen](#gekoppelte-toolchain-versionen).
+
+**pnpm 11 liest aus `.npmrc` ausschließlich Auth- und Registry-Einstellungen.**
+Jede andere Einstellung wird dort stillschweigend ignoriert. Bis 2026-08-16
+standen alle vier Werte in `.npmrc` und waren damit wirkungslos. Gemessen wurde:
+
+- Ein Paket mit `preinstall`-Skript und `ignore-scripts=true` in `.npmrc` führte
+  das Skript trotzdem aus. Mit `ignoreScripts: true` in `pnpm-workspace.yaml`
+  lief es nicht.
+- Ein `engines.node`-Konflikt erzeugte mit `.npmrc` nur
+  `[WARN] Unsupported engine` und Exit-Code `0`. Mit `engineStrict: true` in
+  `pnpm-workspace.yaml` bricht derselbe Konflikt mit
+  `ERR_PNPM_UNSUPPORTED_ENGINE` und Exit-Code `1` ab.
+
+Sicherheitsrelevant ist davon vor allem `ignoreScripts`: Ein Lifecycle-Skript
+ist beliebiger Code aus einer Abhängigkeit, der bei jeder Installation läuft.
+Die Installationsbefehle in CI, Dokumentation und Containern übergeben
+`--ignore-scripts` zusätzlich auf der Kommandozeile; dieser Teil war und bleibt
+wirksam. Wirkungslos war ausschließlich der Rückfall für einen Aufruf ohne
+Flags.
+
+`pnpm-workspace.yaml` liegt im Buildkontext beider Container. Die Richtlinie
+gilt damit auch innerhalb der Images. Nachgewiesen im Containerbuild: Mit einem
+Basisimage, dessen Node-Stand von `engines.node` abweicht, bricht
+`RUN pnpm install` mit `ERR_PNPM_UNSUPPORTED_ENGINE` ab; ohne diese
+Einstellungen baut derselbe Build durch und meldet nur eine Warnung.
+
+### Warum `.npmrc` nicht versioniert ist
+
+`.npmrc` steht in [`.gitignore`](../../.gitignore) und in
+[`.dockerignore`](../../.dockerignore). Unter pnpm 11 ist die Datei
+ausschließlich eine Auth- und Registrydatei; der Hersteller verlangt für die
+Datei im Workspace-Wurzelverzeichnis wörtlich, sie solle in `.gitignore`
+stehen. Eine versionierte `.npmrc` wäre eine Einladung, später Zugangsdaten
+hineinzuschreiben und mitzucommitten.
+
+Der Ausschluss aus dem Buildkontext ist die zweite Schicht: Kein Dockerfile
+kopiert die Datei, aber ohne den Eintrag würde eine lokale `.npmrc` überhaupt
+erst an den Docker-Daemon übertragen.
+
+Eine Installationseinstellung in `.npmrc` wäre ohnehin wirkungslos — es gibt
+deshalb keinen Grund, dort etwas abzulegen. Wer lokal eine Registry-
+Authentifizierung braucht, legt sie über die von pnpm vorgesehenen Benutzer-
+oder CI-Mechanismen ab, nicht im Repository.
+
+### Gekoppelte Toolchain-Versionen
+
+Hier wirken **vier getrennte Mechanismen**. Sie werden leicht verwechselt, weil
+alle „die Version festhalten":
+
+| Mechanismus | Aufgabe |
+| --- | --- |
+| `engineStrict` | erzwingt die **Node**-Engine-Kompatibilität hart statt nur zu warnen |
+| `engines.node` / `engines.pnpm` | deklarieren die unterstützte Laufzeit beziehungsweise den unterstützten Paketmanager |
+| `packageManager` + Corepack | legen die tatsächlich verwendete pnpm-Version fest |
+| `test/toolchain-policy.test.ts` | stellt sicher, dass alle Deklarationen im Repository dieselbe Version nennen |
+
+Zur Abgrenzung der ersten beiden, weil die Fehlermeldung hier irreführt:
+
+| Verletzung | ohne `engineStrict` | mit `engineStrict` |
+| --- | --- | --- |
+| `engines.node` unerfüllbar | Exit `0`, nur `[WARN] Unsupported engine` | Exit `1` |
+| `engines.pnpm` unerfüllbar | Exit `1` | Exit `1` |
+
+**`engineStrict` betrifft ausschließlich die Node-Seite.** Ein unerfüllbarer
+pnpm-Bereich bricht ohnehin ab, auch ohne den Schalter. Beide Abbrüche melden
+denselben Text `bad pnpm and/or Node.js version`; er sagt gerade nicht, welche
+Regel gegriffen hat. Ein abweichender pnpm-Stand gegenüber `packageManager`
+wird davon getrennt über `pmOnFail` gesteuert — hier bewusst auf dem Standard
+belassen, weil Corepack die Version bereits festlegt.
+
+Keiner dieser Mechanismen kennt `.node-version` oder ein Dockerfile. Sie
+vergleichen ausschließlich die *laufende* Umgebung mit `engines`. Der Test
+schließt genau diese Lücke: Ohne ihn könnten `.node-version` und ein
+Basisimage auseinanderlaufen, ohne dass irgendetwas anschlägt — jede Umgebung
+wäre für sich konsistent.
+
+**Node**
+
+| Stelle | Geforderte Gleichheit |
+| --- | --- |
+| `.node-version` | Referenz für lokale Shell und `actions/setup-node` |
+| `engines.node` in `package.json` | exakt gleich, damit `engineStrict` den Patchstand erfasst |
+| `FROM node:…` in beiden Dockerfiles | exakt gleich |
+| `@types/node` | **nur Hauptversion gleich** |
+
+`@types/node` folgt ausschließlich Nodes Hauptlinie. Minor- und Patchstand sind
+die von DefinitelyTyped und stimmen nie mit der Laufzeit überein; eine
+Forderung nach voller Gleichheit wäre sachlich falsch und dauerhaft rot.
+Maßgeblich ist die Hauptversion, weil sie entscheidet, welche APIs deklariert
+sind. `.github/dependabot.yml` hält sie über eine `ignore`-Regel für
+Hauptversionen in der Linie.
+
+**pnpm**
+
+| Stelle | Geforderte Gleichheit |
+| --- | --- |
+| `packageManager` in `package.json` | Referenz; Corepack aktiviert genau diese Version |
+| `engines.pnpm` | exakt gleich; pnpm prüft diese Angabe ohne Zutun von `engineStrict` |
+| `corepack prepare pnpm@…` in beiden Dockerfiles und in `quality.yml` | exakt gleich |
+
+Ein Wechsel einer der beiden Versionen ändert alle zugehörigen Stellen
+gemeinsam. Der Test läuft ohne Docker und meldet die Abweichung, bevor ein
+Image gebaut wird.
+
 ## Entscheidung zu Befunden ohne verfügbaren Fix
 
 Die Image-Scans melden ausschließlich Befunde, für die ein Fix existiert. Der
@@ -164,7 +284,7 @@ Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
 Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
 Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
 Eigentümerentscheidung und in
-[#25](https://github.com/tomas-fuerl/SoSeBaMa/issues/25) vermerkt.
+[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46) verfolgt.
 
 ### Warum Hauptversionen nicht gruppiert werden
 

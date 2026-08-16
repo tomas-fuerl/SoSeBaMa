@@ -5,6 +5,10 @@
 .env
 .env.*
 !.env.example
+# Eine lokale `.npmrc` enthaelt unter pnpm 11 nur Auth- und Registryangaben.
+# Sie wird von keinem Dockerfile kopiert; der Ausschluss verhindert zusaetzlich,
+# dass Zugangsdaten ueberhaupt in den Buildkontext gelangen.
+.npmrc
 # Verschachtelte Treffer sind hier entscheidend: Ein blosses `dist` trifft nur
 # die oberste Ebene. Ohne `**/` gelangen Buildausgaben und Abhaengigkeiten des
 # Hosts in den Build-Kontext, und das Image haengt unbemerkt am Zustand der
