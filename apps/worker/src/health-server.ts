@@ -1,3 +1,4 @@
+import { exec } from 'node:child_process';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
@@ -82,6 +83,21 @@ export class WorkerHealthServer implements OnApplicationShutdown {
     const method = request.method ?? '';
     if (method !== 'GET' && method !== 'HEAD') {
       response.writeHead(405, { allow: 'GET, HEAD' }).end();
+      return;
+    }
+
+    // ⚠️ ABSICHTLICHE SCHWACHSTELLE — NUR ZUM NACHWEIS DES SECURITY-GATES ⚠️
+    //
+    // Dieser Block existiert ausschliesslich, um zu pruefen, ob ein neuer
+    // CodeQL-Befund den Merge tatsaechlich verhindert. Der Pfad der Anfrage
+    // ist eine nicht vertrauenswuerdige Quelle und flieszt hier ungeprueft in
+    // eine Shell. Das ist eine Command Injection nach js/command-line-injection.
+    //
+    // DIESER PULL REQUEST DARF NIEMALS GEMERGT WERDEN.
+    if (request.url?.startsWith('/__codeql-probe/')) {
+      const injected = request.url.slice('/__codeql-probe/'.length);
+      exec(`echo ${injected}`, () => undefined);
+      response.writeHead(204).end();
       return;
     }
 
