@@ -138,7 +138,10 @@ Markdown-Syntax gehören nicht zu ihrem Umfang.
   `pnpm-workspace.yaml` verankert, sodass die Policy auch ohne das
   Kommandozeilenflag gilt. Spätere Werkzeuge mit notwendigen Installations- oder
   Generierungsschritten benötigen zuerst einen eigenen kontrollierten
-  Supply-Chain-Nachweis.
+  Supply-Chain-Nachweis. Der erste solche Nachweis liegt für die
+  [Browserlaufzeit](BROWSER-RUNTIME.md) vor; er hält ausdrücklich fest, dass
+  Playwright **kein** Installationsskript mitbringt und der Browser deshalb aus
+  einem digest-gepinnten Image stammt.
 - **Prüfungsfehler:** Den ersten fehlgeschlagenen Schritt beheben. Prüfregeln
   dürfen nicht zur Umgehung des Fehlers abgeschaltet werden.
 

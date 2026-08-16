@@ -210,3 +210,50 @@ describe('pinned pnpm version', () => {
     }
   });
 });
+
+/**
+ * The Chromium runtime used by the browser smoke.
+ *
+ * Playwright downloads no browser during installation — measured for 1.62.1
+ * with npm and lifecycle scripts fully enabled, which produced an empty browser
+ * cache. The binary therefore has to come from somewhere explicit, and the only
+ * two options are `playwright install`, which fetches from a CDN pinned by
+ * nothing but a version string, or a digest-pinned image. This repository pins
+ * every other external artefact by digest, so it does the same here.
+ *
+ * The digest belongs to the multi-architecture index rather than to one
+ * platform manifest: it pins immutably while still resolving on amd64 and
+ * arm64. A platform digest would fail on the respective other architecture.
+ */
+describe('pinned browser runtime', () => {
+  const declared = JSON.parse(read('containers/browser-runtime.json')) as { image?: string };
+  const image = declared.image ?? '';
+
+  it('declares exactly one image reference', () => {
+    expect(image, 'containers/browser-runtime.json: kein "image"').not.toBe('');
+  });
+
+  it('pins that reference by sha256 digest', () => {
+    expect(image).toMatch(/@sha256:[a-f\d]{64}$/u);
+  });
+
+  it('never resolves through a floating tag', () => {
+    expect(image).not.toMatch(/(?:^|:)latest(?:@|$)/u);
+  });
+
+  it('names the expected registry', () => {
+    // A silent registry swap would keep the digest syntax intact while
+    // changing who supplies the binary.
+    expect(image.startsWith('mcr.microsoft.com/playwright:'), image).toBe(true);
+  });
+
+  it('carries the same version as the installed @playwright/test', () => {
+    // `v1.62.1-noble` -> `1.62.1`
+    const tag = /:v([^-@]+)-/u.exec(image)?.[1];
+    const installed = readRootManifest().devDependencies?.['@playwright/test'];
+
+    expect(tag, `keine Version im Tag: ${image}`).toBeDefined();
+    expect(installed, '@playwright/test fehlt in den devDependencies').toBeDefined();
+    expect(tag, `Image ${image} gegen @playwright/test ${installed ?? '—'}`).toBe(installed);
+  });
+});

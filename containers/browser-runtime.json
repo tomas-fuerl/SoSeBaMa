@@ -1,0 +1,14 @@
+{
+  "$comment": [
+    "Browserlaufzeit fuer den Chromium-Smoke. Einzige Quelle der Imagereferenz;",
+    "Werkzeuge und Tests lesen ausschliesslich diese Datei.",
+    "Der Digest gehoert zum Multi-Arch-Index, nicht zu einem einzelnen",
+    "Plattformmanifest: Er pinnt unveraenderlich und laesst amd64 und arm64",
+    "gleichermassen zu. Ein Plattformdigest wuerde auf der jeweils anderen",
+    "Architektur fehlschlagen.",
+    "Die Version im Tag muss mit der installierten @playwright/test-Version",
+    "uebereinstimmen; test/toolchain-policy.test.ts erzwingt das.",
+    "Pflege und Erneuerung: docs/development/BROWSER-RUNTIME.md"
+  ],
+  "image": "mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e"
+}
