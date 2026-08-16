@@ -44,6 +44,7 @@ Repository-spezifische Arbeitsregeln stehen in [AGENTS.md](AGENTS.md).
 - [Browserlaufzeit für den Chromium-Smoke](docs/development/BROWSER-RUNTIME.md)
 - [Workspace- und Importgrenzen](docs/architecture/MONOREPO-BOUNDARIES.md)
 - [Hauptversions- und Kompatibilitätsnachweis](docs/architecture/AP-01-COMPATIBILITY.md)
+- [AP-01-Abnahmenachweis G1 bis G3](docs/architecture/AP-01-ACCEPTANCE.md)
 
 Die lokale VS-Code-Konfiguration bleibt durch `.gitignore` vom Repository
 getrennt. Repositoryprüfungen verwenden ausschließlich die fixierten

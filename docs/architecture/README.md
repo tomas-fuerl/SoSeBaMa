@@ -23,6 +23,7 @@ Einzelentscheidungen folgen dem [ADR-Verfahren](../ADR.md). Der
 - [Architekturübersicht](ARCHITECTURE-OVERVIEW.md)
 - [Implementierungsroadmap](IMPLEMENTATION-ROADMAP.md)
 - [AP-01-Hauptversions- und Kompatibilitätsnachweis](AP-01-COMPATIBILITY.md)
+- [AP-01-Abnahmenachweis G1 bis G3](AP-01-ACCEPTANCE.md)
 - [Initiales Ressourcenbudget](RESOURCE-BUDGET.md)
 - [ADR-Index](decisions/README.md)
 - [Fachliches Inhalts- und Overlaymodell](CONTENT-AND-OVERLAY-MODEL.md)

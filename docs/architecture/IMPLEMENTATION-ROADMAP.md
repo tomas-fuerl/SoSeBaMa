@@ -82,6 +82,8 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
   [0014](decisions/ADR-0014-modulstruktur-und-walking-skeleton.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G3 bestehen für das leere
   Walking-Skeleton-Fundament; DEV startet reproduzierbar ohne fachliche Route.
+  Das ausgeführte Ergebnis steht im
+  [AP-01-Abnahmenachweis](AP-01-ACCEPTANCE.md).
 
 ### AP-02: Identität und Sitzungen
 
