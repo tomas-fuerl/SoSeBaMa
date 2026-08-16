@@ -115,8 +115,14 @@ jobs:
       # Bewusst nicht blockierend: Diese Befunde haben keinen Fix und koennen
       # nicht behoben werden. Sie bleiben aber sichtbar, damit die Entscheidung
       # ueber `ignore-unfixed` nicht dazu fuehrt, dass niemand sie mehr kennt.
+      #
+      # Nicht blockierend heisst `exit-code: '0'` und sonst nichts. Ein
+      # zusaetzliches `continue-on-error: true` wuerde daneben auch technische
+      # Fehlschlaege verschlucken -- nicht bezogenes Image, nicht ladbare
+      # Schwachstellendatenbank, Fehler der Action selbst. Dann waere nicht
+      # etwa ein Befund toleriert, sondern der Scan gar nicht gelaufen, und der
+      # Job trotzdem gruen.
       - name: Report unfixed backend image findings without blocking
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true
@@ -128,7 +134,6 @@ jobs:
           ignore-unfixed: false
           trivyignores: .trivyignore.yaml
       - name: Report unfixed web image findings without blocking
-        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true
@@ -145,6 +150,28 @@ jobs:
         run: pnpm container:health
       - name: Verify DEV host ingress
         run: pnpm container:smoke
+      # Bewusst nicht blockierend, und das ist eine Eigentuemerentscheidung.
+      # Das Playwright-Image ist ein reines Testartefakt: Es wird nie
+      # ausgeliefert, laeuft unprivilegiert im internen Netz ohne Route nach
+      # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
+      # liegen im gebuendelten npm des Images -- derselbe Fall wie beim
+      # Node-Basisimage, dort aber entfernbar, hier nicht: Nur der Hersteller
+      # kann das Image neu bauen. Ein blockierendes Gate waere dauerhaft rot
+      # und wuerde abgeschaltet statt beachtet. Begruendung und Stand:
+      # docs/development/SUPPLY-CHAIN-CHECKS.md
+      - name: Report browser image findings without blocking
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+      - name: Verify SPA delivery in Chromium
+        run: pnpm browser:smoke
       - name: Verify DEV structured logs
         run: pnpm container:logs
       # Ohne diesen Schritt ist eine fehlgeschlagene Rolle nur als Exit-Code

@@ -266,6 +266,20 @@ describe('pinned browser runtime', () => {
     expect(image.startsWith('mcr.microsoft.com/playwright:'), image).toBe(true);
   });
 
+  it('is referenced identically wherever the image is named', () => {
+    // The workflow scans the image and therefore has to name it. A second
+    // literal is a second thing to forget; this keeps both in step.
+    const workflow = read('.github/workflows/quality.yml');
+    const referenced = [...workflow.matchAll(/image-ref:\s*(mcr\.microsoft\.com\/\S+)/gu)]
+      .map((match) => match[1])
+      .filter((reference): reference is string => reference !== undefined);
+
+    expect(referenced.length, 'quality.yml nennt das Browserimage nicht').toBeGreaterThan(0);
+    for (const reference of referenced) {
+      expect(reference, '.github/workflows/quality.yml').toBe(image);
+    }
+  });
+
   it('carries the same version as the installed @playwright/test', () => {
     // Both the declaration and the resolved installation are compared. The
     // manifest alone would leave a lockfile drift invisible, which is exactly
