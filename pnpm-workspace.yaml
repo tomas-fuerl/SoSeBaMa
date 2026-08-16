@@ -10,6 +10,10 @@ packages:
 # `ignore-scripts=true` in `.npmrc` hat Lifecycle-Skripte nachweislich trotzdem
 # ausgeführt. Die Namen sind hier camelCase, nicht kebab-case.
 #
+# `.npmrc` ist deshalb nicht mehr versioniert und steht in `.gitignore` sowie
+# `.dockerignore` -- als reine Auth-Datei gehört sie dorthin. Diese Datei ist
+# der einzige Ort der Installationsrichtlinie.
+#
 # `pnpm-workspace.yaml` liegt im Buildkontext beider Container
 # (`containers/*.Dockerfile`). Die Richtlinie gilt damit auch innerhalb der
 # Images und nicht nur auf Host und CI.

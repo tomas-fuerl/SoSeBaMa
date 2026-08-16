@@ -9,6 +9,12 @@ Task.md
 patch.sh
 
 # Zugangsdaten und Schlüsselmaterial
+#
+# `.npmrc` ist unter pnpm 11 ausschließlich eine Auth- und Registrydatei; der
+# Hersteller verlangt ausdrücklich, sie zu ignorieren. Die Installations-
+# richtlinie steht in `pnpm-workspace.yaml`, nicht hier.
+# Siehe docs/development/SUPPLY-CHAIN-CHECKS.md
+.npmrc
 *.key
 *.pem
 *.p12

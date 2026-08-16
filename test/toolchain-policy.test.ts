@@ -15,16 +15,16 @@ const policySettings = [
   'strictPeerDependencies',
 ] as const;
 
-/** The same settings under the kebab-case names that pnpm 11 no longer reads. */
-const inertNpmrcKeys = [
-  'engine-strict',
-  'ignore-scripts',
-  'save-exact',
-  'strict-peer-dependencies',
-] as const;
-
 function read(relativePath: string): string {
   return readFileSync(resolve(repositoryRoot, relativePath), 'utf8');
+}
+
+/** Non-empty, non-comment lines of an ignore file. */
+function ignorePatterns(relativePath: string): string[] {
+  return read(relativePath)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#'));
 }
 
 const pinnedNodeVersion = read('.node-version').trim();
@@ -63,7 +63,9 @@ const corepackSources = [
  * 1. The whole installation policy lived in `.npmrc`, where pnpm 11 ignores it.
  *    pnpm reads only auth and registry settings from that file. Measured: a
  *    lifecycle script still executed with `ignore-scripts=true` set, and an
- *    `engines` mismatch produced `[WARN] Unsupported engine` and exit code 0.
+ *    `engines.node` mismatch produced `[WARN] Unsupported engine` and exit
+ *    code 0. `.npmrc` is now gitignored, as the vendor requires for an auth
+ *    file, so the policy has exactly one home.
  * 2. A base image bump to a different Node patch level passed every check for
  *    the same reason, leaving the container on a Node version that no other
  *    file in the repository declared.
@@ -76,13 +78,13 @@ describe('installation policy', () => {
     }
   });
 
-  it('keeps the silently ignored kebab-case keys out of .npmrc', () => {
-    // A policy line in `.npmrc` suggests a safeguard that does not exist. The
-    // file stays reserved for auth and registry settings.
-    const npmrc = read('.npmrc');
-    for (const key of inertNpmrcKeys) {
-      expect(npmrc, key).not.toMatch(new RegExp(`^\\s*${key}\\s*=`, 'mu'));
-    }
+  it('keeps .npmrc out of version control and out of the build context', () => {
+    // Under pnpm 11 `.npmrc` is an auth and registry file; the vendor requires
+    // it to be gitignored. A policy line placed there would be inert anyway,
+    // so the invariant worth enforcing is that credentials cannot be committed
+    // or shipped into a build context by accident.
+    expect(ignorePatterns('.gitignore'), '.gitignore').toContain('.npmrc');
+    expect(ignorePatterns('.dockerignore'), '.dockerignore').toContain('.npmrc');
   });
 
   it('carries the policy into both container builds', () => {
