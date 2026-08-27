@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
-    "happy-dom": "20.11.2",
-    "vite": "8.2.1"
+    "@types/react-dom": "19.2.5",
+    "happy-dom": "20.11.6",
+    "vite": "8.2.2"
   }
 }
