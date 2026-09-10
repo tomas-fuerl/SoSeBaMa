@@ -14,7 +14,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@nestjs/common": "11.1.29",
+    "@nestjs/common": "12.0.1",
     "@nestjs/core": "11.1.29",
     "@sobama/config": "workspace:*",
     "@sobama/contracts": "workspace:*",
