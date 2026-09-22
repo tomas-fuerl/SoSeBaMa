@@ -147,9 +147,10 @@ Hauptversionen in der Linie.
 
 `engines.node` stand zunächst exakt auf dem Pin. Das war falsch, und der Fehler
 war teuer: **`engines` gilt auch für fremde Umgebungen, die ihr eigenes Node
-mitbringen.** Dependabots Updater-Container läuft auf einem anderen Patchstand
-als der hier fixierte. Seit `engineStrict` wirksam ist, brach seine
-npm-Aktualisierung deshalb ab:
+mitbringen.** Der folgende historische Befund entstand beim damaligen
+Repositorypin 24.18.1: Dependabots Updater-Container lief auf einem anderen
+Patchstand als der damals fixierte. Seit `engineStrict` wirksam war, brach
+seine npm-Aktualisierung deshalb ab:
 
 ```
 | typescript | tool_version_not_supported | {
@@ -174,9 +175,9 @@ Die Rollenteilung lautet daher:
 - **`.node-version` und die Dockerfile-Basen** legen fest, was tatsächlich
   läuft — beide weiterhin exakt.
 
-`engineStrict` setzt die Linie weiterhin hart durch; gemessen brechen
-`^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1 jeweils ab. Der
-Driftschutz hängt ohnehin nicht an `engines`, sondern an der
+`engineStrict` setzt die Linie weiterhin hart durch; in dieser historischen
+Probe brachen `^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1
+jeweils ab. Der Driftschutz hängt ohnehin nicht an `engines`, sondern an der
 Deklarationsgleichheit, die `test/toolchain-policy.test.ts` erzwingt: Der Caret
 bleibt am Pin verankert, ein Anheben von `.node-version` zieht diesen Eintrag
 also mit.

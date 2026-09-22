@@ -24,13 +24,16 @@ describe('web runtime', () => {
     server = await createServer({
       logLevel: 'silent',
       root: fileURLToPath(new URL('../', import.meta.url)),
-      server: { host: 'localhost', port: 0 },
+      // Bind and fetch the same address family explicitly. Node 24.21 can
+      // resolve `localhost` to IPv4 while Vite listens on IPv6, which turns
+      // this runtime assertion into an address-selection test.
+      server: { host: '127.0.0.1', port: 0 },
     });
     await server.listen();
 
     const address = server.httpServer?.address() as AddressInfo | null;
     expect(address).not.toBeNull();
-    const baseUrl = `http://localhost:${address?.port ?? 0}`;
+    const baseUrl = `http://127.0.0.1:${address?.port ?? 0}`;
     const healthUrl = `${baseUrl}/health.json`;
 
     const pageResponse = await fetch(`${baseUrl}/`);
