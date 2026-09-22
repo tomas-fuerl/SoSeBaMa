@@ -64,5 +64,14 @@ strictPeerDependencies: true
 # deklariert ^3.3.17; eine frische Auflösung landet damit ohnehin auf dem Kopf
 # der Patchlinie. Vor dem Entfernen ist zu prüfen, dass die aufgelöste Version
 # nicht erneut unterhalb der dann gültigen Advisory-Grenze liegt.
+#
+# Multer 2.2.0 ist über mehrere 2026 veröffentlichte Advisories verwundbar.
+# @nestjs/platform-express 11.1.29 ist die neueste Version der eingesetzten
+# NestJS-11-Linie, deklariert Multer aber weiterhin exakt auf 2.2.0. Der
+# Parent-Selector begrenzt den Override deshalb auf genau diesen Upstream-Pin
+# und löst ihn auf den geprüften Kopf der kompatiblen 2.x-Linie. Entfernen,
+# sobald eine eingesetzte NestJS-Version selbst mindestens Multer 2.4.0
+# deklariert.
 overrides:
   'nanoid@': '3.3.18'
+  '@nestjs/platform-express@11.1.29>multer': '2.4.0'
