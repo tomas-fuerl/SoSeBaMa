@@ -351,6 +351,10 @@ und beim genannten Preset den Zustand **Disabled** prüfen. Nach jeder Änderung
 von Dependabot-Regeln ist diese Kontrolle zu wiederholen und im zugehörigen
 Issue oder Pull Request zu protokollieren.
 
+Technischer Nachweis: Am 2026-10-02 wurde die zuvor aktive Preset-Regel in der
+GitHub-Oberfläche deaktiviert. GitHub bestätigte das Speichern und zeigte den
+Regelzustand anschließend als **Disabled** an.
+
 ## Warum die Browserlaufzeit nicht blockierend gescannt wird
 
 Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
