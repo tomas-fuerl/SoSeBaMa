@@ -72,6 +72,22 @@ strictPeerDependencies: true
 # und löst ihn auf den geprüften Kopf der kompatiblen 2.x-Linie. Entfernen,
 # sobald eine eingesetzte NestJS-Version selbst mindestens Multer 2.4.0
 # deklariert.
+#
+# brace-expansion 5.0.9 ist über GHSA-qhr7-859c-m2p7 und
+# GHSA-6j4f-fj2g-mc7p verwundbar. Es wird ausschließlich von minimatch 10.2.6
+# eingebracht; dessen ^5.0.0-Range erlaubt den korrigierten Patchstand 5.0.12.
+# Der Parent-Selector hält die Sicherheitsauflösung auf genau dieser Kante.
+# Entfernen, sobald die eingesetzte minimatch-Version selbst mindestens
+# brace-expansion 5.0.12 auflöst.
+#
+# qs 6.15.3 ist über GHSA-x5fp-wj9c-mxmx und GHSA-4mjr-xmp4-gh2g
+# verwundbar. Express 5.2.1 und body-parser 2.3.0 deklarieren genau diesen
+# Stand. Die beiden Parent-Selectoren begrenzen die Korrektur deshalb auf die
+# betroffenen Produktionspfade. Entfernen, sobald die eingesetzten
+# Upstream-Versionen selbst mindestens qs 6.16.0 deklarieren.
 overrides:
   'nanoid@': '3.3.18'
   '@nestjs/platform-express@11.1.29>multer': '2.4.0'
+  'minimatch@10.2.6>brace-expansion': '5.0.12'
+  'body-parser@2.3.0>qs': '6.16.0'
+  'express@5.2.1>qs': '6.16.0'
