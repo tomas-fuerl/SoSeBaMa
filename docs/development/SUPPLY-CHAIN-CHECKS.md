@@ -318,18 +318,38 @@ Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet
 Sicherheitsaktualisierungen. Auto-Merge ist nach ADR-0013 nicht eingerichtet;
 jede Aktualisierung durchläuft denselben Pflichtcheck wie jede andere Änderung.
 
-**Bekannte Einschränkung.** GitHub verwirft mit der voreingestellten
-Auto-Triage-Regel Befunde in `development`-scoped Abhängigkeiten automatisch.
-Ein solcher Befund erscheint dann als `auto_dismissed`, und es entsteht keine
-Sicherheitsaktualisierung. Beim Befund aus
-[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) ist das zweimal
-eingetreten; beide Male wurde er nur durch manuelle Durchsicht bemerkt.
+Die GitHub-Preset-Regel **Dismiss low impact issues for development-scoped
+dependencies** muss für dieses Repository deaktiviert sein und deaktiviert
+bleiben. Das ist die verbindliche Eigentümerentscheidung aus
+[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46): Abhängigkeiten aus
+Build-, Test-, Browser-, Analyse- und Supply-Chain-Werkzeugen gelten nicht
+pauschal als sicherheitsirrelevant, weil sie Repositoryinhalte verarbeiten und
+in CI beziehungsweise in der Lieferkette ausgeführt werden.
 
-Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
-Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
-Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
-Eigentümerentscheidung und in
-[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46) verfolgt.
+Damit gelten für `development`-scoped Abhängigkeiten dieselben
+Bewertungsgrundsätze wie für andere Befunde:
+
+- Alerts bleiben sichtbar und werden nicht allein wegen ihres Scopes
+  automatisch verworfen.
+- Jeder Befund wird nach Schweregrad, Ausnutzbarkeit, Patch-Verfügbarkeit und
+  tatsächlicher Erreichbarkeit bewertet.
+- Ein irrelevanter Befund darf weiterhin bewusst manuell oder durch eine
+  hinreichend spezifische, dokumentierte Regel behandelt werden.
+- Eine spätere Automatisierung muss enger als der Development-Scope gefasst
+  sein und darf relevante Supply-Chain-Befunde nicht verdecken.
+
+Der Trivy-Lauf über das Lockfile bleibt davon unabhängig verpflichtend. Er
+erkennt Befunde auch dann, wenn GitHub keinen Alert oder keine
+Sicherheitsaktualisierung erzeugt. Beim Befund aus
+[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) hatte die frühere
+Preset-Regel den Alert zweimal automatisch verworfen; diese Erkennungslücke ist
+der konkrete Anlass für die jetzige Policy.
+
+Die Einstellung liegt außerhalb des versionierten Repositoryinhalts. Zur
+Kontrolle in GitHub **Settings → Advanced Security → Dependabot rules** öffnen
+und beim genannten Preset den Zustand **Disabled** prüfen. Nach jeder Änderung
+von Dependabot-Regeln ist diese Kontrolle zu wiederholen und im zugehörigen
+Issue oder Pull Request zu protokollieren.
 
 ## Warum die Browserlaufzeit nicht blockierend gescannt wird
 
