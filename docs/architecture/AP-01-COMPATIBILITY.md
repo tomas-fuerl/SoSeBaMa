@@ -1,14 +1,14 @@
 # AP-01: Hauptversions- und Kompatibilitätsnachweis
 
 - Status: Bestanden
-- Prüfstand: 2026-08-02
-- Letzte Durchsicht: 2026-08-16
+- Prüfstand: 2026-09-22
+- Letzte Durchsicht: 2026-09-22
 - Bezogenes Issue: [#9](https://github.com/tomas-fuerl/SoSeBaMa/issues/9)
 - Geltungsbereich: AP-01 in lokaler isolierter DEV-Probe
 
-Der Prüfstand nennt das Datum der ausgeführten Probe. Die Durchsicht bewertet
-ausschließlich, welche der damals offenen Punkte inzwischen durch eigene
-Teilschnitte erbracht sind; der geprüfte Versionskorridor bleibt unverändert.
+Der Prüfstand nennt das Datum der zuletzt ausgeführten Probe. Die erneute Probe
+vom 2026-09-22 hebt ausschließlich den Node-24-Patchstand an; der übrige
+Versionskorridor bleibt unverändert.
 
 ## Ziel und Ergebnis
 
@@ -42,7 +42,7 @@ Upgradefreigabe. Maßgeblich bleibt jeweils die im Repository fixierte Version.
 
 | Bestandteil | Prüfversion | Veröffentlichte Kompatibilitätsgrenze | Ergebnis |
 | --- | --- | --- | --- |
-| Node.js | 24.18.1 LTS | Linie 24 ist LTS | bestanden |
+| Node.js | 24.21.0 LTS | Linie 24 ist LTS | bestanden |
 | pnpm | 11.18.0 | Node.js `>=22.13` | bestanden |
 | TypeScript | 5.9.3 | Node.js `>=14.17` | bestanden |
 | React und React DOM | 19.2.8 | gleiche React-/React-DOM-Linie | bestanden |
@@ -71,7 +71,8 @@ PostgreSQL-Anbindung folgt erst im dafür vorgesehenen Integrationsschnitt.
 ## Quellen
 
 Die folgenden Herstellerquellen und veröffentlichten Paketmetadaten wurden am
-2026-08-02 geprüft:
+2026-08-02 geprüft. Der Node-Imagepin und die Auflösbarkeit der unveränderten
+Prüfeingabe wurden am 2026-09-22 erneut geprüft:
 
 - [Node.js-Releasestatus](https://nodejs.org/en/about/previous-releases),
 - [React-Versionen](https://react.dev/versions),
@@ -136,7 +137,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.1-bookworm-slim \
+     node:24.21.0-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm install --lockfile-only --ignore-scripts --strict-peer-dependencies'
    ```
 
@@ -146,7 +147,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.1-bookworm-slim \
+     node:24.21.0-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm install --frozen-lockfile --ignore-scripts --strict-peer-dependencies'
    ```
 
@@ -156,7 +157,7 @@ Verzeichnis darf keine Secrets oder private Konfiguration enthalten.
    docker run --rm \
      --volume "<LEERES-PROBEVERZEICHNIS>:/workspace" \
      --workdir /workspace \
-     node:24.18.1-bookworm-slim \
+     node:24.21.0-bookworm-slim \
      sh -lc 'corepack enable && corepack prepare pnpm@11.18.0 --activate && pnpm exec tsc --version && node --input-type=module -e "await Promise.all([import(\"react\"), import(\"@nestjs/core\"), import(\"vite\"), import(\"vitest\"), import(\"pino\"), import(\"@opentelemetry/api\"), import(\"testcontainers\")]); console.log(\"esm-imports: ok\")"'
    ```
 
@@ -167,12 +168,12 @@ das Ergebnis nicht.
 ## Ausgeführtes Ergebnis
 
 Die Probe lief mit dem offiziellen Image
-`node:24.18.1-bookworm-slim` und dem beim Abruf gemeldeten Digest
-`sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7`.
+`node:24.21.0-bookworm-slim` und dem beim Abruf gemeldeten Digest
+`sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6`.
 
 - Die strikte Lockfile-Auflösung endete mit Exit-Code `0`.
-- pnpm bestätigte seine Supply-Chain-Prüfung für 458 Lockfileeinträge.
-- Die gefrorene Installation löste 433 Pakete ohne Engine- oder
+- pnpm bestätigte seine Supply-Chain-Prüfung für 454 Lockfileeinträge.
+- Die gefrorene Installation löste 428 Pakete ohne Engine- oder
   Peer-Abhängigkeitskonflikt auf.
 - Installationsskripte blieben deaktiviert.
 - TypeScript meldete Version `5.9.3`.

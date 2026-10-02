@@ -239,6 +239,25 @@ describe('server observability foundation', () => {
     ).toThrowError(/Invalid local telemetry configuration(?!.*private-external)/u);
   });
 
+  it('normalizes long trailing-slash sequences without rejecting a loopback exporter', async () => {
+    const traces = new InMemorySpanExporter();
+    const metrics = new InMemoryMetricExporter(AggregationTemporality.CUMULATIVE);
+    const { streams } = captureStreams();
+    const observability = createRuntimeObservabilityCore(
+      {
+        environment: 'DEV',
+        role: 'api',
+        telemetry: {
+          endpoint: `http://127.0.0.1:4318/collector${'/'.repeat(100_000)}`,
+          exporter: 'otlp',
+        },
+      },
+      { exporters: { metrics, traces }, streams },
+    );
+
+    await expect(observability.shutdown()).resolves.toBeUndefined();
+  });
+
   it.each([
     'OTEL_EXPORTER_OTLP_HEADERS',
     'OTEL_EXPORTER_OTLP_TRACES_HEADERS',

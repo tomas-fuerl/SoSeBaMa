@@ -67,7 +67,7 @@ function installedVersion(packageName: string): string | undefined {
   return manifest.version;
 }
 
-/** `24.18.1` and `24.13.3` share the major `24`. */
+/** `24.21.0` and `24.13.3` share the major `24`. */
 function major(version: string): string {
   return version.split('.')[0] ?? version;
 }
@@ -175,7 +175,7 @@ describe('pinned Node version', () => {
 
       expect(tags.length, `${dockerfile}: keine Node-Basisstufe gefunden`).toBeGreaterThan(0);
       for (const tag of tags) {
-        // `24.18.1-bookworm-slim` traegt die Version vor der Variante.
+        // `24.21.0-bookworm-slim` traegt die Version vor der Variante.
         expect(tag.split('-')[0], `${dockerfile}: ${tag}`).toBe(pinnedNodeVersion);
       }
     }
