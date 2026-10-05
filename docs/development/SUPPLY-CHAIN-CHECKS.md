@@ -246,12 +246,14 @@ befristeten Caddy-Ausnahmen wurden nach einem frischen Scan des offiziellen
 für die CI-Scans erhalten.
 
 Der frische Image-Scan fand stattdessen `CVE-2026-103111` (`HIGH`) in
-`libpcre2-8-0` des gepinnten Node-Basisimages. Beide Runtime-Dockerfiles
-installieren deshalb gezielt die korrigierte Debian-Version
-`10.42-1+deb12u2`; der anschließende Scan beider Images ohne Ausnahmen war
-erfolgreich. Bei einem späteren Node-Image-Update ist diese Übergangsmaßnahme
-erneut zu prüfen und nachweislich überflüssige Paket-Upgrades sind zu
-entfernen.
+`libpcre2-8-0` des gepinnten Node-Basisimages. Eine zwischen lokalem Lauf und
+GitHub-CI aktualisierte Trivy-Datenbank meldete außerdem sieben fixbare
+`perl-base`-Befunde (drei `CRITICAL`, vier `HIGH`) in beiden Runtime-Images.
+Beide Runtime-Dockerfiles installieren deshalb gezielt die korrigierten
+Debian-Versionen `libpcre2-8-0=10.42-1+deb12u2` und
+`perl-base=5.36.0-7+deb12u4`. Bei einem späteren Node-Image-Update sind
+diese Übergangsmaßnahmen erneut zu prüfen und nachweislich überflüssige
+Paket-Upgrades zu entfernen.
 
 ## Hinweis zum Format der Ignoredatei
 

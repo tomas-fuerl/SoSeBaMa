@@ -32,9 +32,12 @@ ENV XDG_CONFIG_HOME=/tmp/caddy-config
 ENV XDG_DATA_HOME=/tmp/caddy-data
 
 # Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
-# (CVE-2026-103111). Nur das betroffene Debian-Paket aktualisieren.
+# (CVE-2026-103111) und perl-base deb12u3 (mehrere HIGH/CRITICAL-Befunde).
+# Nur diese betroffenen Debian-Pakete aktualisieren.
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends --only-upgrade libpcre2-8-0=10.42-1+deb12u2 \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+      libpcre2-8-0=10.42-1+deb12u2 \
+      perl-base=5.36.0-7+deb12u4 \
     && rm -rf /var/lib/apt/lists/*
 
 # Die Runtime startet Caddy; `node` bleibt ausschliesslich fuer die
