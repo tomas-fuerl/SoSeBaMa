@@ -154,10 +154,11 @@ jobs:
       # Das Playwright-Image ist ein reines Testartefakt: Es wird nie
       # ausgeliefert, laeuft unprivilegiert im internen Netz ohne Route nach
       # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
-      # liegen im gebuendelten npm des Images -- derselbe Fall wie beim
-      # Node-Basisimage, dort aber entfernbar, hier nicht: Nur der Hersteller
-      # kann das Image neu bauen. Ein blockierendes Gate waere dauerhaft rot
-      # und wuerde abgeschaltet statt beachtet. Begruendung und Stand:
+      # lagen zuerst im gebuendelten npm des Images -- derselbe Fall wie beim
+      # Node-Basisimage, dort aber entfernbar, hier nicht. Der aktuelle Scan
+      # meldet auch Ubuntu-OpenSSL; diese neuen Befunde erfordern die in der
+      # Anleitung dokumentierte Neubewertung. Der nichtblockierende Scan
+      # bleibt sichtbar, ersetzt aber keine Ownerentscheidung. Stand:
       # docs/development/SUPPLY-CHAIN-CHECKS.md
       - name: Report browser image findings without blocking
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

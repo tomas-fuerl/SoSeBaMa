@@ -147,9 +147,10 @@ Hauptversionen in der Linie.
 
 `engines.node` stand zunächst exakt auf dem Pin. Das war falsch, und der Fehler
 war teuer: **`engines` gilt auch für fremde Umgebungen, die ihr eigenes Node
-mitbringen.** Dependabots Updater-Container läuft auf einem anderen Patchstand
-als der hier fixierte. Seit `engineStrict` wirksam ist, brach seine
-npm-Aktualisierung deshalb ab:
+mitbringen.** Der folgende historische Befund entstand beim damaligen
+Repositorypin 24.18.1: Dependabots Updater-Container lief auf einem anderen
+Patchstand als der damals fixierte. Seit `engineStrict` wirksam war, brach
+seine npm-Aktualisierung deshalb ab:
 
 ```
 | typescript | tool_version_not_supported | {
@@ -174,9 +175,9 @@ Die Rollenteilung lautet daher:
 - **`.node-version` und die Dockerfile-Basen** legen fest, was tatsächlich
   läuft — beide weiterhin exakt.
 
-`engineStrict` setzt die Linie weiterhin hart durch; gemessen brechen
-`^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1 jeweils ab. Der
-Driftschutz hängt ohnehin nicht an `engines`, sondern an der
+`engineStrict` setzt die Linie weiterhin hart durch; in dieser historischen
+Probe brachen `^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1
+jeweils ab. Der Driftschutz hängt ohnehin nicht an `engines`, sondern an der
 Deklarationsgleichheit, die `test/toolchain-policy.test.ts` erzwingt: Der Caret
 bleibt am Pin verankert, ein Anheben von `.node-version` zieht diesen Eintrag
 also mit.
@@ -237,69 +238,22 @@ Scanner oder der Basisimages erneut zu bewerten.
 
 ## Bestehende Ausnahmen
 
-Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: 13 Go-Befunde
-im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH`. Davon tragen 12
-eine CVE-Kennung und einer eine GHSA-Kennung.
+Zum Prüfstand vom 2026-10-05 bestehen **keine Ausnahmen**. Die 13 zuvor
+befristeten Caddy-Ausnahmen wurden nach einem frischen Scan des offiziellen
+`caddy:2.11.6`-Binaries entfernt: `/usr/bin/caddy` meldete auch ohne
+`ignore-unfixed` keine `HIGH`- oder `CRITICAL`-Befunde. Die leere
+[`.trivyignore.yaml`](../../.trivyignore.yaml) bleibt als explizite Eingabe
+für die CI-Scans erhalten.
 
-**Nicht alle sind Denial of Service.** Drei betreffen ausschließlich andere
-Wirkungen: `CVE-2026-39821` eine mögliche Umgehung von
-Autorisierungsentscheidungen über fehlerhaft akzeptierte Punycode-Labels,
-`CVE-2026-39822` das Verlassen einer Wurzelgrenze über Symlinks und
-`CVE-2026-56858` Cross-Site Scripting. `GHSA-hrxh-6v49-42gf` vereint mehrere
-Wirkungsklassen, nämlich einen Autorisierungsfehler in xDS RBAC und
-Denial-of-Service-Szenarien. `CVE-2026-56853` ist entgegen einer früheren
-Fassung dieses Dokuments sehr wohl ein Denial of Service: `ReadHeaderTimeout`
-greift beim Lesen des h2c-Preface nicht. Jede Ausnahme in
-[`.trivyignore.yaml`](../../.trivyignore.yaml) trägt deshalb eine eigene
-Bewertung aus Wirkung, Erreichbarkeit in der tatsächlichen Caddy-Konfiguration
-und Restrisiko, statt einer pauschalen Einstufung.
-
-Der Weg über ein Update ist ausgeschöpft. Caddy 2.11.4 ist die neueste
-veröffentlichte Version. Das offizielle Image wurde seit dem ursprünglichen Pin
-neu gebaut, nachweislich aber mit derselben Go-Toolchain: Nach dem Digestwechsel
-meldet Trivy unverändert `stdlib v1.26.3`, `x/net v0.55.0` und `x/text v0.37.0`.
-Das Binary wird als offizielles Image übernommen und nicht selbst gebaut; die
-einzige Abhilfe ist ein Upstream-Release mit neuerer Go-Version. Dependabot
-überwacht das Docker-Ökosystem und meldet einen solchen Rebuild.
-
-Grundlage der Erreichbarkeitsbewertung ist die tatsächliche Konfiguration in
-`containers/caddy/`: Beide Caddyfiles setzen `admin off` und `auto_https off`;
-TLS-Terminierung, `templates`, `browse`, XML-Verarbeitung und ein xDS-Client
-sind nicht konfiguriert. Der Caddy-Startlog bestätigt zusätzlich
-„HTTP/2 skipped because it requires TLS". Das ist eine Bewertung auf
-Konfigurationsebene und kein Nachweis auf Codeebene; Erreichbarkeit über einen
-nicht betrachteten internen Pfad ist damit nicht ausgeschlossen.
-
-### Abweichender Schweregrad bei CVE-2026-39821
-
-Trivy meldet diesen Befund als `HIGH`. Die GitHub Advisory Database führt ihn
-unter `GHSA-w2q5-6q6x-x959` als **`CRITICAL` mit CVSS 10.0**.
-
-Das ist kein Nebenaspekt: Diese Anleitung hält an anderer Stelle fest, dass für
-einen kritischen Befund keine Ausnahme vorgesehen ist. Nach der Trivy-Einstufung
-greift diese Regel nicht, nach der Advisory-Einstufung schon. Die Ausnahme wird
-deshalb ausdrücklich als **Entscheidung des Projekteigentümers** geführt und
-nicht als Routinefall.
-
-Tragende Gründe für die befristete Annahme:
-
-- Beide Caddyfiles definieren die Site als `:8080` ohne Hostnamen. Es gibt weder
-  Host-Matcher noch hostbasierte Routing- oder Autorisierungsentscheidungen; es
-  existiert also keine Entscheidung, die umgangen werden könnte.
-- Der Reparaturweg ist ausgeschöpft, siehe oben.
-- In DEV ist der Eingang ausschließlich über Loopback erreichbar.
-
-Nicht tragend wäre die Trivy-Einstufung allein. **Vor einer TST- oder
-PRD-Freigabe ist dieser Befund zwingend und vorrangig neu zu bewerten**; dort
-entfällt die Loopback-Mitigation, und eine spätere hostbasierte Konfiguration
-würde die Erreichbarkeitsbewertung umkehren.
-
-Die Ausnahmen laufen am 2026-11-16 ab. Caddy ist der einzige
-Anwendungseingang, die Befunde sind also nicht folgenlos; in DEV besteht
-allerdings kein Zugriff von außerhalb des Loopback. **Vor einer TST- oder
-PRD-Freigabe ist diese Gruppe neu zu bewerten und nicht ungeprüft zu
-verlängern.** Dort entfällt die Loopback-Mitigation. Höchste Priorität hat
-dabei `CVE-2026-39821`, weil Hostnamen bei jeder Anfrage verarbeitet werden.
+Der frische Image-Scan fand stattdessen `CVE-2026-103111` (`HIGH`) in
+`libpcre2-8-0` des gepinnten Node-Basisimages. Eine zwischen lokalem Lauf und
+GitHub-CI aktualisierte Trivy-Datenbank meldete außerdem sieben fixbare
+`perl-base`-Befunde (drei `CRITICAL`, vier `HIGH`) in beiden Runtime-Images.
+Beide Runtime-Dockerfiles installieren deshalb gezielt die korrigierten
+Debian-Versionen `libpcre2-8-0=10.42-1+deb12u2` und
+`perl-base=5.36.0-7+deb12u4`. Bei einem späteren Node-Image-Update sind
+diese Übergangsmaßnahmen erneut zu prüfen und nachweislich überflüssige
+Paket-Upgrades zu entfernen.
 
 ## Hinweis zum Format der Ignoredatei
 
@@ -317,39 +271,71 @@ Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet
 Sicherheitsaktualisierungen. Auto-Merge ist nach ADR-0013 nicht eingerichtet;
 jede Aktualisierung durchläuft denselben Pflichtcheck wie jede andere Änderung.
 
-**Bekannte Einschränkung.** GitHub verwirft mit der voreingestellten
-Auto-Triage-Regel Befunde in `development`-scoped Abhängigkeiten automatisch.
-Ein solcher Befund erscheint dann als `auto_dismissed`, und es entsteht keine
-Sicherheitsaktualisierung. Beim Befund aus
-[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) ist das zweimal
-eingetreten; beide Male wurde er nur durch manuelle Durchsicht bemerkt.
+Die GitHub-Preset-Regel **Dismiss low impact issues for development-scoped
+dependencies** muss für dieses Repository deaktiviert sein und deaktiviert
+bleiben. Das ist die verbindliche Eigentümerentscheidung aus
+[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46): Abhängigkeiten aus
+Build-, Test-, Browser-, Analyse- und Supply-Chain-Werkzeugen gelten nicht
+pauschal als sicherheitsirrelevant, weil sie Repositoryinhalte verarbeiten und
+in CI beziehungsweise in der Lieferkette ausgeführt werden.
 
-Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
-Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
-Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
-Eigentümerentscheidung und in
-[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46) verfolgt.
+Damit gelten für `development`-scoped Abhängigkeiten dieselben
+Bewertungsgrundsätze wie für andere Befunde:
+
+- Alerts bleiben sichtbar und werden nicht allein wegen ihres Scopes
+  automatisch verworfen.
+- Jeder Befund wird nach Schweregrad, Ausnutzbarkeit, Patch-Verfügbarkeit und
+  tatsächlicher Erreichbarkeit bewertet.
+- Ein irrelevanter Befund darf weiterhin bewusst manuell oder durch eine
+  hinreichend spezifische, dokumentierte Regel behandelt werden.
+- Eine spätere Automatisierung muss enger als der Development-Scope gefasst
+  sein und darf relevante Supply-Chain-Befunde nicht verdecken.
+
+Der Trivy-Lauf über das Lockfile bleibt davon unabhängig verpflichtend. Er
+erkennt Befunde auch dann, wenn GitHub keinen Alert oder keine
+Sicherheitsaktualisierung erzeugt. Beim Befund aus
+[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) hatte die frühere
+Preset-Regel den Alert zweimal automatisch verworfen; diese Erkennungslücke ist
+der konkrete Anlass für die jetzige Policy.
+
+Die Einstellung liegt außerhalb des versionierten Repositoryinhalts. Zur
+Kontrolle in GitHub **Settings → Advanced Security → Dependabot rules** öffnen
+und beim genannten Preset den Zustand **Disabled** prüfen. Nach jeder Änderung
+von Dependabot-Regeln ist diese Kontrolle zu wiederholen und im zugehörigen
+Issue oder Pull Request zu protokollieren.
+
+Technischer Nachweis: Am 2026-10-02 wurde die zuvor aktive Preset-Regel in der
+GitHub-Oberfläche deaktiviert. GitHub bestätigte das Speichern und zeigte den
+Regelzustand anschließend als **Disabled** an.
 
 ## Warum die Browserlaufzeit nicht blockierend gescannt wird
 
 Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
 Eigentümerentscheidung, keine Nachlässigkeit.
 
-Gemessen am 2026-08-16 gegen
-`mcr.microsoft.com/playwright:v1.62.1-noble`, Schweregrad `CRITICAL,HIGH`, nur
-Befunde **mit** verfügbarem Fix:
+Der erneute Scan am 2026-10-05 gegen den weiterhin aktuellen offiziellen
+Multi-Arch-Digest
+`mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`
+meldet bei `CRITICAL,HIGH` und `ignore-unfixed: true` folgende **fixbare**
+Befunde:
 
 | Paket | Befunde |
 | --- | --- |
-| `tar` | 1 × CRITICAL, 1 × HIGH |
-| `brace-expansion` | 3 × HIGH |
+| `tar` | 1 × CRITICAL, 2 × HIGH |
+| `brace-expansion` | 5 × HIGH |
 | `ip-address` | 1 × HIGH |
-| `undici` | 1 × HIGH |
+| `pacote` | 1 × HIGH |
+| `undici` | 2 × HIGH |
+| Ubuntu `libssl3t64` und `openssl` | je 1 × HIGH (`CVE-2026-84782`) |
 
-Alle sieben liegen im **gebündelten npm** des Images — dieselbe Klasse wie beim
-Node-Basisimage. Dort war die Abhilfe, npm aus dem Runtime-Image zu entfernen;
-hier ist sie nicht verfügbar, weil das Image vom Hersteller kommt und nur dieser
-es neu bauen kann.
+Zwölf Befunde liegen im **gebündelten npm** des Images — dieselbe Klasse wie
+beim Node-Basisimage. Dort war die Abhilfe, npm aus dem Runtime-Image zu
+entfernen; hier ist sie nicht verfügbar, weil das Image vom Hersteller kommt
+und nur dieser es neu bauen kann. Zwei neue Befundzeilen betreffen dagegen
+Ubuntu-OpenSSL und liegen **außerhalb** des npm-Bundles. Der Browser-Smoke
+verwendet nur lokales HTTP im internen Netz, nicht TLS; dennoch ist die
+frühere npm-spezifische Erreichbarkeitsbewertung auf diese Pakete nicht
+übertragbar.
 
 Die Entscheidung stützt sich auf vier Punkte:
 
@@ -364,10 +350,13 @@ Die Entscheidung stützt sich auf vier Punkte:
 4. Ein blockierendes Gate wäre ohne Handlungsoption dauerhaft rot — genau die
    Lage, in der ein Check abgeschaltet statt beachtet wird.
 
-Der Scan bleibt trotzdem im Lauf, damit die Befunde sichtbar sind und eine
-Verschlechterung auffällt. **Auslöser für eine Neubewertung:** ein Befund
-außerhalb des npm-Bundles, ein Befund in einer Browserbibliothek oder jede
-Verwendung des Images außerhalb des Tests.
+Der Scan bleibt im Lauf, damit die Befunde sichtbar sind und eine
+Verschlechterung auffällt. **Die beiden OpenSSL-Befunde lösen die hier
+vorgesehene Neubewertung aus.** Bis zur Entscheidung des Projekteigentümers
+ist die Annahme dieser neuen Befunde für eine AP-01-Abnahme offen; der
+nichtblockierende CI-Scan allein ist keine solche Entscheidung. Weitere
+Auslöser sind Befunde in einer Browserbibliothek oder jede Verwendung des
+Images außerhalb des Tests.
 
 ### Warum Hauptversionen nicht gruppiert werden
 

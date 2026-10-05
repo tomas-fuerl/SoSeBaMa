@@ -1,4 +1,4 @@
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS dependencies
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS dependencies
 
 WORKDIR /workspace
 
@@ -43,9 +43,18 @@ RUN pnpm --filter @sobama/config run build \
 RUN pnpm --filter @sobama/api deploy --prod --legacy /output/api
 RUN pnpm --filter @sobama/worker deploy --prod --legacy /output/worker
 
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS runtime
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime
 
 ENV NODE_ENV=production
+
+# Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
+# (CVE-2026-103111) und perl-base deb12u3 (mehrere HIGH/CRITICAL-Befunde).
+# Nur diese betroffenen Debian-Pakete aktualisieren.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+      libpcre2-8-0=10.42-1+deb12u2 \
+      perl-base=5.36.0-7+deb12u4 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Die Runtime startet ausschliesslich `node`; die Healthchecks nutzen ebenfalls
 # nur `node -e`. npm und corepack werden nicht benoetigt, bringen aber ein

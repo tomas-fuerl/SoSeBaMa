@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@11.18.0",
   "engines": {
-    "node": "^24.18.1",
+    "node": "^24.21.0",
     "pnpm": "11.18.0"
   },
   "scripts": {
@@ -46,11 +46,11 @@
     "@sobama/eslint-config": "workspace:*",
     "@sobama/typescript-config": "workspace:*",
     "@types/node": "24.13.3",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "eslint": "10.8.1",
     "prettier": "3.9.6",
     "typescript": "5.9.3",
     "typescript-eslint": "8.67.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }
