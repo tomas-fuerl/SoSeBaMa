@@ -47,6 +47,12 @@ FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea41952009
 
 ENV NODE_ENV=production
 
+# Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
+# (CVE-2026-103111). Nur das betroffene Debian-Paket aktualisieren.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends --only-upgrade libpcre2-8-0=10.42-1+deb12u2 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Die Runtime startet ausschliesslich `node`; die Healthchecks nutzen ebenfalls
 # nur `node -e`. npm und corepack werden nicht benoetigt, bringen aber ein
 # eigenes gebuendeltes Abhaengigkeitsset mit. Das Entfernen reduziert sowohl die
