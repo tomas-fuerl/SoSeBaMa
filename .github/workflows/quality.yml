@@ -156,7 +156,7 @@ jobs:
       # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
       # lagen zuerst im gebuendelten npm des Images -- derselbe Fall wie beim
       # Node-Basisimage, dort aber entfernbar, hier nicht. Der aktuelle Scan
-      # meldet auch Ubuntu-OpenSSL; diese neuen Befunde erfordern die in der
+      # meldet auch Ubuntu-APT; diese neuen Befunde erfordern die in der
       # Anleitung dokumentierte Neubewertung. Der nichtblockierende Scan
       # bleibt sichtbar, ersetzt aber keine Ownerentscheidung. Stand:
       # docs/development/SUPPLY-CHAIN-CHECKS.md
@@ -166,7 +166,7 @@ jobs:
           skip-setup-trivy: true
           version: v0.74.0
           scan-type: image
-          image-ref: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+          image-ref: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d
           exit-code: '0'
           severity: CRITICAL,HIGH
           ignore-unfixed: true

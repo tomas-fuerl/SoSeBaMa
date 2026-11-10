@@ -24,7 +24,7 @@ COPY packages/typescript-config packages/typescript-config
 
 RUN pnpm --filter @sobama/web run build
 
-FROM caddy:2.11.6@sha256:3422ce6de165df66534f9b9ba50efaf457114ec961763cc52f5dbdaac2972d73 AS caddy
+FROM caddy:2.11.9@sha256:0c2243efcf437ab7f7a978f1027fcf0d4f9be8a75df27b1b3fbc5dbe0ffa8cf0 AS caddy
 
 FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime
 
@@ -33,9 +33,12 @@ ENV XDG_DATA_HOME=/tmp/caddy-data
 
 # Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
 # (CVE-2026-103111) und perl-base deb12u3 (mehrere HIGH/CRITICAL-Befunde).
+# APT 2.6.1 ist ueber CVE-2026-109518 verwundbar; Fix ist 2.6.2.
 # Nur diese betroffenen Debian-Pakete aktualisieren.
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends --only-upgrade \
+      apt=2.6.2 \
+      libapt-pkg6.0=2.6.2 \
       libpcre2-8-0=10.42-1+deb12u2 \
       perl-base=5.36.0-7+deb12u4 \
     && rm -rf /var/lib/apt/lists/*

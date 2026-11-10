@@ -49,9 +49,12 @@ ENV NODE_ENV=production
 
 # Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
 # (CVE-2026-103111) und perl-base deb12u3 (mehrere HIGH/CRITICAL-Befunde).
+# APT 2.6.1 ist ueber CVE-2026-109518 verwundbar; Fix ist 2.6.2.
 # Nur diese betroffenen Debian-Pakete aktualisieren.
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends --only-upgrade \
+      apt=2.6.2 \
+      libapt-pkg6.0=2.6.2 \
       libpcre2-8-0=10.42-1+deb12u2 \
       perl-base=5.36.0-7+deb12u4 \
     && rm -rf /var/lib/apt/lists/*

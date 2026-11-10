@@ -238,7 +238,7 @@ Scanner oder der Basisimages erneut zu bewerten.
 
 ## Bestehende Ausnahmen
 
-Zum Prüfstand vom 2026-10-05 bestehen **keine Ausnahmen**. Die 13 zuvor
+Zum Prüfstand vom 2026-11-10 bestehen **keine Trivy-Ignore-Ausnahmen**. Die 13 zuvor
 befristeten Caddy-Ausnahmen wurden nach einem frischen Scan des offiziellen
 `caddy:2.11.6`-Binaries entfernt: `/usr/bin/caddy` meldete auch ohne
 `ignore-unfixed` keine `HIGH`- oder `CRITICAL`-Befunde. Die leere
@@ -254,6 +254,60 @@ Debian-Versionen `libpcre2-8-0=10.42-1+deb12u2` und
 `perl-base=5.36.0-7+deb12u4`. Bei einem späteren Node-Image-Update sind
 diese Übergangsmaßnahmen erneut zu prüfen und nachweislich überflüssige
 Paket-Upgrades zu entfernen.
+
+Der neue Scan vom 2026-11-10 meldete zusaetzlich `CVE-2026-109518` in
+`apt` und `libapt-pkg6.0` (jeweils 2.6.1). Beide Runtime-Stages aktualisieren
+deshalb gezielt auch diese Pakete auf 2.6.2. Die erneut betroffenen
+Go-Abhaengigkeiten des alten Caddy-2.11.6-Binaries werden durch das offizielle,
+per Multi-Arch-Digest gepinnte Caddy 2.11.9 ersetzt. Die Herkunft und
+Pullbarkeit wurden fuer amd64 und arm64 verifiziert.
+
+Die drei neuen npm-Befunde `CVE-2026-111181` (body-parser),
+`CVE-2026-113872` (multer) und `CVE-2026-90711` (proxy-addr) werden mit
+eng begrenzten Parent-Overrides auf 2.4.0, 2.5.0 und 2.0.8 korrigiert.
+Der bisherige qs-Override unter body-parser entfaellt, weil body-parser 2.4.0
+selbst qs ^6.16.1 verlangt. Die Express-qs-Kante wird wegen
+`GHSA-6pq8-jhm2-2vcw` ebenfalls auf die sichere 6.x-Aufloesung gehoben.
+
+Das zusaetzliche npm-Audit meldete HIGH-Befunde in Vite, source-map-js und
+Happy DOM, die in der Trivy-Datenbank noch fehlten. Vite wird innerhalb
+derselben Minorlinie auf 8.2.4 und source-map-js auf 1.2.2 korrigiert.
+Happy DOM benoetigt fuer `GHSA-834v-8h66-3h79` mindestens 21.0.4;
+dieser Majorwechsel ist deshalb eine Sicherheitskorrektur der reinen
+Testlaufzeit. Vitest und sein Coverage-Paket werden gemeinsam auf 4.1.12
+gehoben, das die beiden gemeldeten Mocker-Advisories behebt.
+
+`GHSA-g3hv-75wg-m249` in minimatch 10 bleibt als moderater Befund offen.
+Der Fix liegt erst in 11.0.1; ESLint und typescript-eslint deklarieren
+weiterhin 10.x. Es wird kein ungepruefter transitiver Major erzwungen.
+Ein npm-Audit-Exit-Code 1 wird deshalb weiterhin transparent berichtet;
+ein bestandener HIGH/CRITICAL-Scan ersetzt diesen Restbefund nicht.
+
+### Offener offizieller Caddy-Blocker am 2026-11-10
+
+Auch der neueste offizielle Release v2.11.9 und das gepinnte Image enthalten
+noch `golang.org/x/net` v0.60.0. Trivy 0.74.0 meldet darin
+`CVE-2026-78661` als fixbaren `HIGH`-Befund; korrigiert ist das Modul ab
+v0.62.0. Der offizielle `latest`-Tag verwendet fuer amd64 dasselbe
+Plattformmanifest. Ein neuerer offizieller Caddy-Release war am Prueftag
+nicht verfuegbar.
+
+Der verpflichtende Web-Image-Scan bleibt deshalb rot. AP-01 ist nicht
+abgenommen. Es wird keine neue Ignore-Ausnahme angelegt. Nach einem
+gepatchten offiziellen Image sind Pin, frische Scans, lokales G1–G3 und
+GitHub-Checks erneut gegen denselben Kandidaten nachzuweisen.
+
+Reproduktion mit laufender lokaler Docker-Engine:
+
+```sh
+docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:0.74.0 image --scanners vuln --severity CRITICAL,HIGH \
+  --ignore-unfixed --exit-code 1 \
+  caddy:2.11.9@sha256:0c2243efcf437ab7f7a978f1027fcf0d4f9be8a75df27b1b3fbc5dbe0ffa8cf0
+```
+
+Erwarteter aktueller Befund: `usr/bin/caddy`, `CVE-2026-78661`, Exit-Code 1.
+Ein Fehler beim Image- oder Datenbankbezug ist kein bestaetigter Scan.
 
 ## Hinweis zum Format der Ignoredatei
 
@@ -313,29 +367,33 @@ Regelzustand anschließend als **Disabled** an.
 Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
 Eigentümerentscheidung, keine Nachlässigkeit.
 
-Der erneute Scan am 2026-10-05 gegen den weiterhin aktuellen offiziellen
+Der erneute Scan am 2026-11-10 gegen den aktuellen offiziellen
 Multi-Arch-Digest
-`mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`
+`mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d`
 meldet bei `CRITICAL,HIGH` und `ignore-unfixed: true` folgende **fixbare**
 Befunde:
 
 | Paket | Befunde |
 | --- | --- |
-| `tar` | 1 × CRITICAL, 2 × HIGH |
-| `brace-expansion` | 5 × HIGH |
-| `ip-address` | 1 × HIGH |
-| `pacote` | 1 × HIGH |
-| `undici` | 2 × HIGH |
-| Ubuntu `libssl3t64` und `openssl` | je 1 × HIGH (`CVE-2026-84782`) |
+| `brace-expansion` 5.0.9 | 2 × HIGH; Fix 5.0.11 |
+| `undici` 6.28.0 | 4 × HIGH; Fix 6.29.1 |
+| Ubuntu `apt` und `libapt-pkg6.0t64` 2.8.3 | je 1 × HIGH (`CVE-2026-109518`); Fix 2.8.4ubuntu0.1 |
 
-Zwölf Befunde liegen im **gebündelten npm** des Images — dieselbe Klasse wie
+Sechs Befunde liegen im **gebündelten npm** des Images — dieselbe Klasse wie
 beim Node-Basisimage. Dort war die Abhilfe, npm aus dem Runtime-Image zu
 entfernen; hier ist sie nicht verfügbar, weil das Image vom Hersteller kommt
-und nur dieser es neu bauen kann. Zwei neue Befundzeilen betreffen dagegen
-Ubuntu-OpenSSL und liegen **außerhalb** des npm-Bundles. Der Browser-Smoke
-verwendet nur lokales HTTP im internen Netz, nicht TLS; dennoch ist die
-frühere npm-spezifische Erreichbarkeitsbewertung auf diese Pakete nicht
-übertragbar.
+und nur dieser es neu bauen kann. Zwei Befundzeilen betreffen dagegen
+Ubuntu-APT und liegen **außerhalb** des npm-Bundles. Weder APT noch npm werden
+vom Browser-Smoke aufgerufen. Er laedt nur lokal erzeugte Inhalte ueber HTTP
+im internen Netz; Paketinstallation und Repositoryzugriffe finden dort
+nicht statt. Eine pauschale Uebertragung der bisherigen Ownerentscheidung
+auf neue Systempakete ist trotzdem nicht vorgesehen.
+
+Der vorher offene OpenSSL-Befund `CVE-2026-84782` aus dem 1.62.1-Image wird
+im aktuellen Image nicht mehr gemeldet; auch fixbare CRITICAL- oder
+Brotli-Befunde wurden im 1.65.0-Scan nicht gefunden. Das zwischenzeitlich
+gepruefte 1.64.0-Image wurde wegen zusaetzlicher Systempaketbefunde nicht
+uebernommen.
 
 Die Entscheidung stützt sich auf vier Punkte:
 
@@ -351,7 +409,7 @@ Die Entscheidung stützt sich auf vier Punkte:
    Lage, in der ein Check abgeschaltet statt beachtet wird.
 
 Der Scan bleibt im Lauf, damit die Befunde sichtbar sind und eine
-Verschlechterung auffällt. **Die beiden OpenSSL-Befunde lösen die hier
+Verschlechterung auffällt. **Die beiden APT-Befunde lösen die hier
 vorgesehene Neubewertung aus.** Bis zur Entscheidung des Projekteigentümers
 ist die Annahme dieser neuen Befunde für eine AP-01-Abnahme offen; der
 nichtblockierende CI-Scan allein ist keine solche Entscheidung. Weitere

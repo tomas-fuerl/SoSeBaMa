@@ -1,7 +1,7 @@
 # Browserlaufzeit für den Chromium-Smoke
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-16
+- Letzter Prüfstand: 2026-11-10 (Imageherkunft und Sicherheit; Laufzeit siehe PR-Nachweis)
 - Bezogenes Issue: [#26](https://github.com/tomas-fuerl/SoSeBaMa/issues/26)
 - Geltungsbereich: lokale DEV-Umgebung und Pull-Request-Stufe
 
@@ -63,6 +63,13 @@ Chromium kommt aus dem offiziellen, per Digest gepinnten Playwright-Image.
 Die Referenz steht als einzige Quelle in
 [`containers/browser-runtime.json`](../../containers/browser-runtime.json).
 Werkzeuge und Tests lesen ausschließlich diese Datei.
+
+Der aktuelle Pin ist Playwright 1.65.0. Der offizielle Multi-Arch-Index
+`sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d`
+wurde am 2026-11-10 fuer amd64 und arm64 verifiziert und erfolgreich gezogen.
+Der damalige 1.62.1-Installationsversuch bleibt oben als historischer Nachweis
+gekennzeichnet. Aktuelle Image-Befunde und die noch offene Neubewertung stehen
+in [Supply-Chain-Prüfungen](SUPPLY-CHAIN-CHECKS.md).
 
 ## Was das Image enthält — und was nicht
 
@@ -172,8 +179,8 @@ sie nicht ohne Kenntnis dieser Abwägung geändert wird.
      node -e "const {chromium}=require('@playwright/test');const p=chromium.executablePath();console.log(p, require('node:fs').existsSync(p))"
    ```
 
-   Erwartet: ein Pfad unterhalb von `/ms-playwright` und `true`, zum Prüfstand
-   `/ms-playwright/chromium-1234/chrome-linux64/chrome true`.
+   Erwartet: ein zur Paketversion passender Pfad unterhalb von
+   `/ms-playwright` und `true`. Die Chromium-Buildnummer ist versionsabhängig.
 
    `--network none` ist hier kein Beiwerk, sondern der Kern des Schritts: Er
    belegt, dass die Binärdatei aus dem Image stammt und nichts nachgeladen wird.
@@ -226,7 +233,7 @@ verwendet die Browserlaufzeit an keiner Stelle.
 Ein lokal bezogenes Image lässt sich entfernen:
 
 ```bash
-docker image rm mcr.microsoft.com/playwright:v1.62.1-noble
+docker image rm mcr.microsoft.com/playwright:v1.65.0-noble
 ```
 
 ## Pflege
