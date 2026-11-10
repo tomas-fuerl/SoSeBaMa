@@ -24,45 +24,24 @@ COPY packages/typescript-config packages/typescript-config
 
 RUN pnpm --filter @sobama/web run build
 
-FROM caddy:2.11.9@sha256:0c2243efcf437ab7f7a978f1027fcf0d4f9be8a75df27b1b3fbc5dbe0ffa8cf0 AS caddy
+FROM nginx:1.30.6-trixie@sha256:42c68eab6f7e22611786a9fe1d1c019e275c50185bd54b8f75dc2b9184322703 AS runtime
 
-FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime
-
-ENV XDG_CONFIG_HOME=/tmp/caddy-config
-ENV XDG_DATA_HOME=/tmp/caddy-data
-
-# Das gepinnte Basisimage enthaelt noch libpcre2-8-0 deb12u1
-# (CVE-2026-103111) und perl-base deb12u3 (mehrere HIGH/CRITICAL-Befunde).
-# APT 2.6.1 ist ueber CVE-2026-109518 verwundbar; Fix ist 2.6.2.
-# Nur diese betroffenen Debian-Pakete aktualisieren.
+# Official base still contains two fixable HIGH findings in zlib1g.
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends --only-upgrade \
-      apt=2.6.2 \
-      libapt-pkg6.0=2.6.2 \
-      libpcre2-8-0=10.42-1+deb12u2 \
-      perl-base=5.36.0-7+deb12u4 \
+      zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
+    && apt-get purge --yes --auto-remove \
+      nginx-module-acme nginx-module-geoip nginx-module-image-filter \
+      nginx-module-njs nginx-module-xslt curl gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
-# Die Runtime startet Caddy; `node` bleibt ausschliesslich fuer die
-# Compose-Healthchecks erhalten. npm und corepack werden nicht benoetigt,
-# bringen aber ein eigenes gebuendeltes Abhaengigkeitsset mit.
-RUN rm -rf \
-    /usr/local/lib/node_modules/npm \
-    /usr/local/lib/node_modules/corepack \
-    /usr/local/bin/npm \
-    /usr/local/bin/npx \
-    /usr/local/bin/corepack
+# Retain the existing Node health contract; do not add a new probe implementation.
+COPY --from=dependencies /usr/local/bin/node /usr/local/bin/node
+COPY containers/nginx /etc/nginx/app
+COPY --from=build /workspace/apps/web/dist /srv
 
-COPY --from=caddy /usr/bin/caddy /tmp/caddy-with-file-capability
-RUN cp /tmp/caddy-with-file-capability /usr/bin/caddy \
-    && rm /tmp/caddy-with-file-capability \
-    && chmod 0755 /usr/bin/caddy
-COPY --chown=node:node containers/caddy /etc/caddy
-COPY --from=build --chown=node:node /workspace/apps/web/dist /srv
-
-USER node
-
+USER 1000:1000
 EXPOSE 8080
-
-ENTRYPOINT ["caddy"]
-CMD ["run", "--config", "/etc/caddy/Web.Caddyfile", "--adapter", "caddyfile"]
+STOPSIGNAL SIGQUIT
+ENTRYPOINT ["nginx"]
+CMD ["-c", "/etc/nginx/app/Web.conf", "-g", "daemon off;"]

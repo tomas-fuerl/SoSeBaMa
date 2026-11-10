@@ -63,7 +63,7 @@ function renderCompose(): RenderedCompose {
   return JSON.parse(output) as RenderedCompose;
 }
 
-describe('DEV container policy', () => {
+describe('nginx DEV container policy', () => {
   const compose = renderCompose();
   const services = compose.services ?? {};
 
@@ -138,7 +138,7 @@ describe('DEV container policy', () => {
     expect(services.worker?.healthcheck?.test?.join(' ')).toContain('http://127.0.0.1:');
   });
 
-  it('publishes only Caddy on the selected loopback port', () => {
+  it('publishes only the gateway on the selected loopback port', () => {
     expect(services.gateway?.ports).toEqual([
       expect.objectContaining({ host_ip: '127.0.0.1', published: '18080', target: 8080 }),
     ]);
@@ -151,6 +151,31 @@ describe('DEV container policy', () => {
     for (const serviceName of serviceNames) {
       expect(services[serviceName]?.pull_policy, serviceName).toBe('never');
     }
+    const webImage = 'sosebama-web:dev';
+    expect(services.gateway?.image).toBe(webImage);
+    expect(services.web?.image).toBe(webImage);
+  });
+
+  it('uses nginx by default with explicit DNS, path, and write boundaries', () => {
+    const dockerfile = readFileSync(resolve(repositoryRoot, 'containers/web.Dockerfile'), 'utf8');
+    expect(dockerfile).toContain('FROM nginx:');
+    expect(dockerfile).toContain('ENTRYPOINT ["nginx"]');
+    expect(dockerfile).not.toContain('caddy');
+    const gateway = readFileSync(resolve(repositoryRoot, 'containers/nginx/Gateway.conf'), 'utf8');
+    expect(gateway).toContain('resolver 127.0.0.11 valid=2s ipv6=off;');
+    expect(gateway).toContain('server api:3000 resolve;');
+    expect(gateway).toContain('server web:8080 resolve;');
+    expect(gateway).toContain('proxy_pass http://api_backend/;');
+    expect(gateway).toContain('proxy_set_header Forwarded "";');
+    for (const file of ['Gateway.conf', 'Web.conf']) {
+      const source = readFileSync(resolve(repositoryRoot, 'containers/nginx', file), 'utf8');
+      expect(source).toContain('pid /tmp/nginx.pid;');
+      expect(source).toContain('access_log off;');
+      expect(source).not.toContain('access_log /dev/stdout;');
+      for (const kind of ['client_body', 'proxy', 'fastcgi', 'uwsgi', 'scgi']) {
+        expect(source).toContain(`${kind}_temp_path /tmp/`);
+      }
+    }
   });
 
   it('pins every external Dockerfile base and avoids latest image tags', () => {
@@ -158,6 +183,8 @@ describe('DEV container policy', () => {
       const source = readFileSync(resolve(repositoryRoot, dockerfile), 'utf8');
       const fromLines = source.split('\n').filter((line) => line.startsWith('FROM '));
       expect(fromLines.length, dockerfile).toBeGreaterThan(0);
+      // The last stage is the default application runtime.
+      expect(fromLines.at(-1), dockerfile).toMatch(/ AS runtime$/u);
       const knownStages = new Set<string>();
       for (const line of fromLines) {
         const [, reference, asKeyword, stage] = line.split(/\s+/u);

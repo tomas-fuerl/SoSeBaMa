@@ -154,11 +154,12 @@ jobs:
       # Das Playwright-Image ist ein reines Testartefakt: Es wird nie
       # ausgeliefert, laeuft unprivilegiert im internen Netz ohne Route nach
       # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
-      # lagen zuerst im gebuendelten npm des Images -- derselbe Fall wie beim
-      # Node-Basisimage, dort aber entfernbar, hier nicht. Der aktuelle Scan
-      # meldet auch Ubuntu-APT; diese neuen Befunde erfordern die in der
-      # Anleitung dokumentierte Neubewertung. Der nichtblockierende Scan
-      # bleibt sichtbar, ersetzt aber keine Ownerentscheidung. Stand:
+      # betreffen gebuendeltes npm und Ubuntu-APT. Die Ownerentscheidung vom
+      # 2026-11-10 akzeptiert genau die dokumentierten Befunde befristet bis
+      # spaetestens 2026-12-10 unter expliziten Schutzbedingungen. Bei einem
+      # Imagewechsel oder neuen Befunden ist erneut zu bewerten. Der Scan
+      # bleibt sichtbar; Exit-Code 0 ist keine pauschale Risikoakzeptanz.
+      # Bedingungen, Restrisiko und Rueckkehrplan:
       # docs/development/SUPPLY-CHAIN-CHECKS.md
       - name: Report browser image findings without blocking
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

@@ -2,8 +2,10 @@
 
 ## Status
 
-Die folgenden Entscheidungen wurden am 2026-07-30 vom Projekteigentümer
-angenommen. Sie bilden die verbindliche Architekturgrundlage. Ihre Umsetzung
+Die ursprünglichen Entscheidungen wurden am 2026-07-30 vom Projekteigentümer
+angenommen. Spätere Entscheidungen tragen ihr eigenes Datum; ersetzte
+Entscheidungen bleiben nachvollziehbar. Die aktuellen Entscheidungen bilden
+die verbindliche Architekturgrundlage. Ihre Umsetzung
 erfolgt über die Arbeitspakete der
 [Implementierungsroadmap](../IMPLEMENTATION-ROADMAP.md); das Repository enthält
 bislang ausschließlich technische Starts und Health-Nachweise ohne fachliche
@@ -27,8 +29,9 @@ Das verbindliche Verfahren und die Statusregeln stehen im
 | [ADR-0009](ADR-0009-bearbeitungssitzungen-check-outs-und-leases.md) | Bearbeitungssitzungen, Check-outs und Leases | Angenommen |
 | [ADR-0010](ADR-0010-hintergrundaufgaben-loeschung-und-auditaufbewahrung.md) | Hintergrundaufgaben, Löschung und Auditaufbewahrung | Angenommen |
 | [ADR-0011](ADR-0011-logging-metriken-tracing-und-diagnose.md) | Logging, Metriken, Tracing und Diagnose | Angenommen |
-| [ADR-0012](ADR-0012-container-netz-secrets-und-deployment.md) | Container, Netz, Secrets und Deployment | Angenommen |
+| [ADR-0012](ADR-0012-container-netz-secrets-und-deployment.md) | Container, Netz, Secrets und Deployment | Ersetzt durch ADR-0017 |
 | [ADR-0013](ADR-0013-teststrategie-und-software-lieferkette.md) | Teststrategie und Software-Lieferkette | Angenommen |
 | [ADR-0014](ADR-0014-modulstruktur-und-walking-skeleton.md) | Modulstruktur und Walking Skeleton | Angenommen |
 | [ADR-0015](ADR-0015-implementierungsstrategie-und-arbeitspakete.md) | Implementierungsstrategie und Arbeitspakete | Angenommen |
 | [ADR-0016](ADR-0016-initiales-ressourcenbudget-und-oq-016.md) | Initiales Ressourcenbudget und OQ-016 | Angenommen |
+| [ADR-0017](ADR-0017-nginx-application-gateway.md) | nginx als Application Gateway und Webserver | Angenommen |

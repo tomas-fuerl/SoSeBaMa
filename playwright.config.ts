@@ -39,7 +39,7 @@ export default defineConfig({
      * `outputDir` above is writable, so Playwright could write them — but the
      * smoke container is started with `--rm`, so anything written there is gone
      * before it could be inspected. Retaining artefacts would need an extra
-     * writable mount and an upload step, which is not worth it for two
+     * writable mount and an upload step, which is not worth it for this small set of
      * assertions whose failure messages already name the expected and the
      * received value.
      *

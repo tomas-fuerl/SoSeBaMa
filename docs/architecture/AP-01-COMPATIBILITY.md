@@ -1,10 +1,16 @@
 # AP-01: Hauptversions- und Kompatibilitätsnachweis
 
-- Status: Bestanden
+- Status: Historische Kompatibilitätsprobe bestanden; keine aktuelle AP-01-Abnahme
 - Prüfstand: 2026-09-22
 - Letzte Durchsicht: 2026-09-22
 - Bezogenes Issue: [#9](https://github.com/tomas-fuerl/SoSeBaMa/issues/9)
 - Geltungsbereich: AP-01 in lokaler isolierter DEV-Probe
+
+Einordnung vom 2026-11-10: Die folgenden Ergebnisse gelten ausschließlich für
+den genannten September-Prüfstand. Sie ersetzen weder Scans, G1–G3 und CI des
+aktuellen Repositorystands noch eine Betriebs- oder Produktionsfreigabe.
+Aktuelle Prüfungen und offene Befunde stehen in den
+[Supply-Chain-Nachweisen](../development/SUPPLY-CHAIN-CHECKS.md).
 
 Der Prüfstand nennt das Datum der zuletzt ausgeführten Probe. Die erneute Probe
 vom 2026-09-22 hebt ausschließlich den Node-24-Patchstand an; der übrige
