@@ -15,11 +15,10 @@ services:
   gateway:
     <<: *runtime-hardening
     command:
-      - run
-      - --config
-      - /etc/caddy/Gateway.Caddyfile
-      - --adapter
-      - caddyfile
+      - -c
+      - /etc/nginx/app/Gateway.conf
+      - -g
+      - daemon off;
     depends_on:
       api:
         condition: service_healthy

@@ -6,10 +6,11 @@
   "type": "module",
   "packageManager": "pnpm@11.18.0",
   "engines": {
-    "node": "^24.18.1",
+    "node": "^24.21.0",
     "pnpm": "11.18.0"
   },
   "scripts": {
+    "browser:build": "node tools/check-dev-containers.mjs browser-build",
     "browser:smoke": "node tools/check-dev-containers.mjs browser",
     "build": "pnpm --recursive --if-present run build",
     "check": "pnpm format && pnpm lint && pnpm typecheck && pnpm test && pnpm licenses:check && pnpm docs:links",
@@ -42,15 +43,15 @@
     "typecheck": "tsc --project tsconfig.json --noEmit && pnpm --recursive --if-present run typecheck"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "1.65.0",
     "@sobama/eslint-config": "workspace:*",
     "@sobama/typescript-config": "workspace:*",
     "@types/node": "24.13.3",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.12",
     "eslint": "10.8.1",
     "prettier": "3.9.6",
     "typescript": "5.9.3",
     "typescript-eslint": "8.67.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.12"
   }
 }

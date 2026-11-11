@@ -67,7 +67,7 @@ function installedVersion(packageName: string): string | undefined {
   return manifest.version;
 }
 
-/** `24.18.1` and `24.13.3` share the major `24`. */
+/** `24.21.0` and `24.13.3` share the major `24`. */
 function major(version: string): string {
   return version.split('.')[0] ?? version;
 }
@@ -175,7 +175,7 @@ describe('pinned Node version', () => {
 
       expect(tags.length, `${dockerfile}: keine Node-Basisstufe gefunden`).toBeGreaterThan(0);
       for (const tag of tags) {
-        // `24.18.1-bookworm-slim` traegt die Version vor der Variante.
+        // `24.21.0-bookworm-slim` traegt die Version vor der Variante.
         expect(tag.split('-')[0], `${dockerfile}: ${tag}`).toBe(pinnedNodeVersion);
       }
     }
@@ -246,8 +246,28 @@ describe('pinned pnpm version', () => {
  * arm64. A platform digest would fail on the respective other architecture.
  */
 describe('pinned browser runtime', () => {
-  const declared = JSON.parse(read('containers/browser-runtime.json')) as { image?: string };
+  const declared = JSON.parse(read('containers/browser-runtime.json')) as {
+    image?: string;
+    runtimeImage?: string;
+  };
   const image = declared.image ?? '';
+
+  it('uses the pinned manufacturer source without inheriting its deleted layers', () => {
+    const dockerfile = read('containers/browser.Dockerfile');
+    expect(dockerfile).toContain(`FROM ${image} AS prepared`);
+    const runtime = dockerfile.split('FROM scratch AS runtime\n')[1];
+    expect(runtime, 'separate runtime with no manufacturer layer ancestry').toBeDefined();
+    expect(runtime).toContain('COPY --from=prepared / /');
+    expect(runtime).toContain('PLAYWRIGHT_BROWSERS_PATH=/ms-playwright');
+    expect(runtime).toContain('USER 1000:1000');
+    expect(runtime).not.toMatch(/^RUN\s/gmu);
+    expect(dockerfile).toContain('apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1');
+    expect(dockerfile).toContain('libpcre2-8-0=10.42-4ubuntu2.2');
+    expect(dockerfile).toContain('/usr/lib/node_modules /usr/local/lib/node_modules');
+    expect(dockerfile).not.toMatch(
+      /playwright install|--allow-unauthenticated|--allow-downgrades/u,
+    );
+  });
 
   it('declares a fully formed image reference', () => {
     // The whole shape is fixed, not just its parts: registry, repository,
@@ -274,17 +294,27 @@ describe('pinned browser runtime', () => {
   });
 
   it('is referenced identically wherever the image is named', () => {
-    // The workflow scans the image and therefore has to name it. A second
-    // literal is a second thing to forget; this keeps both in step.
+    expect(declared.runtimeImage).toBe('sosebama-browser:dev');
+    expect(read('containers/browser.Dockerfile')).toContain(`FROM ${image} AS prepared`);
+    // Scan and execution bind to the built image ID, never the upstream image.
     const workflow = read('.github/workflows/quality.yml');
-    const referenced = [...workflow.matchAll(/image-ref:\s*(mcr\.microsoft\.com\/\S+)/gu)]
+    const referenced = [...workflow.matchAll(/image-ref:\s*(.+)/gu)]
       .map((match) => match[1])
       .filter((reference): reference is string => reference !== undefined);
 
-    expect(referenced.length, 'quality.yml nennt das Browserimage nicht').toBeGreaterThan(0);
-    for (const reference of referenced) {
-      expect(reference, '.github/workflows/quality.yml').toBe(image);
-    }
+    expect(
+      referenced.filter((reference) => reference === '${{ steps.browser-image.outputs.id }}'),
+    ).toHaveLength(3);
+    expect(workflow).not.toContain('image-ref: mcr.microsoft.com/playwright:');
+    expect(workflow).toContain("docker image inspect sosebama-browser:dev --format '{{.Id}}'");
+    expect(workflow).toContain('SOSEBAMA_BROWSER_IMAGE_ID: ${{ steps.browser-image.outputs.id }}');
+    expect(workflow).toMatch(/scanners: secret\s+exit-code: '1'/u);
+    expect(workflow).toMatch(/scanners: vuln\s+exit-code: '1'/u);
+    const helper = read('tools/check-dev-containers.mjs');
+    expect(helper).toContain('image = inspected.Id;');
+    expect(helper).toContain("'--pull',\n        'never',");
+    expect(helper).toContain("declared.runtimeImage !== 'sosebama-browser:dev'");
+    expect(helper).toContain("['io.sosebama.browser-recipe'] !== declared.recipeDigest");
   });
 
   it('carries the same version as the installed @playwright/test', () => {

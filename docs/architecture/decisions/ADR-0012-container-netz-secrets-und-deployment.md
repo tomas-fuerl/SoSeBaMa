@@ -1,9 +1,13 @@
 # ADR-0012: Container, Netz, Secrets und Deployment
 
-- Status: Angenommen
+- Status: Ersetzt
 - Datum: 2026-07-30
 - Eigentümer: Projekteigentümer
 - Bezogenes Issue: #7 – nachträglich angelegtes Tracking- und Abnahme-Issue; Ownerentscheidung vom 2026-07-30
+
+Ersetzt am 2026-11-10 durch [ADR-0017](ADR-0017-nginx-application-gateway.md).
+Die übrigen Festlegungen werden dort unverändert übernommen; geändert wird
+die Webserver-/Gatewaywahl. Der folgende Entscheidungstext bleibt historisch.
 
 ## Kontext und Problem
 

@@ -42,7 +42,7 @@ lokal und werden nicht für Installation oder Prüfung benötigt.
    node --version
    ```
 
-   Erwartet wird `v24.18.1`. Eine andere Version wird nicht mit `--force`
+   Erwartet wird `v24.21.0`. Eine andere Version wird nicht mit `--force`
    umgangen.
 
 3. Den im Repository fixierten Paketmanager aktivieren:

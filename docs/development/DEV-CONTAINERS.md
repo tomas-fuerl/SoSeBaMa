@@ -1,13 +1,13 @@
 # Lokalen DEV-Containerrahmen starten und zurückbauen
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-16
+- Letzter Prüfstand: 2026-11-10
 - Bezogenes Issue: [#15](https://github.com/tomas-fuerl/SoSeBaMa/issues/15)
 - Geltungsbereich: ausschließlich lokales DEV
 
 ## Ziel und Grenzen
 
-Web, API und Worker laufen als getrennte, gehärtete Container. Caddy ist der
+Web, API und Worker laufen als getrennte, gehärtete Container. nginx ist der
 einzige Hosteingang und bindet ausschließlich an einen vom Ausführenden
 gewählten lokalen Loopback-Port. Der sichtbare Sollzustand besteht aus der
 technischen Webansicht sowie den secretfreien Gateway-, Web- und API-Health-
@@ -18,6 +18,10 @@ Datenbank, Fachroute, produktiven Werte, Secrets, persistenten Daten,
 Collector oder Telemetriespeicher. API und Worker verwenden die getrennt
 dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
 
+Der Wechsel auf nginx wurde in [ADR-0017](../architecture/decisions/ADR-0017-nginx-application-gateway.md)
+freigegeben. Die [vorherige Evaluierung](NGINX-PROOF.md) bleibt als historischer
+Nachweis erhalten; ein zusätzliches Proof-Overlay wird nicht mehr benötigt.
+
 ## Sicherheitsgrenzen
 
 - Keine `.env`-Datei mit Secrets anlegen oder an Compose übergeben.
@@ -25,7 +29,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
   LAN-Adresse, Domain oder Weiterleitung konfigurieren.
 - `compose.yaml` und `compose.dev.yaml` immer gemeinsam verwenden. Keine
   TST-/PRD-Datei ergänzen oder nachbilden.
-- API, Web und Worker besitzen keine Hostports. Nur Caddy verbindet das
+- API, Web und Worker besitzen keine Hostports. Nur nginx verbindet das
   `edge`- mit dem internen `application`-Netz.
 - Der Worker beantwortet seine Health-Endpunkte ausschließlich auf dem
   containerinternen Loopback `127.0.0.1`. Die Bindeadresse ist eine Konstante
@@ -94,7 +98,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    ```
 
    Erwartet wird Exit-Code `0`. Gateway, Web, API und Worker müssen `Healthy`
-   erreichen. Der Gatewaycheck ruft dabei auch Web und API über Caddy auf.
+   erreichen. Der Gatewaycheck ruft dabei auch Web und API über nginx auf.
    Fehlt ein lokales DEV-Image, bricht der Start ab, ohne es aus einer Registry
    zu laden. Alle vier Healthchecks prüfen Rolle und Status der Antwort; ein
    bloßer HTTP-Erfolg genügt keinem der Checks.
@@ -133,11 +137,16 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
 
 5. Die tatsächliche Auslieferung der Einzelseitenanwendung in Chromium prüfen:
 
+   Zuerst `pnpm browser:build` ausführen und das gebaute Testimage gemäß
+   [Browserlaufzeit](BROWSER-RUNTIME.md) auf Schwachstellen und Secrets scannen.
+   Nur bei erfolgreichen Scans fortfahren. CI erledigt dies vor dem Smoke
+   automatisch und verwendet dabei für Scan und Ausführung dieselbe Image-ID.
+
    ```sh
    pnpm browser:smoke
    ```
 
-   Erwartet werden Exit-Code `0` und zwei bestandene Prüfungen. Der Befehl
+   Erwartet werden Exit-Code `0` und drei bestandene Prüfungen. Der Befehl
    startet die in der [Browserlaufzeit](BROWSER-RUNTIME.md) gepinnte
    Browserlaufzeit **im internen Anwendungsnetz** und ruft den Gateway unter
    `http://gateway:8080` auf — ohne Hostnetz, ohne Hostport und ohne
@@ -147,9 +156,10 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    und rendert. Schritt 3 und 4 blieben auch dann grün, wenn das Bundle kaputt
    wäre: Sie prüfen ausschließlich Healthpfade.
 
-   Beim ersten Lauf wird die Browserlaufzeit einmalig bezogen; das dauert
-   spürbar. Ein Lauf ohne gestarteten Stack bricht mit dem Hinweis ab, dass kein
-   internes Anwendungsnetz gefunden wurde.
+   Der separate Build bezieht einmalig die gepinnte Herstellerquelle und
+   bereinigt sie; das dauert spürbar. Der Smoke selbst zieht kein Image nach.
+   Ein Lauf ohne gestarteten Stack oder ohne passend gebautes Testimage
+   bricht ab, statt auf den ungeklärten Herstellerstand zurückzufallen.
 
 6. Die strukturierten API- und Worker-Startlogs prüfen:
 
@@ -161,7 +171,7 @@ dokumentierte [DEV-Telemetriegrundlage](OBSERVABILITY.md) ohne Export.
    `runtime.started`; PID und Hostname fehlen. Der vollständige Datenvertrag
    steht in der [DEV-Telemetrieanleitung](OBSERVABILITY.md).
 
-7. Bei Bedarf die Antworten einzeln ausschließlich über Caddy anzeigen:
+7. Bei Bedarf die Antworten einzeln ausschließlich über nginx anzeigen:
 
    ```sh
    curl --fail --silent --show-error "http://127.0.0.1:<LOCAL_GATEWAY_PORT>/health/gateway"
@@ -195,7 +205,7 @@ Worker nicht. Der Nachweis muss den Node-Prozess selbst adressieren.
 1. Die PID der Node-Laufzeit im Worker ermitteln:
 
    ```sh
-   docker compose -f compose.yaml -f compose.dev.yaml exec -T worker node -e 'const fs=require("node:fs");for(const p of fs.readdirSync("/proc")){if(!/^[0-9]+$/.test(p))continue;let c="";try{c=fs.readFileSync("/proc/"+p+"/cmdline","utf8")}catch{}if(c.includes("worker/dist/main.js")&&!c.includes("docker-init"))console.log(p)}'
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T worker node -e 'const fs=require("node:fs");for(const p of fs.readdirSync("/proc")){if(!/^[0-9]+$/.test(p))continue;try{const a=fs.readFileSync("/proc/"+p+"/cmdline","utf8").split("\0");if(a[1]?.endsWith("worker/dist/main.js"))console.log(p)}catch{}}'
    ```
 
    Erwartet wird genau eine PID ungleich `1`. Der Platzhalter `<WORKER_PID>`

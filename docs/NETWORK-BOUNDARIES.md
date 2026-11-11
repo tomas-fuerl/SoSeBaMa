@@ -25,7 +25,7 @@ Externe Erreichbarkeit erteilt weder Nutzern noch Zugangspunkt Rechte auf
 andere Netze, Umgebungen oder Komponenten.
 
 Jede SoSeBaMa-Umgebung besitzt genau einen Anwendungseingang. Der angenommene
-interne Pfad ist Infrastruktur-Ingress → Caddy → Web beziehungsweise API. Caddy
+interne Pfad ist Infrastruktur-Ingress → nginx → Web beziehungsweise API. nginx
 ist der Application Gateway. Nutzer-Clients umgehen ihn nicht und erreichen
 weder API-Prozess, Worker, Migrator, PDF-Prüfer noch Datenbank direkt.
 
@@ -62,8 +62,8 @@ Weiterleitung nach TST, PRD oder zur Datenbank.
 
 | Quelle | Ziel | Erlaubter Zweck |
 | --- | --- | --- |
-| Infrastruktur-Ingress einer Umgebung | Caddy derselben Umgebung | einziger freigegebener Anwendungseingang |
-| Caddy einer Umgebung | Web und API derselben Umgebung | ausschließlich vorgesehene Anwendungsendpunkte |
+| Infrastruktur-Ingress einer Umgebung | nginx derselben Umgebung | einziger freigegebener Anwendungseingang |
+| nginx einer Umgebung | Web und API derselben Umgebung | ausschließlich vorgesehene Anwendungsendpunkte |
 | geschützter TST-Prüfzugang | freigegebene TST-Diagnose-, Backend-API-, Test- oder Prüfschnittstelle | produktionsnahe Verifikation mit benannter technischer Identität |
 | App-Backend einer Umgebung | Datenbank derselben Umgebung | fachlicher Datenzugriff mit eigener minimal berechtigter Identität |
 | API beziehungsweise Worker einer Umgebung | Binärspeicher derselben Umgebung | autorisierte Dateiablage und -verarbeitung mit minimaler Identität |
@@ -91,7 +91,7 @@ vermeintliche Notfallzugänge umgehen.
 
 Jede Umgebung trennt folgende Netze oder gleichwertige Kommunikationsgrenzen:
 
-- `edge` für Infrastruktur-Ingress und Caddy,
+- `edge` für Infrastruktur-Ingress und nginx,
 - `application` für Web, API und Workerkommunikation,
 - `data` für backendexklusiven Datenbank- und Binärzugriff,
 - `validation` für die isolierte PDF-Prüfung,
@@ -101,7 +101,8 @@ Der PDF-Prüfer besitzt weder Internet- noch Datenbankzugang, keine
 App-Sitzungen und keine Secrets. TST und PRD teilen weder
 Observability-Netzwerk noch Telemetriespeicher oder Identitäten. Die
 vollständige Container- und Netzentscheidung steht in
-[ADR-0012](architecture/decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+[ADR-0017](architecture/decisions/ADR-0017-nginx-application-gateway.md), das die
+übrigen Festlegungen aus ADR-0012 übernimmt.
 
 ## Standardmäßig verbotene Beziehungen
 

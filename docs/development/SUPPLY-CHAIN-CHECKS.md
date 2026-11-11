@@ -1,7 +1,7 @@
 # Prüfungen der Software-Lieferkette
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-16
+- Letzter Prüfstand: 2026-11-11 (bereinigter Browserkandidat; veröffentlichte CI separat nachweisen)
 - Bezogenes Issue: [#25](https://github.com/tomas-fuerl/SoSeBaMa/issues/25)
 - Geltungsbereich: Pull-Request-Stufe in GitHub-hosted CI
 
@@ -26,7 +26,8 @@ AP-11 und hier bewusst nicht enthalten.
 | Dependency Review | neu hinzukommende Abhängigkeiten im Pull Request | Schweregrad `high` |
 | Lizenzprüfung | Lizenz jeder aufgelösten Abhängigkeit | jeder nicht zugelassenen Lizenz |
 | Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` mit verfügbarem Fix |
-| Trivy `image` (Browserlaufzeit) | das gepinnte Playwright-Testimage | **nichts** — nur Sichtbarkeit, siehe unten |
+| Trivy `image` (bereinigte Browserlaufzeit) | das aus gepinnter Quelle gebaute Testimage | `CRITICAL`, `HIGH` mit verfügbarem Fix |
+| Trivy Secret-Scanner (Browserlaufzeit) | dasselbe gebaute Testimage | jedem Treffer, unabhängig vom Schweregrad |
 | Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH`, auch ohne Fix |
 | Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
 | CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Sicherheitsbefunden ab `HIGH`, über die Ruleset-Regel |
@@ -147,9 +148,10 @@ Hauptversionen in der Linie.
 
 `engines.node` stand zunächst exakt auf dem Pin. Das war falsch, und der Fehler
 war teuer: **`engines` gilt auch für fremde Umgebungen, die ihr eigenes Node
-mitbringen.** Dependabots Updater-Container läuft auf einem anderen Patchstand
-als der hier fixierte. Seit `engineStrict` wirksam ist, brach seine
-npm-Aktualisierung deshalb ab:
+mitbringen.** Der folgende historische Befund entstand beim damaligen
+Repositorypin 24.18.1: Dependabots Updater-Container lief auf einem anderen
+Patchstand als der damals fixierte. Seit `engineStrict` wirksam war, brach
+seine npm-Aktualisierung deshalb ab:
 
 ```
 | typescript | tool_version_not_supported | {
@@ -174,9 +176,9 @@ Die Rollenteilung lautet daher:
 - **`.node-version` und die Dockerfile-Basen** legen fest, was tatsächlich
   läuft — beide weiterhin exakt.
 
-`engineStrict` setzt die Linie weiterhin hart durch; gemessen brechen
-`^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1 jeweils ab. Der
-Driftschutz hängt ohnehin nicht an `engines`, sondern an der
+`engineStrict` setzt die Linie weiterhin hart durch; in dieser historischen
+Probe brachen `^25.0.0`, `^23.0.0` und `^24.19.0` gegen ein laufendes 24.18.1
+jeweils ab. Der Driftschutz hängt ohnehin nicht an `engines`, sondern an der
 Deklarationsgleichheit, die `test/toolchain-policy.test.ts` erzwingt: Der Caret
 bleibt am Pin verankert, ein Anheben von `.node-version` zieht diesen Eintrag
 also mit.
@@ -237,69 +239,160 @@ Scanner oder der Basisimages erneut zu bewerten.
 
 ## Bestehende Ausnahmen
 
-Zum Prüfstand dieser Anleitung besteht eine Gruppe von Ausnahmen: 13 Go-Befunde
-im vorkompilierten Caddy-Binary des Web-Images, sämtlich `HIGH`. Davon tragen 12
-eine CVE-Kennung und einer eine GHSA-Kennung.
+Seit der Ownerentscheidung vom 2026-11-10 ersetzt nginx gemäß
+[ADR-0017](../architecture/decisions/ADR-0017-nginx-application-gateway.md)
+Caddy. Das Webimage verwendet nun das offizielle nginx-1.30.6-Trixie-Image
+mit exakt gepinntem Digest und gezieltem zlib1g-Fix
+`1:1.3.dfsg+really1.3.1-1+deb13u1` gegen `CVE-2026-76844` und
+`CVE-2026-85091`. Node wird nur als bestehender Healthcheck übernommen,
+npm/corepack fehlen in der Webruntime. Die nachfolgend beschriebenen
+Bookworm-Upgrades bleiben im Backend erforderlich; ihre frühere Anwendung
+auf die Caddy-Webruntime ist historisch. Alle Gates bleiben unverändert;
+der lokale Proof allein ist keine aktuelle AP-01-/CI-Abnahme.
 
-**Nicht alle sind Denial of Service.** Drei betreffen ausschließlich andere
-Wirkungen: `CVE-2026-39821` eine mögliche Umgehung von
-Autorisierungsentscheidungen über fehlerhaft akzeptierte Punycode-Labels,
-`CVE-2026-39822` das Verlassen einer Wurzelgrenze über Symlinks und
-`CVE-2026-56858` Cross-Site Scripting. `GHSA-hrxh-6v49-42gf` vereint mehrere
-Wirkungsklassen, nämlich einen Autorisierungsfehler in xDS RBAC und
-Denial-of-Service-Szenarien. `CVE-2026-56853` ist entgegen einer früheren
-Fassung dieses Dokuments sehr wohl ein Denial of Service: `ReadHeaderTimeout`
-greift beim Lesen des h2c-Preface nicht. Jede Ausnahme in
-[`.trivyignore.yaml`](../../.trivyignore.yaml) trägt deshalb eine eigene
-Bewertung aus Wirkung, Erreichbarkeit in der tatsächlichen Caddy-Konfiguration
-und Restrisiko, statt einer pauschalen Einstufung.
+Der anschließend geprüfte **lokale Standardkandidat** vom 2026-11-10 verwendet
+den Image-Index
+`sha256:694a7bf4eda9ffd942f0b29d941e58af21ca8e3f71dcf4d8fa0787aedcd8c9eb`.
+Ungenutzte dynamische nginx-Module (ACME, GeoIP, Bildfilter, njs und XSLT)
+sowie curl/gettext-base und ihre exklusiven Abhängigkeiten sind entfernt.
+Das reduziert echte Laufzeitkomponenten, nicht nur die Scanneranzeige.
+Trivy 0.74.0 mit Datenbank vom 2026-11-10 13:03 UTC meldet:
 
-Der Weg über ein Update ist ausgeschöpft. Caddy 2.11.4 ist die neueste
-veröffentlichte Version. Das offizielle Image wurde seit dem ursprünglichen Pin
-neu gebaut, nachweislich aber mit derselben Go-Toolchain: Nach dem Digestwechsel
-meldet Trivy unverändert `stdlib v1.26.3`, `x/net v0.55.0` und `x/text v0.37.0`.
-Das Binary wird als offizielles Image übernommen und nicht selbst gebaut; die
-einzige Abhilfe ist ein Upstream-Release mit neuerer Go-Version. Dependabot
-überwacht das Docker-Ökosystem und meldet einen solchen Rebuild.
+- Web- und Backendimage: jeweils 0 **fixbare** HIGH/CRITICAL.
+- Lockfile einschließlich Development Dependencies: 0 HIGH/CRITICAL.
+- Dockerfile-Konfiguration: 0 HIGH/CRITICAL. Der Scanner erkennt hier die
+  beiden Dockerfiles; Compose-Grenzen werden zusätzlich durch acht
+  Containerpolicytests geprüft, nicht als vollständige Trivy-Compose-Analyse
+  ausgegeben.
+- Sichtbarkeitsscan ohne `ignore-unfixed`: Web 46 HIGH / 0 CRITICAL,
+  Backend 34 HIGH / 1 CRITICAL, jeweils ohne angebotenen Distributionsfix.
+  Beim unminimierten nginx-Kandidaten waren es noch 105 HIGH / 1 CRITICAL.
+  Die vorhandene, unveränderte Unfixed-Policy gilt; diese Befunde werden
+  ausdrücklich nicht als behoben oder als schwachstellenfrei dargestellt.
+- Browser-Testimage unverändert 8 fixbare HIGH-Zeilen; die weiter unten
+  dokumentierte Ownerentscheidung vom 2026-11-10 akzeptiert sie befristet
+  unter expliziten Bedingungen. Der moderate Minimatch-Befund bleibt bestehen.
 
-Grundlage der Erreichbarkeitsbewertung ist die tatsächliche Konfiguration in
-`containers/caddy/`: Beide Caddyfiles setzen `admin off` und `auto_https off`;
-TLS-Terminierung, `templates`, `browse`, XML-Verarbeitung und ein xDS-Client
-sind nicht konfiguriert. Der Caddy-Startlog bestätigt zusätzlich
-„HTTP/2 skipped because it requires TLS". Das ist eine Bewertung auf
-Konfigurationsebene und kein Nachweis auf Codeebene; Erreichbarkeit über einen
-nicht betrachteten internen Pfad ist damit nicht ausgeschlossen.
+Der vollständige lokale Repository-Check mit 194 Tests, die drei Chromium-
+Smokes und der DNS-Wechsel bei unverändertem Gateway bestehen auf dem neuen
+Standardpfad. Worker-Ausfall/Erholung ohne Neustart, anschließende Health-/
+HTTP-/Logprüfungen und kontrollierter Cleanup bestehen ebenfalls. Temporäre
+Prüfvolumes und Scannerarchive wurden gezielt entfernt; keine DEV-Dienste
+verbleiben. Kein neuer GitHub-CI-Nachweis wird durch diesen lokalen Stand
+behauptet; AP-01 bleibt bis zur vollständigen Abnahme offen.
 
-### Abweichender Schweregrad bei CVE-2026-39821
+Zum Prüfstand vom 2026-11-10 bestehen **keine Trivy-Ignore-Ausnahmen**. Die 13 zuvor
+befristeten Caddy-Ausnahmen wurden nach einem frischen Scan des offiziellen
+`caddy:2.11.6`-Binaries entfernt: `/usr/bin/caddy` meldete auch ohne
+`ignore-unfixed` keine `HIGH`- oder `CRITICAL`-Befunde. Die leere
+[`.trivyignore.yaml`](../../.trivyignore.yaml) bleibt als explizite Eingabe
+für die CI-Scans erhalten.
 
-Trivy meldet diesen Befund als `HIGH`. Die GitHub Advisory Database führt ihn
-unter `GHSA-w2q5-6q6x-x959` als **`CRITICAL` mit CVSS 10.0**.
+Der frische Image-Scan fand stattdessen `CVE-2026-103111` (`HIGH`) in
+`libpcre2-8-0` des gepinnten Node-Basisimages. Eine zwischen lokalem Lauf und
+GitHub-CI aktualisierte Trivy-Datenbank meldete außerdem sieben fixbare
+`perl-base`-Befunde (drei `CRITICAL`, vier `HIGH`) in beiden Runtime-Images.
+Beide Runtime-Dockerfiles installieren deshalb gezielt die korrigierten
+Debian-Versionen `libpcre2-8-0=10.42-1+deb12u2` und
+`perl-base=5.36.0-7+deb12u4`. Bei einem späteren Node-Image-Update sind
+diese Übergangsmaßnahmen erneut zu prüfen und nachweislich überflüssige
+Paket-Upgrades zu entfernen.
 
-Das ist kein Nebenaspekt: Diese Anleitung hält an anderer Stelle fest, dass für
-einen kritischen Befund keine Ausnahme vorgesehen ist. Nach der Trivy-Einstufung
-greift diese Regel nicht, nach der Advisory-Einstufung schon. Die Ausnahme wird
-deshalb ausdrücklich als **Entscheidung des Projekteigentümers** geführt und
-nicht als Routinefall.
+Der neue Scan vom 2026-11-10 meldete zusaetzlich `CVE-2026-109518` in
+`apt` und `libapt-pkg6.0` (jeweils 2.6.1). Beide Runtime-Stages aktualisieren
+deshalb gezielt auch diese Pakete auf 2.6.2. Die erneut betroffenen
+Go-Abhaengigkeiten des alten Caddy-2.11.6-Binaries werden durch das offizielle,
+per Multi-Arch-Digest gepinnte Caddy 2.11.9 ersetzt. Die Herkunft und
+Pullbarkeit wurden fuer amd64 und arm64 verifiziert.
 
-Tragende Gründe für die befristete Annahme:
+Die drei neuen npm-Befunde `CVE-2026-111181` (body-parser),
+`CVE-2026-113872` (multer) und `CVE-2026-90711` (proxy-addr) werden mit
+eng begrenzten Parent-Overrides auf 2.4.0, 2.5.0 und 2.0.8 korrigiert.
+Der bisherige qs-Override unter body-parser entfaellt, weil body-parser 2.4.0
+selbst qs ^6.16.1 verlangt. Die Express-qs-Kante wird wegen
+`GHSA-6pq8-jhm2-2vcw` ebenfalls auf die sichere 6.x-Aufloesung gehoben.
 
-- Beide Caddyfiles definieren die Site als `:8080` ohne Hostnamen. Es gibt weder
-  Host-Matcher noch hostbasierte Routing- oder Autorisierungsentscheidungen; es
-  existiert also keine Entscheidung, die umgangen werden könnte.
-- Der Reparaturweg ist ausgeschöpft, siehe oben.
-- In DEV ist der Eingang ausschließlich über Loopback erreichbar.
+Das zusaetzliche npm-Audit meldete HIGH-Befunde in Vite, source-map-js und
+Happy DOM, die in der Trivy-Datenbank noch fehlten. Vite wird innerhalb
+derselben Minorlinie auf 8.2.4 und source-map-js auf 1.2.2 korrigiert.
+Happy DOM benoetigt fuer `GHSA-834v-8h66-3h79` mindestens 21.0.4;
+dieser Majorwechsel ist deshalb eine Sicherheitskorrektur der reinen
+Testlaufzeit. Vitest und sein Coverage-Paket werden gemeinsam auf 4.1.12
+gehoben, das die beiden gemeldeten Mocker-Advisories behebt.
 
-Nicht tragend wäre die Trivy-Einstufung allein. **Vor einer TST- oder
-PRD-Freigabe ist dieser Befund zwingend und vorrangig neu zu bewerten**; dort
-entfällt die Loopback-Mitigation, und eine spätere hostbasierte Konfiguration
-würde die Erreichbarkeitsbewertung umkehren.
+`GHSA-g3hv-75wg-m249` in minimatch 10 bleibt als moderater Befund offen.
+Der Fix liegt erst in 11.0.1; ESLint und typescript-eslint deklarieren
+weiterhin 10.x. Es wird kein ungepruefter transitiver Major erzwungen.
+Ein npm-Audit-Exit-Code 1 wird deshalb weiterhin transparent berichtet;
+ein bestandener HIGH/CRITICAL-Scan ersetzt diesen Restbefund nicht.
 
-Die Ausnahmen laufen am 2026-11-16 ab. Caddy ist der einzige
-Anwendungseingang, die Befunde sind also nicht folgenlos; in DEV besteht
-allerdings kein Zugriff von außerhalb des Loopback. **Vor einer TST- oder
-PRD-Freigabe ist diese Gruppe neu zu bewerten und nicht ungeprüft zu
-verlängern.** Dort entfällt die Loopback-Mitigation. Höchste Priorität hat
-dabei `CVE-2026-39821`, weil Hostnamen bei jeder Anfrage verarbeitet werden.
+Die [Hersteller-Advisory](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249)
+beschreibt CPU-/Speicherverstärkung durch angreifergesteuerte Globmuster bei
+`optimizationLevel >= 2`. Die bekannte Abhängigkeitskette führt hier über
+ESLint/typescript-eslint und damit Entwicklungs-/CI-Werkzeuge. Ein Aufruf aus
+einer fachlichen Runtime-Route ist nicht nachgewiesen. Das ist ausdrücklich
+keine vollständige Nicht-Erreichbarkeitsanalyse: Repository-/PR-Inhalte können
+Entwicklungswerkzeuge beeinflussen, und daraus entstehende CI-DoS-Risiken
+bleiben relevant. Der Befund wird weder dismissed noch von der Browserimage-
+Risikoakzeptanz erfasst. Bei Consumerupdates ist die sichere Auflösung erneut
+zu prüfen; kein ungeprüfter Minimatch-11-Override gegen deklarierte 10.x-Ranges.
+
+### Wartungsvertrag für Parent-Overrides und Debian-Fixpins
+
+Verantwortlich sind der Beitragende des Updates und der Projekteigentümer
+beim Review. Bei jedem NestJS-/Express-Upgrade muss der PR:
+
+1. die Parent-Versionen mit den Selectoren in `pnpm-workspace.yaml` abgleichen,
+2. nach Frozen-Installation die tatsächlichen Kanten mit
+   `pnpm why --recursive multer body-parser proxy-addr qs minimatch` und dem
+   `pnpm-lock.yaml` prüfen; ein alter Selector ist kein Wirksamkeitsnachweis,
+3. Audit, Lockfile-/Runtime-Scans und relevante Tests neu ausführen,
+4. Overrides entfernen oder eng angepasst begründen, wenn Upstream die sichere
+   Version selbst auflöst. Keine unbenötigten Alt-Selectoren beibehalten.
+
+Bei jedem Node-/nginx-Basisimagewechsel werden die expliziten Debian-Fixpins
+gegen die tatsächlich enthaltenen Paketversionen und einen frischen Scan
+bewertet. Bereits korrigierte Basispakete dürfen nicht durch einen Alt-Pin
+heruntergestuft werden. Überflüssige Upgradezeilen werden entfernt; verbleibende
+Pins benötigen einen erfolgreichen frischen Build. Ist eine exakte Version
+nicht mehr verfügbar, wird der Buildfehler behoben und neu geprüft, nicht
+durch eine unversionierte Installation oder ein gelockertes Gate kaschiert.
+
+Diese Schritte erweitern vorhandene Prüfungen; es wird kein neuer Prüfer oder
+eine automatische Ignore-Regel eingeführt. Der aktuelle verbleibende
+Minimatch-Befund wird beim nächsten ESLint-/typescript-eslint-Update erneut
+behandelt und bis dahin sichtbar berichtet.
+
+### Historischer offizieller Caddy-Blocker am 2026-11-10
+
+Dieser Befund begründete die erneute Produktauswahl. Durch den freigegebenen
+Wechsel wird Caddy nicht mehr ausgeliefert; ein grüner Scan des neuen
+Standardimages ist dennoch separat nachzuweisen. Der folgende Text und
+Reproduktionsbefehl dokumentieren den Zustand vor dem Wechsel.
+
+Auch der neueste offizielle Release v2.11.9 und das gepinnte Image enthalten
+noch `golang.org/x/net` v0.60.0. Trivy 0.74.0 meldet darin
+`CVE-2026-78661` als fixbaren `HIGH`-Befund; korrigiert ist das Modul ab
+v0.62.0. Der offizielle `latest`-Tag verwendet fuer amd64 dasselbe
+Plattformmanifest. Ein neuerer offizieller Caddy-Release war am Prueftag
+nicht verfuegbar.
+
+Der verpflichtende Web-Image-Scan bleibt deshalb rot. AP-01 ist nicht
+abgenommen. Es wird keine neue Ignore-Ausnahme angelegt. Nach einem
+gepatchten offiziellen Image sind Pin, frische Scans, lokales G1–G3 und
+GitHub-Checks erneut gegen denselben Kandidaten nachzuweisen.
+
+Reproduktion mit laufender lokaler Docker-Engine:
+
+```sh
+docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:0.74.0 image --scanners vuln --severity CRITICAL,HIGH \
+  --ignore-unfixed --exit-code 1 \
+  caddy:2.11.9@sha256:0c2243efcf437ab7f7a978f1027fcf0d4f9be8a75df27b1b3fbc5dbe0ffa8cf0
+```
+
+Erwarteter aktueller Befund: `usr/bin/caddy`, `CVE-2026-78661`, Exit-Code 1.
+Ein Fehler beim Image- oder Datenbankbezug ist kein bestaetigter Scan.
 
 ## Hinweis zum Format der Ignoredatei
 
@@ -317,57 +410,230 @@ Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet
 Sicherheitsaktualisierungen. Auto-Merge ist nach ADR-0013 nicht eingerichtet;
 jede Aktualisierung durchläuft denselben Pflichtcheck wie jede andere Änderung.
 
-**Bekannte Einschränkung.** GitHub verwirft mit der voreingestellten
-Auto-Triage-Regel Befunde in `development`-scoped Abhängigkeiten automatisch.
-Ein solcher Befund erscheint dann als `auto_dismissed`, und es entsteht keine
-Sicherheitsaktualisierung. Beim Befund aus
-[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) ist das zweimal
-eingetreten; beide Male wurde er nur durch manuelle Durchsicht bemerkt.
+Die GitHub-Preset-Regel **Dismiss low impact issues for development-scoped
+dependencies** muss für dieses Repository deaktiviert sein und deaktiviert
+bleiben. Das ist die verbindliche Eigentümerentscheidung aus
+[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46): Abhängigkeiten aus
+Build-, Test-, Browser-, Analyse- und Supply-Chain-Werkzeugen gelten nicht
+pauschal als sicherheitsirrelevant, weil sie Repositoryinhalte verarbeiten und
+in CI beziehungsweise in der Lieferkette ausgeführt werden.
 
-Der Trivy-Lauf über das Lockfile kennt diese Regel nicht und meldet solche
-Befunde unabhängig davon. Er ist damit die verlässlichere Erkennung. Ob die
-Auto-Triage-Regel zusätzlich abgeschaltet wird, ist eine offene
-Eigentümerentscheidung und in
-[#46](https://github.com/tomas-fuerl/SoSeBaMa/issues/46) verfolgt.
+Damit gelten für `development`-scoped Abhängigkeiten dieselben
+Bewertungsgrundsätze wie für andere Befunde:
 
-## Warum die Browserlaufzeit nicht blockierend gescannt wird
+- Alerts bleiben sichtbar und werden nicht allein wegen ihres Scopes
+  automatisch verworfen.
+- Jeder Befund wird nach Schweregrad, Ausnutzbarkeit, Patch-Verfügbarkeit und
+  tatsächlicher Erreichbarkeit bewertet.
+- Ein irrelevanter Befund darf weiterhin bewusst manuell oder durch eine
+  hinreichend spezifische, dokumentierte Regel behandelt werden.
+- Eine spätere Automatisierung muss enger als der Development-Scope gefasst
+  sein und darf relevante Supply-Chain-Befunde nicht verdecken.
+
+Der Trivy-Lauf über das Lockfile bleibt davon unabhängig verpflichtend. Er
+erkennt Befunde auch dann, wenn GitHub keinen Alert oder keine
+Sicherheitsaktualisierung erzeugt. Beim Befund aus
+[#32](https://github.com/tomas-fuerl/SoSeBaMa/issues/32) hatte die frühere
+Preset-Regel den Alert zweimal automatisch verworfen; diese Erkennungslücke ist
+der konkrete Anlass für die jetzige Policy.
+
+Die Einstellung liegt außerhalb des versionierten Repositoryinhalts. Zur
+Kontrolle in GitHub **Settings → Advanced Security → Dependabot rules** öffnen
+und beim genannten Preset den Zustand **Disabled** prüfen. Nach jeder Änderung
+von Dependabot-Regeln ist diese Kontrolle zu wiederholen und im zugehörigen
+Issue oder Pull Request zu protokollieren.
+
+Technischer Nachweis: Am 2026-10-02 wurde die zuvor aktive Preset-Regel in der
+GitHub-Oberfläche deaktiviert. GitHub bestätigte das Speichern und zeigte den
+Regelzustand anschließend als **Disabled** an.
+
+## Bereinigte Browserlaufzeit ab 2026-11-11
+
+Der Projekteigentümer hat den zusätzlichen Scope eines separat qualifizierten,
+bereinigten Browser-Testimages im Chat ausdrücklich freigegeben. Das ist
+**keine neue Risikoakzeptanz**. Der lokale Änderungskandidat aus
+[#65](https://github.com/tomas-fuerl/SoSeBaMa/pull/65) erweitert vorhandene
+Docker-/Prüfpfade statt einen zweiten Smoke oder eigenen Browserinstaller
+einzuführen. Anleitung, Alternativen und Pflege:
+[Browserlaufzeit](BROWSER-RUNTIME.md).
+
+`containers/browser.Dockerfile` verwendet den unveränderten Herstellerpin
+aus `containers/browser-runtime.json` als Quelle. Die gezielten Ubuntu-Fixes
+`apt=2.8.4ubuntu0.1` und `libapt-pkg6.0t64=2.8.4ubuntu0.1` korrigieren die
+zwei APT-Zeilen. Nicht benötigte globale npm-/Yarn-Pakete werden entfernt.
+`libpcre2-8-0=10.42-4ubuntu2.2` korrigiert zusätzlich sieben im ersten
+bereinigten Kandidaten gefundene fixbare MEDIUM-Zeilen. Auch hier wird ein
+Distributionsfix verwendet, kein ungeprüfter Bibliotheksaustausch.
+Eine neue `scratch`-Stufe übernimmt nur das fertige Dateisystem. Browser,
+Systembibliotheken, Lizenzen und OS-Paketdatenbank bleiben erhalten; alte
+Hersteller-/Buildschichten werden nicht in das neue Image übernommen.
+
+Anlass sind zusätzlich drei HIGH-Secret-Verdachtsmeldungen aus dem
+[veröffentlichten Hersteller-Scan](https://github.com/tomas-fuerl/SoSeBaMa/actions/runs/42872545541/job/130027267810)
+in npm-Cache-/Logdateien. Sie sind im vereinigten Hersteller-Dateisystem
+nicht mehr vorhanden, aber aus früheren Schichten potenziell extrahierbar.
+Das folgt aus der Dateinameninventur und der getrennten Secret-Zusammenführung
+im [Trivy-0.74-Quellcode](https://github.com/aquasecurity/trivy/blob/v0.74.0/pkg/fanal/applier/docker.go#L103-L185).
+Keine Aussage zur Token-Gültigkeit, kein Fehlalarm-/Waiverstatus und keine
+Tokenwerte werden dafür benötigt. Nur eine weitere Löschschicht wäre keine
+ausreichende Bereinigung.
+
+CI baut das eigene Testimage und bindet blockierenden Vulnerability-Scan,
+blockierenden Secret-Scan und Chromium-Smoke an **dieselbe lokale Image-ID**.
+Der bestehende Sichtbarkeitspfad berichtet zusätzlich HIGH/CRITICAL ohne
+`ignore-unfixed`. Kein `continue-on-error`, keine neue Ignore-Ausnahme und
+keine Erleichterung der Anwendungs-/Lockfile-/CodeQL-Gates. Die bisher nur
+berichteten Browser-CVEs erhalten damit ein zusätzliches Gate statt einer
+pauschalen Fortsetzung der alten Ausnahme.
+
+Vor der Qualifikation: frischer Build, vollständiger Secret-Scan, fixbare
+HIGH/CRITICAL, Sichtbarkeit ohne Unfixed-Filter, Dockerfile-Konfiguration,
+Policy-/Repositorytests und drei Chromium-Smokes mit den bestehenden
+Härtungs-/Netzgrenzen. Ein lokaler amd64-Nachweis ist weder native arm64-
+Qualifikation noch veröffentlichter Final-Head-/AP-01-/TST-/PRD-Nachweis.
+Die unten unverändert dokumentierte befristete Ownerentscheidung gilt nur
+für das alte Herstellerartefakt und wird nicht auf neue Befunde übertragen.
+Minimatch bleibt separat offen. Keine Abnahme oder automatisches Schließen
+von #64 durch diese Bereinigung.
+
+### Lokaler Qualifikationsnachweis vom 2026-11-11
+
+Geprüft ist der **amd64-Kandidat**, lokale Image-ID
+`sha256:0fbc97c45435bff1f7c2d066981e5abc9330516e721ad93f0958c11d92a339a1`.
+Trivy 0.74.0, Datenbank aktualisiert am 2026-11-10 um 19:01 UTC und frisch
+bezogen am 2026-11-11. Vollständiger Scan ohne Severity-/Unfixed-Ausblendung:
+
+- 0 fixbare Schwachstellen, auch unterhalb von HIGH.
+- 0 Secret-Treffer über alle Schweregrade; keine zusätzliche Ignore-Regel.
+- Weiterhin 2 HIGH-Paketzeilen ohne angebotenen Distributionsfix:
+  `CVE-2025-3887` in `gstreamer1.0-plugins-bad` und
+  `libgstreamer-plugins-bad1.0-0`. Außerdem 602 MEDIUM und 51 LOW ohne
+  ausgewiesene Fixversion. Nicht als behoben, harmlos oder neu akzeptiert
+  behandeln; die bestehende Unfixed-Policy und Sichtbarkeit gelten weiter.
+
+Der OS-Paketbestand bleibt erkannt. Die sieben Hersteller-Dateisystemschichten
+kommen in den zwei neuen Runtime-Schichten nicht vor. Rezept-Hash und
+Herstellerpin stimmen mit den erwarteten Buildmarkern überein. Das ist ein
+lokaler Artefaktnachweis, kein veröffentlichter Multi-Arch-Digest.
+
+Frozen-Installation und serieller `pnpm check` unter Node 24.21.0 /
+pnpm 11.18.0 / Vitest 4.1.12 bestehen mit **195 Tests**, Build, Format, Lint,
+Types, Lizenzen und 53 Markdown-Dateizielen. Eine vorherige Wiederholung
+parallel zum kalten Imagebuild scheiterte an einem bestehenden 5000-ms-
+Architekturtestlimit; die unveränderte serielle Wiederholung besteht.
+Keine Anpassung von Testlimits oder Gates.
+
+Alle drei Dockerfiles melden 0 HIGH/CRITICAL-Konfigurationsbefunde. Acht
+Containerpolicytests bestehen zusätzlich unter Hostnode 24.18.1 /
+Vitest 4.1.11; das ist ausdrücklich kein gepinnter CI-Nachweis. Die drei
+vorhandenen Chromium-Smokes mit frisch installiertem Playwright 1.65.0
+bestehen auf der oben genannten gescannten Image-ID. Nicht-Root, effektive
+Capabilitymenge 0 und `no-new-privileges` sind bestätigt; Gateway erreichbar,
+Internet und Hosteingang nicht erreichbar. APT-/PCRE2-Versionen und entfernte
+globale npm-Pakete wurden am finalen Image geprüft.
+Abschließende Health-/HTTP-/Logprüfungen und DEV-Cleanup bestehen; temporäre
+Prüfvolumes und der isolierte Abhängigkeitssnapshot sind entfernt.
+
+Noch erforderlich: Veröffentlichung und GitHub-Checks auf dem tatsächlichen
+neuen PR-Head. Der grüne Lauf auf `e2f117f` prüft den Vorgänger und ist dafür
+kein Ersatz. Keine AP-01-, native-arm64-, TST- oder PRD-Abnahme ableiten.
+
+## Historisch: nichtblockierender Scan des direkten Herstellerimages
+
+Der folgende Abschnitt beschreibt den vor der Bereinigung freigegebenen
+Herstellerstand. Der neue Kandidat verwendet ihn nur noch als Buildquelle;
+er führt das daraus bereinigte und separat gescannte Testimage aus.
 
 Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
 Eigentümerentscheidung, keine Nachlässigkeit.
 
-Gemessen am 2026-08-16 gegen
-`mcr.microsoft.com/playwright:v1.62.1-noble`, Schweregrad `CRITICAL,HIGH`, nur
-Befunde **mit** verfügbarem Fix:
+Der erneute Scan am 2026-11-10 gegen den aktuellen offiziellen
+Multi-Arch-Digest
+`mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d`
+meldet bei `CRITICAL,HIGH` und `ignore-unfixed: true` folgende **fixbare**
+Befunde:
 
 | Paket | Befunde |
 | --- | --- |
-| `tar` | 1 × CRITICAL, 1 × HIGH |
-| `brace-expansion` | 3 × HIGH |
-| `ip-address` | 1 × HIGH |
-| `undici` | 1 × HIGH |
+| `brace-expansion` 5.0.9 | 2 × HIGH; Fix 5.0.11 |
+| `undici` 6.28.0 | 4 × HIGH; Fix 6.29.1 |
+| Ubuntu `apt` und `libapt-pkg6.0t64` 2.8.3 | je 1 × HIGH (`CVE-2026-109518`); Fix 2.8.4ubuntu0.1 |
 
-Alle sieben liegen im **gebündelten npm** des Images — dieselbe Klasse wie beim
-Node-Basisimage. Dort war die Abhilfe, npm aus dem Runtime-Image zu entfernen;
-hier ist sie nicht verfügbar, weil das Image vom Hersteller kommt und nur dieser
-es neu bauen kann.
+Sechs Befunde liegen im **gebündelten npm** des Images — dieselbe Klasse wie
+beim Node-Basisimage. Ein abgeleitetes, gezielt gepatchtes oder um npm
+bereinigtes Testimage wäre technisch möglich, benötigt aber eigene
+Kompatibilitäts-, Herkunfts- und Sicherheitsnachweise. Es ist keine bereits
+umgesetzte Alternative. Zwei Befundzeilen betreffen dagegen
+Ubuntu-APT und liegen **außerhalb** des npm-Bundles. Weder APT noch npm werden
+vom Browser-Smoke aufgerufen. Er laedt nur lokal erzeugte Inhalte ueber HTTP
+im internen Netz; Paketinstallation und Repositoryzugriffe finden dort
+nicht statt. Eine pauschale Uebertragung der bisherigen Ownerentscheidung
+auf neue Systempakete ist trotzdem nicht vorgesehen.
+
+Der vorher offene OpenSSL-Befund `CVE-2026-84782` aus dem 1.62.1-Image wird
+im aktuellen Image nicht mehr gemeldet; auch fixbare CRITICAL- oder
+Brotli-Befunde wurden im 1.65.0-Scan nicht gefunden. Das zwischenzeitlich
+gepruefte 1.64.0-Image wurde wegen zusaetzlicher Systempaketbefunde nicht
+uebernommen.
 
 Die Entscheidung stützt sich auf vier Punkte:
 
 1. Das Image ist ein **reines Testartefakt** und in keinem ausgelieferten
    Container enthalten. Weder `backend.Dockerfile` noch `web.Dockerfile`
    beziehen sich darauf.
-2. Der Smoke ruft `node_modules/.bin/playwright` direkt auf. **npm wird nicht
-   ausgeführt**, das gebündelte Abhängigkeitsset also nicht erreicht.
+2. Der Smoke ruft `node_modules/.bin/playwright` direkt auf. **npm und APT
+   werden nicht ausgeführt**; im regulären Testablauf ist kein Aufruf der
+   betroffenen Paketverwaltungsfunktionen festgestellt. Das ist kein
+   allgemeiner Beweis der Unausnutzbarkeit.
 3. Der Container läuft unprivilegiert, mit read-only Root-Dateisystem, ohne
-   Capabilities, im `internal`-Netz ohne Route nach außen. Nachgewiesen:
-   Weder das Internet noch ein Hostport ist von dort erreichbar.
-4. Ein blockierendes Gate wäre ohne Handlungsoption dauerhaft rot — genau die
-   Lage, in der ein Check abgeschaltet statt beachtet wird.
+   Capabilities, im `internal`-Netz ohne externen Netzzugang, ohne Docker-Socket
+   und ohne Hostnetz. Diese Isolation reduziert das Risiko, beseitigt es nicht.
+4. Die befristete Nutzung vermeidet einen eigenen Testimage-Build, ohne
+   die bekannten Befunde unsichtbar zu machen. Eigener Fixbuild und Warten
+   auf einen korrigierten Herstellerstand bleiben mögliche Alternativen.
 
-Der Scan bleibt trotzdem im Lauf, damit die Befunde sichtbar sind und eine
-Verschlechterung auffällt. **Auslöser für eine Neubewertung:** ein Befund
-außerhalb des npm-Bundles, ein Befund in einer Browserbibliothek oder jede
-Verwendung des Images außerhalb des Tests.
+### Befristete Owner-Risikoakzeptanz vom 2026-11-10
+
+Der Projekteigentümer hat im Chat nach Vorlage des genauen Geltungsbereichs
+ausdrücklich erklärt: „ich akzeptiere das Risiko in der Form.“ Damit ist die
+Neubewertung der beiden APT-Fundzeilen entschieden. Der nichtblockierende
+Scan selbst ist weiterhin keine Risikoentscheidung.
+
+- **Geltungsbereich:** ausschließlich die acht oben beschriebenen fixbaren
+  HIGH-Fundzeilen des exakt gepinnten Playwright-1.65.0-Testimages. Die
+  bisherige npm-Behandlung wird ausdrücklich um die beiden APT-Zeilen
+  (`CVE-2026-109518`) erweitert. Keine Anwendung auf nginx, Backend,
+  andere Images, neue Schwachstellen oder den Minimatch-Befund.
+- **Zulässiger Zweck:** isolierte lokale DEV-/CI-Browser-Smokes, keine
+  Auslieferung als Anwendung oder Produktivcontainer. Keine produktiven Daten
+  oder Secrets im Container; nur benötigte Testeingaben read-only einbinden.
+- **Verbindliche Schutzmaßnahmen:** Nicht-Root, read-only Root-Dateisystem,
+  keine Capabilities, `no-new-privileges`, kein Hostnetz oder Docker-Socket,
+  internes Testnetz ohne externen Netzzugang. npm und APT nicht ausführen;
+  keine Paketinstallation oder Registryabfragen im Browser-Smoke.
+- **Restrisiko:** bekannte verwundbare Komponenten bleiben vorhanden. Isolation
+  und Nichtverwendung reduzieren die erwartete Erreichbarkeit, beweisen aber
+  keine vollständige Unausnutzbarkeit. Eine unerwartete Nutzung oder
+  Schutzgrenzenverletzung könnte weiterhin die Test-/CI-Ausführung gefährden.
+- **Transparenz:** Scan und Befundausgabe bleiben aktiv, keine neuen
+  Ignore-Einträge und keine pauschale Development-Ausnahme. Technische
+  Scannerfehler bleiben Fehler; nur die beschriebenen Befunde sind bewertet.
+- **Ablauf:** erneute Bewertung spätestens am **2026-12-10**, ohne automatische
+  Verlängerung. Verantwortlich ist der Projekteigentümer vor weiterer
+  qualifizierender Nutzung oder Abnahme.
+- **Vorzeitige Neubewertung:** jeder Imagewechsel, neue Befunde, betroffene
+  Browserbibliotheken, geänderte Nutzung oder Schutzmaßnahmen. Bei einem
+  nachgewiesenen Angriffspfad oder nicht mehr eingehaltenen Bedingungen gilt
+  die Akzeptanz nicht weiter.
+- **Rückkehrplan:** korrigierten Herstellerstand oder separat qualifiziertes
+  eigenes Fiximage einsetzen, Paket-/Image-Kompatibilität und alle relevanten
+  Scans/Smokes neu nachweisen. Bei Ablauf oder ungültigen Bedingungen darf die
+  ungeklärte Nutzung nicht als Abnahmenachweis gelten; bis zur erneuten
+  Entscheidung aussetzen. Kein Ersatz durch stilles Dismissal.
+
+Diese Entscheidung ändert weder den produktiven Securitystandard noch andere
+offene AP-01-Akzeptanzkriterien. GitHub-Pflichtchecks und Betriebsnachweise
+auf dem finalen veröffentlichten Commit bleiben erforderlich.
 
 ### Warum Hauptversionen nicht gruppiert werden
 

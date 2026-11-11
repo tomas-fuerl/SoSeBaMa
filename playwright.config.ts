@@ -3,7 +3,8 @@ import { defineConfig } from '@playwright/test';
 /**
  * Configuration for the Chromium smoke.
  *
- * The smoke runs inside the digest-pinned browser image described in
+ * The smoke runs inside the sanitized test image built from the digest-pinned
+ * browser source described in
  * `docs/development/BROWSER-RUNTIME.md`, joined to the internal DEV application
  * network. It therefore reaches the gateway by service name and never through
  * the host.
@@ -39,7 +40,7 @@ export default defineConfig({
      * `outputDir` above is writable, so Playwright could write them — but the
      * smoke container is started with `--rm`, so anything written there is gone
      * before it could be inspected. Retaining artefacts would need an extra
-     * writable mount and an upload step, which is not worth it for two
+     * writable mount and an upload step, which is not worth it for this small set of
      * assertions whose failure messages already name the expected and the
      * received value.
      *

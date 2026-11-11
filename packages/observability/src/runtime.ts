@@ -80,6 +80,14 @@ interface BoundedRuntimeLogger {
 const exportTimeoutMillis = 1_000;
 const supportedOtlpEnvironmentVariable = 'OTEL_EXPORTER_OTLP_ENDPOINT';
 
+function withoutTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
 function validateRole(role: RuntimeRole): RuntimeRole {
   if (role !== 'api' && role !== 'worker') {
     throw new Error('Invalid runtime role.');
@@ -152,7 +160,7 @@ export function createRuntimeFailureReporterCore(
 }
 
 function signalEndpoint(endpoint: string, signal: 'metrics' | 'traces'): string {
-  return `${endpoint.replace(/\/+$/u, '')}/v1/${signal}`;
+  return `${withoutTrailingSlashes(endpoint)}/v1/${signal}`;
 }
 
 function validateTelemetryConfig(telemetry: TelemetryExporterConfig): TelemetryExporterConfig {
@@ -190,7 +198,7 @@ function validateTelemetryConfig(telemetry: TelemetryExporterConfig): TelemetryE
     throw new Error('Invalid local telemetry configuration.');
   }
   return {
-    endpoint: `${endpoint.origin}${endpoint.pathname.replace(/\/+$/u, '')}`,
+    endpoint: `${endpoint.origin}${withoutTrailingSlashes(endpoint.pathname)}`,
     exporter: 'otlp',
   };
 }

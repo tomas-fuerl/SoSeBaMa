@@ -77,7 +77,7 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
 - **ADRs:** [0001](decisions/ADR-0001-systemarchitektur-und-laufzeitrollen.md),
   [0002](decisions/ADR-0002-typescript-technologiestack-und-monorepo.md),
   [0011](decisions/ADR-0011-logging-metriken-tracing-und-diagnose.md),
-  [0012](decisions/ADR-0012-container-netz-secrets-und-deployment.md),
+  [0017](decisions/ADR-0017-nginx-application-gateway.md),
   [0013](decisions/ADR-0013-teststrategie-und-software-lieferkette.md),
   [0014](decisions/ADR-0014-modulstruktur-und-walking-skeleton.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G3 bestehen für das leere
@@ -253,7 +253,7 @@ Gates sind kumulativ. G4 ersetzt weder G1 noch G2 oder G3.
   Qualitätszieländerung.
 - **ADRs:** alle ADRs, besonders
   [0011](decisions/ADR-0011-logging-metriken-tracing-und-diagnose.md),
-  [0012](decisions/ADR-0012-container-netz-secrets-und-deployment.md),
+  [0017](decisions/ADR-0017-nginx-application-gateway.md),
   [0013](decisions/ADR-0013-teststrategie-und-software-lieferkette.md) und
   [0016](decisions/ADR-0016-initiales-ressourcenbudget-und-oq-016.md).
 - **Kumulatives Abnahmekriterium:** G1 bis G4 bestehen. Digest,

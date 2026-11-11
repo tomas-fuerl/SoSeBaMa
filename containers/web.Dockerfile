@@ -1,4 +1,4 @@
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS dependencies
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS dependencies
 
 WORKDIR /workspace
 
@@ -24,33 +24,24 @@ COPY packages/typescript-config packages/typescript-config
 
 RUN pnpm --filter @sobama/web run build
 
-FROM caddy:2.11.4@sha256:df7f1c2fb114453b951de51a98efc010db1655a92c2e86be6706714e2417a78d AS caddy
+FROM nginx:1.30.6-trixie@sha256:42c68eab6f7e22611786a9fe1d1c019e275c50185bd54b8f75dc2b9184322703 AS runtime
 
-FROM node:24.18.1-bookworm-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7 AS runtime
+# Official base still contains two fixable HIGH findings in zlib1g.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+      zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
+    && apt-get purge --yes --auto-remove \
+      nginx-module-acme nginx-module-geoip nginx-module-image-filter \
+      nginx-module-njs nginx-module-xslt curl gettext-base \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV XDG_CONFIG_HOME=/tmp/caddy-config
-ENV XDG_DATA_HOME=/tmp/caddy-data
+# Retain the existing Node health contract; do not add a new probe implementation.
+COPY --from=dependencies /usr/local/bin/node /usr/local/bin/node
+COPY containers/nginx /etc/nginx/app
+COPY --from=build /workspace/apps/web/dist /srv
 
-# Die Runtime startet Caddy; `node` bleibt ausschliesslich fuer die
-# Compose-Healthchecks erhalten. npm und corepack werden nicht benoetigt,
-# bringen aber ein eigenes gebuendeltes Abhaengigkeitsset mit.
-RUN rm -rf \
-    /usr/local/lib/node_modules/npm \
-    /usr/local/lib/node_modules/corepack \
-    /usr/local/bin/npm \
-    /usr/local/bin/npx \
-    /usr/local/bin/corepack
-
-COPY --from=caddy /usr/bin/caddy /tmp/caddy-with-file-capability
-RUN cp /tmp/caddy-with-file-capability /usr/bin/caddy \
-    && rm /tmp/caddy-with-file-capability \
-    && chmod 0755 /usr/bin/caddy
-COPY --chown=node:node containers/caddy /etc/caddy
-COPY --from=build --chown=node:node /workspace/apps/web/dist /srv
-
-USER node
-
+USER 1000:1000
 EXPOSE 8080
-
-ENTRYPOINT ["caddy"]
-CMD ["run", "--config", "/etc/caddy/Web.Caddyfile", "--adapter", "caddyfile"]
+STOPSIGNAL SIGQUIT
+ENTRYPOINT ["nginx"]
+CMD ["-c", "/etc/nginx/app/Web.conf", "-g", "daemon off;"]
