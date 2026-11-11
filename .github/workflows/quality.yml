@@ -150,29 +150,53 @@ jobs:
         run: pnpm container:health
       - name: Verify DEV host ingress
         run: pnpm container:smoke
-      # Bewusst nicht blockierend, und das ist eine Eigentuemerentscheidung.
-      # Das Playwright-Image ist ein reines Testartefakt: Es wird nie
-      # ausgeliefert, laeuft unprivilegiert im internen Netz ohne Route nach
-      # aussen und laedt ausschliesslich lokal erzeugte Inhalte. Die Befunde
-      # betreffen gebuendeltes npm und Ubuntu-APT. Die Ownerentscheidung vom
-      # 2026-11-10 akzeptiert genau die dokumentierten Befunde befristet bis
-      # spaetestens 2026-12-10 unter expliziten Schutzbedingungen. Bei einem
-      # Imagewechsel oder neuen Befunden ist erneut zu bewerten. Der Scan
-      # bleibt sichtbar; Exit-Code 0 ist keine pauschale Risikoakzeptanz.
-      # Bedingungen, Restrisiko und Rueckkehrplan:
-      # docs/development/SUPPLY-CHAIN-CHECKS.md
-      - name: Report browser image findings without blocking
+      # Das eigene Testimage wird vor seiner ersten Ausfuehrung gescannt.
+      # Scans und Smoke erhalten dieselbe unveraenderliche lokale Image-ID.
+      # Die alte Hersteller-Risikoakzeptanz wird nicht auf dieses Image erweitert.
+      - name: Build sanitized browser runtime
+        id: browser-image
+        run: |
+          pnpm browser:build
+          printf 'id=%s\n' "$(docker image inspect sosebama-browser:dev --format '{{.Id}}')" >> "$GITHUB_OUTPUT"
+      - name: Scan sanitized browser image for fixable vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           skip-setup-trivy: true
           version: v0.74.0
           scan-type: image
-          image-ref: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d
-          exit-code: '0'
+          image-ref: ${{ steps.browser-image.outputs.id }}
+          scanners: vuln
+          exit-code: '1'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           trivyignores: .trivyignore.yaml
+      - name: Scan sanitized browser image for secrets
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: ${{ steps.browser-image.outputs.id }}
+          scanners: secret
+          exit-code: '1'
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
+      - name: Report unfixed browser image findings without blocking
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          version: v0.74.0
+          scan-type: image
+          image-ref: ${{ steps.browser-image.outputs.id }}
+          scanners: vuln
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
       - name: Verify SPA delivery in Chromium
+        env:
+          SOSEBAMA_BROWSER_IMAGE_ID: ${{ steps.browser-image.outputs.id }}
         run: pnpm browser:smoke
       - name: Verify DEV structured logs
         run: pnpm container:logs

@@ -1,7 +1,7 @@
 # Browserlaufzeit für den Chromium-Smoke
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-11-10 (Imageherkunft und Sicherheit; Laufzeit siehe PR-Nachweis)
+- Letzter Prüfstand: 2026-11-11 (bereinigter lokaler Kandidat; veröffentlichte CI separat nachweisen)
 - Bezogenes Issue: [#26](https://github.com/tomas-fuerl/SoSeBaMa/issues/26)
 - Geltungsbereich: lokale DEV-Umgebung und Pull-Request-Stufe
 
@@ -52,7 +52,33 @@ Chromium muss irgendwoher kommen. Genau diese Quelle legt diese Anleitung fest.
 
 ## Entscheidung
 
-Chromium kommt aus dem offiziellen, per Digest gepinnten Playwright-Image.
+Chromium kommt weiterhin aus dem offiziellen, per Digest gepinnten
+Playwright-Image. Aus dessen fertigem Dateisystem wird jedoch ein eigenes,
+bereinigtes **Testimage** gebaut; das Herstellerimage wird nicht mehr direkt
+ausgeführt. Ownerfreigabe für diesen zusätzlichen Scope: 2026-11-10, [#65](https://github.com/tomas-fuerl/SoSeBaMa/pull/65).
+
+Der veröffentlichte Hersteller-Scan enthält drei HIGH-Secret-Verdachtsmeldungen
+in früheren npm-Cache-/Logschichten. Eine Dateinameninventur des vereinigten
+Dateisystems fand keine `/root/.npm`-Einträge. Das beweist weder Ungültigkeit
+noch einen Fehlalarm: alte Schichten bleiben extrahierbar. Kein Tokeninhalt
+wird übernommen oder als Zugang getestet.
+
+[`containers/browser.Dockerfile`](../../containers/browser.Dockerfile) behebt
+die zwei APT- und sieben mittleren PCRE2-Fundzeilen mit exakt gepinnten
+Ubuntu-Paketen und entfernt
+ungenutztes globales npm/Yarn. Die finale `scratch`-Stufe übernimmt nur das
+vereinigte Dateisystem, **nicht** die alten Hersteller-/Buildschichten.
+OS-Paketdatenbank, Browser und Lizenzdateien bleiben für Analyse und
+Attribution erhalten. Das ist kein Betriebssystemwechsel: Ubuntu und die
+Hersteller-Browserbibliotheken werden weiterverwendet. Kein neuer Browser-
+Download, kein eigener Chromium-Build, keine neue Sicherheitsausnahme.
+
+Nur eine Löschschicht auf `FROM <Herstellerimage>` würde die alten Inhalte
+weiter verteilen und scheidet aus. Ungepinntes Nachladen oder ein Wechsel der
+Browserdistribution bleiben aus den unten genannten Gründen ausgeschlossen.
+Ein eigener vollständiger Browserbuild wäre deutlich größerer Pflegeaufwand.
+Die bestehende Container-/Sandbox-/Netzgrenze bleibt unverändert; dies ist ein
+Security-Fix innerhalb des angenommenen Stacks, keine neue Technologieentscheidung.
 
 | Verworfene Alternative | Grund |
 | --- | --- |
@@ -60,9 +86,15 @@ Chromium kommt aus dem offiziellen, per Digest gepinnten Playwright-Image.
 | Chromium aus Debian-Paketen | Version und Playwright-Protokoll müssten getrennt gepflegt werden; Playwright unterstützt ausdrücklich nur die eigenen Builds. |
 | Browser im DEV-Image mitbauen | Vergrößert das Anwendungsimage dauerhaft für einen reinen Testzweck und vermischt Anwendungs- mit Testlaufzeit. |
 
-Die Referenz steht als einzige Quelle in
+Die kanonische Herstellerreferenz steht in
 [`containers/browser-runtime.json`](../../containers/browser-runtime.json).
-Werkzeuge und Tests lesen ausschließlich diese Datei.
+Der Dockerfile-Pin wird maschinell dagegen geprüft. `runtimeImage` benennt nur
+den **lokalen Buildtag**, keine entfernte Lieferquelle. Der Smoke inspiziert
+dieses Image, prüft Herkunft, Buildmarker und den SHA-256 des aktuellen
+Dockerfiles und startet mit der
+unveränderlichen Image-ID und `--pull never`. Die Marker sind ein Driftcheck,
+keine kryptografische Provenienz oder Attestierung. Ein nach einer
+Dockerfileänderung veraltetes lokales Image wird abgewiesen.
 
 Der aktuelle Pin ist Playwright 1.65.0. Der offizielle Multi-Arch-Index
 `sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d`
@@ -73,19 +105,20 @@ in [Supply-Chain-Prüfungen](SUPPLY-CHAIN-CHECKS.md).
 
 ## Was das Image enthält — und was nicht
 
-Das Image liefert **nur** Browserbinärdateien und deren Systemabhängigkeiten,
-unter `/ms-playwright` mit gesetztem `PLAYWRIGHT_BROWSERS_PATH`. Ein
+Das Testimage liefert Browserbinärdateien unter `/ms-playwright` mit gesetztem
+`PLAYWRIGHT_BROWSERS_PATH`, außerdem Node und Systemabhängigkeiten. Ein
 Playwright-npm-Paket ist **nicht** enthalten; im Image gibt es weder ein
 globales `playwright` noch ein `node_modules` mit Playwright.
 
 Das ist keine Lücke, sondern die vorgesehene Aufteilung: Die Testbibliothek
 stammt aus dem Lockfile dieses Repositorys, die Binärdatei aus dem gepinnten
 Image. Beide Hälften werden getrennt versioniert und müssen zusammenpassen —
-deshalb prüft Schritt 4 das Zusammenspiel und nicht nur zwei Versionsstrings.
+deshalb prüft Schritt 5 das Zusammenspiel und nicht nur zwei Versionsstrings.
 
-Praktische Folge: Ein Aufruf wie `docker run <image> npx playwright --version`
-funktioniert **nicht** wie erwartet. Er lädt `playwright` aus der Registry
-nach und scheitert ohne Netz. Für eine Versionsauskunft ist er unbrauchbar.
+Praktische Folge: `npx playwright --version` ist kein Prüfschritt. Im
+bereinigten Image fehlt npx; im direkten Herstellerimage würde es ein Paket
+nachladen können. Der Smoke ruft ausschließlich das Playwright dieses
+Repositorys aus dem schreibgeschützten Mount auf.
 
 ## Warum der Index-Digest und nicht der Plattform-Digest
 
@@ -97,7 +130,7 @@ der jeweils anderen Architektur fehlschlagen.
 
 ## Warum die Chromium-Sandbox abgeschaltet ist
 
-Das Image läuft ab Werk als `root`; der Smoke startet es dagegen bewusst als
+Das Herstellerimage läuft ab Werk als `root`; das eigene Testimage und der Smoke laufen als
 `1000:1000` mit `--cap-drop ALL` und `no-new-privileges`. Genau diese Härtung
 nimmt Chromium die Mittel, seine eigene Sandbox aufzubauen — sie braucht dafür
 Capabilities beziehungsweise User-Namespaces.
@@ -119,10 +152,13 @@ sie nicht ohne Kenntnis dieser Abwägung geändert wird.
 
 - Node und pnpm in den fixierten Versionen, siehe
   [Lokale Entwicklungsumgebung](LOCAL-DEVELOPMENT.md).
-- Laufende Container-Laufzeit für Schritt 3.
+- Laufende lokale DEV-Container-Laufzeit für Schritt 3; genügend freier
+  Speicher für Herstellerimage, Buildcache und bereinigtes Image (mehrere GiB).
 - Netzzugang zu `mcr.microsoft.com`. Das ist eine **zweite Registry** neben
   Docker Hub; sie ist damit ein weiterer Vertrauensanker und ein weiterer
   möglicher Ausfallpunkt.
+- Netzzugang zu den signierten Ubuntu-Paketquellen für die exakt gepinnten
+  APT-Fixpakete. Keine produktiven Docker-Kontexte verwenden.
 
 ## Sicherheitswarnungen
 
@@ -162,33 +198,44 @@ sie nicht ohne Kenntnis dieser Abwägung geändert wird.
    Erwartet: keine Ausgabe von `find` — das Verzeichnis ist leer geblieben —
    und `rmdir` gelingt.
 
-3. Die gepinnte Browserlaufzeit beziehen:
+3. Das bereinigte Testimage bauen:
 
    ```bash
-   docker pull "$(node -e "process.stdout.write(require('./containers/browser-runtime.json').image)")"
+   pnpm browser:build
    ```
 
-   Erwartet: Exit-Code `0`.
+   Erwartet: Exit-Code `0`, lokales Image `sosebama-browser:dev`.
+   Der Build bezieht die gepinnte Herstellerquelle und die exakt angegebenen
+   Ubuntu-Fixpakete. Keine lokale `.npmrc` oder Environment-Datei wird kopiert.
+   Bei einem Fehler abbrechen; **kein** Rückfall auf das direkte Herstellerimage.
 
-4. Prüfen, dass das Playwright **dieses Repositorys** im Image genau den
-   Chromium-Build findet, den es erwartet:
+4. Das gebaute Image vor seiner ersten Ausführung scannen. Der Socket wird
+   ausschließlich dem vorhandenen lokalen Scanner gegeben, niemals dem Browser:
 
    ```bash
-   docker run --rm --network none -v "$PWD":/w:ro -w /w \
-     "$(node -e "process.stdout.write(require('./containers/browser-runtime.json').image)")" \
-     node -e "const {chromium}=require('@playwright/test');const p=chromium.executablePath();console.log(p, require('node:fs').existsSync(p))"
+   docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock \
+     aquasec/trivy:0.74.0 image --scanners vuln --severity HIGH,CRITICAL \
+     --ignore-unfixed --exit-code 1 sosebama-browser:dev
+   docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock \
+     aquasec/trivy:0.74.0 image --scanners secret --exit-code 1 sosebama-browser:dev
    ```
 
-   Erwartet: ein zur Paketversion passender Pfad unterhalb von
-   `/ms-playwright` und `true`. Die Chromium-Buildnummer ist versionsabhängig.
+   Erwartet: beide Scans erfolgreich, keine fixbaren HIGH/CRITICAL und keine
+   Secret-Treffer. Technische Scannerfehler oder neue Befunde sind ein
+   Abbruchgrund, kein Anlass für eine Ignore-Regel oder erweiterten Waiver.
+   Vollständige Secret-Matches nicht kopieren oder veröffentlichen.
 
-   `--network none` ist hier kein Beiwerk, sondern der Kern des Schritts: Er
-   belegt, dass die Binärdatei aus dem Image stammt und nichts nachgeladen wird.
+5. Den vorhandenen DEV-Stack gemäß [DEV-Container](DEV-CONTAINERS.md) starten
+   und `pnpm browser:smoke` ausführen. Erwartet: drei bestandene Chromiumtests
+   ohne Download, im internen Netz und mit unveränderter Härtung. Anschließend
+   `pnpm container:down` und `pnpm container:cleanup` ausführen.
 
 ## Erwartetes Ergebnis
 
 Die Abhängigkeitsinstallation bleibt frei von Browserbinärdateien, und die
-Browserlaufzeit ist über einen unveränderlichen Digest bestimmt.
+Browserquelle ist über einen unveränderlichen Digest bestimmt. Das daraus
+gebaute Testimage wird separat gescannt und anhand seiner lokalen Image-ID
+gestartet; ein lokaler Buildtag allein ist kein Qualifikationsnachweis.
 
 ## Verifikation
 
@@ -202,12 +249,11 @@ Registry und Versionsgleichheit zwischen Imagetag und installiertem
 `@playwright/test`. Sie benötigen keine Container-Laufzeit und laufen deshalb
 in `pnpm check` sowie im CI-Job `repository`.
 
-**Abgrenzung:** Maschinell geprüft ist damit die *Deklaration*. Das
-Zusammenspiel aus Schritt 4 — findet das Playwright des Repositorys seinen
-Chromium-Build im Image — ist hier ein dokumentierter Prüfschritt. Automatisiert
-wird es mit dem Browser-Smoke im nachfolgenden Teilschnitt, der das Image
-ohnehin startet; ein zweiter Bezug desselben mehrere Gigabyte großen Images
-allein für diese Prüfung wäre nicht zu rechtfertigen.
+Zusätzlich wird der bereinigte Aufbau (`FROM scratch`, Dateisystemkopie,
+APT-Fixpins, Entfernung globaler npm-Pakete) geprüft. In CI erhalten beide
+blockierenden Scans und der vorhandene Browser-Smoke dieselbe lokale Image-ID.
+Der zusätzliche Sichtbarkeitsscan zeigt nichtfixbare HIGH/CRITICAL weiterhin.
+Ein grüner Deklarationstest ersetzt weder Image-Scan noch Chromiumlauf.
 
 ## Fehlerbehandlung
 
@@ -222,25 +268,36 @@ allein für diese Prüfung wäre nicht zu rechtfertigen.
 - **Ein Browser wird bei der Installation doch geladen:** Abbrechen. Das wäre
   ein Verhaltenswechsel gegenüber dem hier festgehaltenen Prüfstand und ist vor
   dem Weiterarbeiten zu klären.
+- **APT-Fixversion nicht mehr verfügbar:** Build abbrechen und Pin anhand
+  eines frischen Scans neu bewerten. Kein Downgrade und kein ungepinntes Update.
+- **Bereinigtes Image fehlt oder Marker stimmen nicht:** `pnpm browser:build`
+  wiederholen und erneut scannen. Der Smoke lädt kein Ersatzimage nach.
 
 ## Rollback
 
-Die Änderung ist reine Konfiguration und Dokumentation. Ein `git revert` des
-zugehörigen Commits entfernt die Entwicklungsabhängigkeit, die Referenzdatei und
-die Prüfungen. Laufzeit- oder Datenfolgen entstehen nicht; die Anwendung
-verwendet die Browserlaufzeit an keiner Stelle.
+Ein reviewter Revert stellt Dockerfile, Workflow, Helfer und Konfiguration auf
+den vorherigen Stand zurück. Die bestehende Playwright-Abhängigkeit wird
+dadurch nicht entfernt. Datenfolgen entstehen nicht; die Anwendung
+verwendet die Browserlaufzeit an keiner Stelle. Ein Rückbau auf den bekannten
+ungeklärten Herstellerstand ist **keine** erneute Nutzungsfreigabe; Browser-
+Qualifikation bis zu einer sicheren Alternative aussetzen.
 
 Ein lokal bezogenes Image lässt sich entfernen:
 
 ```bash
-docker image rm mcr.microsoft.com/playwright:v1.65.0-noble
+docker image rm sosebama-browser:dev
 ```
 
 ## Pflege
 
 Verantwortlich ist der Projekteigentümer. Auslöser für eine Aktualisierung sind
 eine neue Playwright-Version, ein neu veröffentlichter Imagetag und jeder
-Sicherheitsbefund an der Browserlaufzeit.
+Sicherheitsbefund an der Browserlaufzeit. Bei jedem Quellenwechsel die
+APT-Pins erneut bewerten, überflüssige Pins entfernen und beide Plattformen
+getrennt qualifizieren. Ein amd64-Nachweis belegt keine native arm64-Ausführung.
+Build, Secret-/Vulnerability-/Konfigurationsscan und drei Smokes wiederholen.
+Der bereinigte Build entfernt alte Schichten nur aus dem **neuen** Image;
+bereits bezogene Herstellerimages und lokale Buildcaches bleiben unverändert.
 
 Digest neu ermitteln:
 
@@ -251,6 +308,13 @@ docker buildx imagetools inspect mcr.microsoft.com/playwright:v<version>-noble
 Der oberste ausgewiesene `Digest` ist der Index-Digest und gehört in
 `containers/browser-runtime.json`. Die darunter aufgeführten Plattformmanifeste
 werden **nicht** eingetragen.
+
+Den identischen Pin im Browser-Dockerfile aktualisieren; der Policytest
+erzwingt die Gleichheit. Ohne Registry-Push gibt es keinen veröffentlichten
+Multi-Arch-Digest des eigenen Testimages. CI baut es deshalb jeweils neu und
+scannt das tatsächlich ausgeführte Artefakt. Exakte APT-Versionen und ein
+Source-Digest sind keine Behauptung bitidentischer Builds oder vollständiger
+Build-Provenienz.
 
 Playwright und Imagetag werden gemeinsam gehoben. Dependabot kann diese Kopplung
 nicht herstellen; `pnpm test:toolchain` weist eine Abweichung aus.

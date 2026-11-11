@@ -3,7 +3,8 @@ import { defineConfig } from '@playwright/test';
 /**
  * Configuration for the Chromium smoke.
  *
- * The smoke runs inside the digest-pinned browser image described in
+ * The smoke runs inside the sanitized test image built from the digest-pinned
+ * browser source described in
  * `docs/development/BROWSER-RUNTIME.md`, joined to the internal DEV application
  * network. It therefore reaches the gateway by service name and never through
  * the host.

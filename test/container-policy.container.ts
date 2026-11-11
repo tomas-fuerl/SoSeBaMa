@@ -179,7 +179,11 @@ describe('nginx DEV container policy', () => {
   });
 
   it('pins every external Dockerfile base and avoids latest image tags', () => {
-    for (const dockerfile of ['containers/backend.Dockerfile', 'containers/web.Dockerfile']) {
+    for (const dockerfile of [
+      'containers/backend.Dockerfile',
+      'containers/web.Dockerfile',
+      'containers/browser.Dockerfile',
+    ]) {
       const source = readFileSync(resolve(repositoryRoot, dockerfile), 'utf8');
       const fromLines = source.split('\n').filter((line) => line.startsWith('FROM '));
       expect(fromLines.length, dockerfile).toBeGreaterThan(0);
@@ -188,7 +192,9 @@ describe('nginx DEV container policy', () => {
       const knownStages = new Set<string>();
       for (const line of fromLines) {
         const [, reference, asKeyword, stage] = line.split(/\s+/u);
-        if (!reference || !knownStages.has(reference)) {
+        const browserScratch =
+          dockerfile === 'containers/browser.Dockerfile' && reference === 'scratch';
+        if (!browserScratch && (!reference || !knownStages.has(reference))) {
           expect(reference, line).toMatch(/@sha256:[a-f\d]{64}$/u);
         }
         if (asKeyword?.toUpperCase() === 'AS' && stage) {

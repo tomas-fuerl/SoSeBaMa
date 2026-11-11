@@ -1,7 +1,7 @@
 # Prüfungen der Software-Lieferkette
 
 - Eigentümer: Projekteigentümer
-- Letzter Prüfstand: 2026-08-16
+- Letzter Prüfstand: 2026-11-11 (bereinigter Browserkandidat; veröffentlichte CI separat nachweisen)
 - Bezogenes Issue: [#25](https://github.com/tomas-fuerl/SoSeBaMa/issues/25)
 - Geltungsbereich: Pull-Request-Stufe in GitHub-hosted CI
 
@@ -26,7 +26,8 @@ AP-11 und hier bewusst nicht enthalten.
 | Dependency Review | neu hinzukommende Abhängigkeiten im Pull Request | Schweregrad `high` |
 | Lizenzprüfung | Lizenz jeder aufgelösten Abhängigkeit | jeder nicht zugelassenen Lizenz |
 | Trivy `image` | beide gebauten DEV-Images samt Systempaketen | `CRITICAL`, `HIGH` mit verfügbarem Fix |
-| Trivy `image` (Browserlaufzeit) | das gepinnte Playwright-Testimage | **nichts** — nur Sichtbarkeit, siehe unten |
+| Trivy `image` (bereinigte Browserlaufzeit) | das aus gepinnter Quelle gebaute Testimage | `CRITICAL`, `HIGH` mit verfügbarem Fix |
+| Trivy Secret-Scanner (Browserlaufzeit) | dasselbe gebaute Testimage | jedem Treffer, unabhängig vom Schweregrad |
 | Trivy `fs` | aufgelöste Abhängigkeiten aus dem Lockfile | `CRITICAL`, `HIGH`, auch ohne Fix |
 | Trivy `config` | Dockerfiles und Compose-Dateien | `CRITICAL`, `HIGH` |
 | CodeQL | TypeScript/JavaScript und GitHub-Actions-Workflows | Sicherheitsbefunden ab `HIGH`, über die Ruleset-Regel |
@@ -446,7 +447,102 @@ Technischer Nachweis: Am 2026-10-02 wurde die zuvor aktive Preset-Regel in der
 GitHub-Oberfläche deaktiviert. GitHub bestätigte das Speichern und zeigte den
 Regelzustand anschließend als **Disabled** an.
 
-## Warum die Browserlaufzeit nicht blockierend gescannt wird
+## Bereinigte Browserlaufzeit ab 2026-11-11
+
+Der Projekteigentümer hat den zusätzlichen Scope eines separat qualifizierten,
+bereinigten Browser-Testimages im Chat ausdrücklich freigegeben. Das ist
+**keine neue Risikoakzeptanz**. Der lokale Änderungskandidat aus
+[#65](https://github.com/tomas-fuerl/SoSeBaMa/pull/65) erweitert vorhandene
+Docker-/Prüfpfade statt einen zweiten Smoke oder eigenen Browserinstaller
+einzuführen. Anleitung, Alternativen und Pflege:
+[Browserlaufzeit](BROWSER-RUNTIME.md).
+
+`containers/browser.Dockerfile` verwendet den unveränderten Herstellerpin
+aus `containers/browser-runtime.json` als Quelle. Die gezielten Ubuntu-Fixes
+`apt=2.8.4ubuntu0.1` und `libapt-pkg6.0t64=2.8.4ubuntu0.1` korrigieren die
+zwei APT-Zeilen. Nicht benötigte globale npm-/Yarn-Pakete werden entfernt.
+`libpcre2-8-0=10.42-4ubuntu2.2` korrigiert zusätzlich sieben im ersten
+bereinigten Kandidaten gefundene fixbare MEDIUM-Zeilen. Auch hier wird ein
+Distributionsfix verwendet, kein ungeprüfter Bibliotheksaustausch.
+Eine neue `scratch`-Stufe übernimmt nur das fertige Dateisystem. Browser,
+Systembibliotheken, Lizenzen und OS-Paketdatenbank bleiben erhalten; alte
+Hersteller-/Buildschichten werden nicht in das neue Image übernommen.
+
+Anlass sind zusätzlich drei HIGH-Secret-Verdachtsmeldungen aus dem
+[veröffentlichten Hersteller-Scan](https://github.com/tomas-fuerl/SoSeBaMa/actions/runs/42872545541/job/130027267810)
+in npm-Cache-/Logdateien. Sie sind im vereinigten Hersteller-Dateisystem
+nicht mehr vorhanden, aber aus früheren Schichten potenziell extrahierbar.
+Das folgt aus der Dateinameninventur und der getrennten Secret-Zusammenführung
+im [Trivy-0.74-Quellcode](https://github.com/aquasecurity/trivy/blob/v0.74.0/pkg/fanal/applier/docker.go#L103-L185).
+Keine Aussage zur Token-Gültigkeit, kein Fehlalarm-/Waiverstatus und keine
+Tokenwerte werden dafür benötigt. Nur eine weitere Löschschicht wäre keine
+ausreichende Bereinigung.
+
+CI baut das eigene Testimage und bindet blockierenden Vulnerability-Scan,
+blockierenden Secret-Scan und Chromium-Smoke an **dieselbe lokale Image-ID**.
+Der bestehende Sichtbarkeitspfad berichtet zusätzlich HIGH/CRITICAL ohne
+`ignore-unfixed`. Kein `continue-on-error`, keine neue Ignore-Ausnahme und
+keine Erleichterung der Anwendungs-/Lockfile-/CodeQL-Gates. Die bisher nur
+berichteten Browser-CVEs erhalten damit ein zusätzliches Gate statt einer
+pauschalen Fortsetzung der alten Ausnahme.
+
+Vor der Qualifikation: frischer Build, vollständiger Secret-Scan, fixbare
+HIGH/CRITICAL, Sichtbarkeit ohne Unfixed-Filter, Dockerfile-Konfiguration,
+Policy-/Repositorytests und drei Chromium-Smokes mit den bestehenden
+Härtungs-/Netzgrenzen. Ein lokaler amd64-Nachweis ist weder native arm64-
+Qualifikation noch veröffentlichter Final-Head-/AP-01-/TST-/PRD-Nachweis.
+Die unten unverändert dokumentierte befristete Ownerentscheidung gilt nur
+für das alte Herstellerartefakt und wird nicht auf neue Befunde übertragen.
+Minimatch bleibt separat offen. Keine Abnahme oder automatisches Schließen
+von #64 durch diese Bereinigung.
+
+### Lokaler Qualifikationsnachweis vom 2026-11-11
+
+Geprüft ist der **amd64-Kandidat**, lokale Image-ID
+`sha256:0fbc97c45435bff1f7c2d066981e5abc9330516e721ad93f0958c11d92a339a1`.
+Trivy 0.74.0, Datenbank aktualisiert am 2026-11-10 um 19:01 UTC und frisch
+bezogen am 2026-11-11. Vollständiger Scan ohne Severity-/Unfixed-Ausblendung:
+
+- 0 fixbare Schwachstellen, auch unterhalb von HIGH.
+- 0 Secret-Treffer über alle Schweregrade; keine zusätzliche Ignore-Regel.
+- Weiterhin 2 HIGH-Paketzeilen ohne angebotenen Distributionsfix:
+  `CVE-2025-3887` in `gstreamer1.0-plugins-bad` und
+  `libgstreamer-plugins-bad1.0-0`. Außerdem 602 MEDIUM und 51 LOW ohne
+  ausgewiesene Fixversion. Nicht als behoben, harmlos oder neu akzeptiert
+  behandeln; die bestehende Unfixed-Policy und Sichtbarkeit gelten weiter.
+
+Der OS-Paketbestand bleibt erkannt. Die sieben Hersteller-Dateisystemschichten
+kommen in den zwei neuen Runtime-Schichten nicht vor. Rezept-Hash und
+Herstellerpin stimmen mit den erwarteten Buildmarkern überein. Das ist ein
+lokaler Artefaktnachweis, kein veröffentlichter Multi-Arch-Digest.
+
+Frozen-Installation und serieller `pnpm check` unter Node 24.21.0 /
+pnpm 11.18.0 / Vitest 4.1.12 bestehen mit **195 Tests**, Build, Format, Lint,
+Types, Lizenzen und 53 Markdown-Dateizielen. Eine vorherige Wiederholung
+parallel zum kalten Imagebuild scheiterte an einem bestehenden 5000-ms-
+Architekturtestlimit; die unveränderte serielle Wiederholung besteht.
+Keine Anpassung von Testlimits oder Gates.
+
+Alle drei Dockerfiles melden 0 HIGH/CRITICAL-Konfigurationsbefunde. Acht
+Containerpolicytests bestehen zusätzlich unter Hostnode 24.18.1 /
+Vitest 4.1.11; das ist ausdrücklich kein gepinnter CI-Nachweis. Die drei
+vorhandenen Chromium-Smokes mit frisch installiertem Playwright 1.65.0
+bestehen auf der oben genannten gescannten Image-ID. Nicht-Root, effektive
+Capabilitymenge 0 und `no-new-privileges` sind bestätigt; Gateway erreichbar,
+Internet und Hosteingang nicht erreichbar. APT-/PCRE2-Versionen und entfernte
+globale npm-Pakete wurden am finalen Image geprüft.
+Abschließende Health-/HTTP-/Logprüfungen und DEV-Cleanup bestehen; temporäre
+Prüfvolumes und der isolierte Abhängigkeitssnapshot sind entfernt.
+
+Noch erforderlich: Veröffentlichung und GitHub-Checks auf dem tatsächlichen
+neuen PR-Head. Der grüne Lauf auf `e2f117f` prüft den Vorgänger und ist dafür
+kein Ersatz. Keine AP-01-, native-arm64-, TST- oder PRD-Abnahme ableiten.
+
+## Historisch: nichtblockierender Scan des direkten Herstellerimages
+
+Der folgende Abschnitt beschreibt den vor der Bereinigung freigegebenen
+Herstellerstand. Der neue Kandidat verwendet ihn nur noch als Buildquelle;
+er führt das daraus bereinigte und separat gescannte Testimage aus.
 
 Der Scan des Playwright-Testimages läuft mit `exit-code: 0`. Das ist eine
 Eigentümerentscheidung, keine Nachlässigkeit.

@@ -137,6 +137,11 @@ Nachweis erhalten; ein zusätzliches Proof-Overlay wird nicht mehr benötigt.
 
 5. Die tatsächliche Auslieferung der Einzelseitenanwendung in Chromium prüfen:
 
+   Zuerst `pnpm browser:build` ausführen und das gebaute Testimage gemäß
+   [Browserlaufzeit](BROWSER-RUNTIME.md) auf Schwachstellen und Secrets scannen.
+   Nur bei erfolgreichen Scans fortfahren. CI erledigt dies vor dem Smoke
+   automatisch und verwendet dabei für Scan und Ausführung dieselbe Image-ID.
+
    ```sh
    pnpm browser:smoke
    ```
@@ -151,9 +156,10 @@ Nachweis erhalten; ein zusätzliches Proof-Overlay wird nicht mehr benötigt.
    und rendert. Schritt 3 und 4 blieben auch dann grün, wenn das Bundle kaputt
    wäre: Sie prüfen ausschließlich Healthpfade.
 
-   Beim ersten Lauf wird die Browserlaufzeit einmalig bezogen; das dauert
-   spürbar. Ein Lauf ohne gestarteten Stack bricht mit dem Hinweis ab, dass kein
-   internes Anwendungsnetz gefunden wurde.
+   Der separate Build bezieht einmalig die gepinnte Herstellerquelle und
+   bereinigt sie; das dauert spürbar. Der Smoke selbst zieht kein Image nach.
+   Ein Lauf ohne gestarteten Stack oder ohne passend gebautes Testimage
+   bricht ab, statt auf den ungeklärten Herstellerstand zurückzufallen.
 
 6. Die strukturierten API- und Worker-Startlogs prüfen:
 

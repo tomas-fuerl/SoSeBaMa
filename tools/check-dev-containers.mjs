@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 const help = `Usage: node tools/check-dev-containers.mjs <command>
 
 Commands:
+  browser-build  Build the sanitized test-only browser runtime from its pinned source.
   health   Verify that every DEV role reports a healthy container health state.
   smoke    Verify gateway, web, and API through the local DEV host ingress.
   browser  Run the Chromium smoke of the SPA delivery inside the DEV network.
@@ -13,8 +15,12 @@ Commands:
   cleanup  Fail if sosebama-dev containers or networks remain.
   --help   Show this help.
 
-Environment for smoke:
+Environment for health, logs, and smoke:
   SOSEBAMA_DEV_GATEWAY_PORT  Required local loopback port (1-65535).
+
+Environment for browser:
+  SOSEBAMA_BROWSER_IMAGE_ID  Optional sha256 image ID already scanned by CI.
+                            Otherwise inspect the locally built runtime tag.
 
 Exit codes:
   0  Verification passed.
@@ -97,7 +103,7 @@ function verifyContainerHealth() {
 }
 
 /**
- * Runs the Chromium smoke inside the digest-pinned browser image.
+ * Runs the Chromium smoke by immutable local ID of the sanitized test image.
  *
  * The container joins the `internal` DEV application network, so it reaches the
  * gateway by service name. That is the point of the exercise: no host network,
@@ -108,6 +114,47 @@ function verifyContainerHealth() {
  * deliberately differs: Chromium runs a process per renderer and utility, and
  * the value used for the application roles would starve it.
  */
+function browserRuntime() {
+  const declared = JSON.parse(readFileSync('containers/browser-runtime.json', 'utf8'));
+  const recipe = readFileSync('containers/browser.Dockerfile', 'utf8');
+  if (
+    !/^mcr\.microsoft\.com\/playwright:v\d+\.\d+\.\d+-noble@sha256:[a-f\d]{64}$/u.test(
+      declared.image ?? '',
+    ) ||
+    declared.runtimeImage !== 'sosebama-browser:dev' ||
+    /^FROM (\S+) AS prepared$/mu.exec(recipe)?.[1] !== declared.image
+  ) {
+    throw new Error('Invalid pinned browser runtime declaration.');
+  }
+  return { ...declared, recipeDigest: createHash('sha256').update(recipe).digest('hex') };
+}
+
+function buildBrowserRuntime() {
+  try {
+    const declared = browserRuntime();
+    execFileSync(
+      'docker',
+      [
+        'build',
+        '--file',
+        'containers/browser.Dockerfile',
+        '--tag',
+        declared.runtimeImage,
+        '--label',
+        `org.opencontainers.image.base.name=${declared.image}`,
+        '--label',
+        'io.sosebama.browser-runtime=flattened-v1',
+        '--label',
+        `io.sosebama.browser-recipe=${declared.recipeDigest}`,
+        '.',
+      ],
+      { stdio: 'inherit' },
+    );
+  } catch {
+    fail('Browser runtime build failed; do not fall back to the manufacturer image.', 1);
+  }
+}
+
 function verifyBrowserSmoke() {
   let network;
   let image;
@@ -126,18 +173,38 @@ function verifyBrowserSmoke() {
       ],
       { encoding: 'utf8' },
     ).trim();
-    image = JSON.parse(readFileSync('containers/browser-runtime.json', 'utf8')).image;
+    const declared = browserRuntime();
+    const expectedID = process.env.SOSEBAMA_BROWSER_IMAGE_ID;
+    if (expectedID !== undefined && !/^sha256:[a-f\d]{64}$/u.test(expectedID)) {
+      fail('SOSEBAMA_BROWSER_IMAGE_ID must be a full sha256 image ID.', 2);
+      return;
+    }
+    const inspected = JSON.parse(
+      execFileSync('docker', ['image', 'inspect', expectedID ?? declared.runtimeImage], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }),
+    )[0];
+    if (
+      !/^sha256:[a-f\d]{64}$/u.test(inspected?.Id ?? '') ||
+      inspected.Config?.Labels?.['org.opencontainers.image.base.name'] !== declared.image ||
+      inspected.Config?.Labels?.['io.sosebama.browser-runtime'] !== 'flattened-v1' ||
+      inspected.Config?.Labels?.['io.sosebama.browser-recipe'] !== declared.recipeDigest
+    ) {
+      fail('Expected the locally built sanitized browser runtime; run pnpm browser:build.', 1);
+      return;
+    }
+    image = inspected.Id;
   } catch {
-    fail('Browser smoke could not inspect Docker resources.', 1);
+    fail(
+      'Browser smoke could not inspect DEV resources or the built runtime; run pnpm browser:build.',
+      1,
+    );
     return;
   }
 
   if (!network || network.includes('\n')) {
     fail('Expected exactly one internal DEV application network; start the stack first.', 1);
-    return;
-  }
-  if (typeof image !== 'string' || !image.includes('@sha256:')) {
-    fail('containers/browser-runtime.json must pin the browser image by digest.', 2);
     return;
   }
 
@@ -165,6 +232,8 @@ function verifyBrowserSmoke() {
       [
         'run',
         '--rm',
+        '--pull',
+        'never',
         '--init',
         '--network',
         network,
@@ -274,11 +343,13 @@ if (command === '--help' || command === '-h') {
   await verifyHostIngress();
 } else if (command === 'browser') {
   verifyBrowserSmoke();
+} else if (command === 'browser-build') {
+  buildBrowserRuntime();
 } else if (command === 'logs') {
   verifyRuntimeLogs();
 } else if (command === 'cleanup') {
   verifyCleanup();
 } else {
   process.stderr.write(help);
-  fail('Expected one command: health, smoke, browser, logs, or cleanup.', 2);
+  fail('Expected one command: health, smoke, browser-build, browser, logs, or cleanup.', 2);
 }

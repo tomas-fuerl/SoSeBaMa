@@ -1,7 +1,7 @@
 {
   "$comment": [
-    "Browserlaufzeit fuer den Chromium-Smoke. Einzige Quelle der Imagereferenz;",
-    "Werkzeuge und Tests lesen ausschliesslich diese Datei.",
+    "Herstellerquelle fuer den Chromium-Smoke; Dockerfile-Pin wird dagegen getestet.",
+    "Das ausgefuehrte Testimage wird mit browser:build separat bereinigt gebaut.",
     "Der Digest gehoert zum Multi-Arch-Index, nicht zu einem einzelnen",
     "Plattformmanifest: Er pinnt unveraenderlich und laesst amd64 und arm64",
     "gleichermassen zu. Ein Plattformdigest wuerde auf der jeweils anderen",
@@ -10,5 +10,6 @@
     "uebereinstimmen; test/toolchain-policy.test.ts erzwingt das.",
     "Pflege und Erneuerung: docs/development/BROWSER-RUNTIME.md"
   ],
-  "image": "mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d"
+  "image": "mcr.microsoft.com/playwright:v1.65.0-noble@sha256:6e3fb709361521eb27161606e6da6d2674e5e89fa16516cb37d6fdd91372273d",
+  "runtimeImage": "sosebama-browser:dev"
 }
