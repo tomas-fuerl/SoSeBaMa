@@ -202,6 +202,15 @@ Image gebaut wird.
 
 ## Entscheidung zu Befunden ohne verfügbaren Fix
 
+Die verbindliche Klassifikation, Fristen, Ausschlusskriterien und
+Deduplizierung stehen in
+[ADR-0018](../architecture/decisions/ADR-0018-befristete-security-zurueckstellung.md).
+Eine automatische befristete Zurückstellung ist keine Risikoakzeptanz. Sie ist
+nur mit erfolgreichem Scan, vollständiger Risikoeinordnung, offenem
+Security-Debt-Issue und exaktem nächsten Prüfzeitpunkt zulässig. CRITICAL,
+unbekannte Severity, Malware, aktive Ausnutzung und nachweislich erreichbare
+HIGH-Befunde sind ausgeschlossen.
+
 Die Image-Scans melden ausschließlich Befunde, für die ein Fix existiert. Der
 Abhängigkeitsscan über das Lockfile tut das bewusst **nicht** und meldet auch
 Befunde ohne Fix.
@@ -320,7 +329,8 @@ dieser Majorwechsel ist deshalb eine Sicherheitskorrektur der reinen
 Testlaufzeit. Vitest und sein Coverage-Paket werden gemeinsam auf 4.1.12
 gehoben, das die beiden gemeldeten Mocker-Advisories behebt.
 
-`GHSA-g3hv-75wg-m249` in minimatch 10 bleibt als moderater Befund offen.
+Auf dem veröffentlichten Stand `8ed648d` bleibt
+`GHSA-g3hv-75wg-m249` in minimatch 10 als moderater Befund offen.
 Der Fix liegt erst in 11.0.1; ESLint und typescript-eslint deklarieren
 weiterhin 10.x. Es wird kein ungepruefter transitiver Major erzwungen.
 Ein npm-Audit-Exit-Code 1 wird deshalb weiterhin transparent berichtet;
@@ -337,10 +347,50 @@ bleiben relevant. Der Befund wird weder dismissed noch von der Browserimage-
 Risikoakzeptanz erfasst. Bei Consumerupdates ist die sichere Auflösung erneut
 zu prüfen; kein ungeprüfter Minimatch-11-Override gegen deklarierte 10.x-Ranges.
 
+### Minimatch-11-Kandidat und noch offene Installationsqualifikation
+
+Der lokale Re-Review-Schnitt vom 2026-11-11 qualifiziert gezielt Minimatch
+11.0.7 für genau `eslint@10.8.1`, `@eslint/config-array@0.23.5` und
+`@typescript-eslint/typescript-estree@8.67.0`. Diese Consumer verwenden
+`Minimatch.match()` einschließlich partieller Verzeichnistreffer bzw.
+`minimatch()` mit `dot: true`. Ihre deklarierten 10.x-Ranges werden bewusst
+überschritten; dies ist kein allgemeiner Kompatibilitätsanspruch für Version 11.
+
+Der [Upstream-Vergleich](https://github.com/isaacs/minimatch/compare/v10.2.6...v11.0.7)
+zeigt einen geänderten Matcher und entfernte API-Oberflächen. Deshalb genügt
+ein grünes Audit allein nicht. 11.0.7 enthält außerdem den Compilezeit-Fix
+für eine Regression aus 11.0.0; ältere 11.x-Stände werden nicht allein zur
+Umgehung der Veröffentlichungswartefrist ausgewählt.
+
+Der isolierte Linux-Proof unter Node 24.21.0 verglich 1.120 begrenzte
+Globfälle zwischen 10.2.6 und 11.0.7 ohne Ergebnisabweichung. Die bestehende
+Toolchain-Testsuite prüft zusätzlich die tatsächlich aufgelösten drei
+Consumer-Kanten, Dateiauswahl/Ignore-Regeln, partielle Treffer, reale
+ESLint-Clientrestriktionen für TS/JSX/MJS und die begrenzte Ablehnung eines
+verstärkenden Globmusters. Der Angriffstest läuft ausschließlich gegen den
+Fix in einem speicher- und zeitbegrenzten Unterprozess, nie gegen die
+verwundbare Baseline. Die neue transitive Abhängigkeit
+`@isaacs/nonrecursive-glob-match@1.1.0` hat die bereits erlaubte Lizenz
+`BlueOak-1.0.0`. Der alte brace-expansion-Override entfällt, weil Minimatch
+11.0.7 selbst 5.0.12 auflöst.
+
+**Lokaler Nachweis vom 20.11.2026:** Die frische Frozen-Installation des
+Kandidaten unter Node 24.21.0 und pnpm 11.18.0 bestand nach Ablauf der
+Veröffentlichungswartefrist mit `--ignore-scripts` und
+`--strict-peer-dependencies`. Die Auflösung enthält keine Altersausnahme.
+Das anschließende `pnpm audit --json` meldete bei 315 Abhängigkeiten null
+bekannte Befunde. Die Abschlussqualifikation mit G3 und GitHub-Pflichtchecks
+auf dem finalen Commit steht für Issue #64 aus.
+
+Die Parent-Selectoren gelten nur für die genannten Consumer-Versionen. Bei
+deren Updates muss der Override entweder entfallen, wenn Upstream sicher
+auflöst, oder neu qualifiziert werden; die Kanten-Regressionstests müssen
+weiter bestehen. Keine automatische Übertragung auf zukünftige Consumer.
+
 ### Wartungsvertrag für Parent-Overrides und Debian-Fixpins
 
 Verantwortlich sind der Beitragende des Updates und der Projekteigentümer
-beim Review. Bei jedem NestJS-/Express-Upgrade muss der PR:
+beim Review. Bei jedem NestJS-/Express-/ESLint-/typescript-eslint-Upgrade muss der PR:
 
 1. die Parent-Versionen mit den Selectoren in `pnpm-workspace.yaml` abgleichen,
 2. nach Frozen-Installation die tatsächlichen Kanten mit
@@ -359,9 +409,30 @@ nicht mehr verfügbar, wird der Buildfehler behoben und neu geprüft, nicht
 durch eine unversionierte Installation oder ein gelockertes Gate kaschiert.
 
 Diese Schritte erweitern vorhandene Prüfungen; es wird kein neuer Prüfer oder
-eine automatische Ignore-Regel eingeführt. Der aktuelle verbleibende
-Minimatch-Befund wird beim nächsten ESLint-/typescript-eslint-Update erneut
-behandelt und bis dahin sichtbar berichtet.
+eine automatische Ignore-Regel eingeführt. Bis zur vollständigen Qualifikation
+des Minimatch-Kandidaten bleibt der Befund im veröffentlichten Stand offen.
+
+### Priorisierte Neubewertung des Backend-CRITICAL-Befunds
+
+Ein erneuter Trivy-0.74.0-Scan vom 2026-11-11 des veröffentlichten Backendimages
+meldet `CVE-2023-45853` in `zlib1g` `1:1.2.13.dfsg-1`, Status
+`will_not_fix`, ohne angebotene Fixversion. Das ist der einzelne verbleibende
+CRITICAL-Befund; keine neue Ausnahme und kein behobener Scannerbefund.
+
+Der [Debian-Security-Tracker](https://security-tracker.debian.org/tracker/CVE-2023-45853)
+ordnet die Schwachstelle MiniZip zu. Für Bookworm begründet Debian das
+Ignorieren des zlib-Quellpaketbefunds damit, dass dessen betroffener
+`contrib/minizip`-Code nicht als Binärpaket gebaut wird. Im geprüften Image
+sind weder MiniZip-Pakete noch entsprechend benannte MiniZip-/pyminizip-Dateien
+vorhanden; die dynamische `libz.so.1` enthält die betroffenen
+`zipOpenNewFileInZip4`-/`zipOpenNewFileInZip4_64`-Symbolnamen nicht.
+
+Diese Indizien sprechen gegen eine Exposition über das gemeldete Debian-Paket.
+Sie sind keine vollständige Erreichbarkeitsanalyse aller statisch eingebundenen
+Komponenten. `zlib1g` wird daher nicht ohne Abhängigkeits-/Laufzeitnachweis
+entfernt. Befund und Unfixed-Bericht bleiben sichtbar. Bei Basisimagewechsel,
+neuem Fix oder zusätzlicher ZIP-/MiniZip-Nutzung erneut priorisiert prüfen;
+die bestehenden Gates und die Owner-Risikoentscheidungen bleiben unverändert.
 
 ### Historischer offizieller Caddy-Blocker am 2026-11-10
 
@@ -409,6 +480,98 @@ unterdrücken.
 Dependabot meldet Schwachstellen in Abhängigkeiten und öffnet
 Sicherheitsaktualisierungen. Auto-Merge ist nach ADR-0013 nicht eingerichtet;
 jede Aktualisierung durchläuft denselben Pflichtcheck wie jede andere Änderung.
+
+Dependabots benutzerdefinierte Auto-Triage kann nach Patchverfügbarkeit filtern
+und Alerts bis zur Patchverfügbarkeit zurückstellen. Sie bleibt hier nur eine
+mögliche Ergänzung für eng begrenzte, bereits getrackte Alerts: Die Regel greift
+vor Benachrichtigungen, kennt weder Trivy-/pnpm-Audit-Befunde noch die
+pnpm-Veröffentlichungsquarantäne oder tatsächliche Erreichbarkeit. Es wird
+deshalb keine breite Auto-Triage-Regel und kein permanentes Auto-Dismissal
+eingeführt. Die getrennte Security-Debt-Synchronisation ist das führende
+Tracking für alle Scannerquellen.
+
+### Security-Debt-Issues
+
+Die stabile Identität eines Findings lautet `Advisory/CVE + Ökosystem + Paket +
+Manifest`. Ein versteckter `security-debt-key` im Issue macht die Identität
+maschinenlesbar; Titel oder frei formulierter Text sind kein Deduplizierungs-
+schlüssel.
+
+Das Issue enthält mindestens Advisory/CVE, Paket und betroffene Version,
+Severity, Runtime-/Development-Scope, Patchstatus, bekannte Erreichbarkeit,
+Grund der Zurückstellung, ersten und letzten Fund, `next_review_at`, die
+Umsetzungsfrist nach Fixverfügbarkeit sowie Links zu Scan, PR und
+Ownerentscheidung. Der automatisierte Block wird aktualisiert, die manuelle
+Risikoeinordnung bleibt erhalten.
+
+Eine Zurückstellung erfordert eine ausgefüllte Begründung. Meldet ein Scanner
+eine Fixversion zu einem bisher als „Kein Fix veröffentlicht“ eingestuften
+Befund, setzt die Synchronisation die Einstufung auf `needs-assessment` und
+entfernt die Zurückstellungslabel. Die Verwendbarkeit wird anschließend
+nach den Kriterien aus [ADR-0018](../architecture/decisions/ADR-0018-befristete-security-zurueckstellung.md)
+bewertet.
+
+Die Synchronisation läuft ausschließlich geplant oder nach einem Push auf den
+Default-Branch. Der PR-Workflow erhält keine schreibenden Issue-Rechte. Vor dem
+ersten schreibenden Lauf wird der Dry-run geprüft. Ein Issue wird erst nach
+einem erfolgreichen autoritativen Scan ohne den Befund geschlossen und bei
+erneutem Fund wieder geöffnet.
+
+#### Synchronisation prüfen und aktivieren
+
+**Ziel:** Der Workflow `Security-debt tracking` liest reale Scannerberichte,
+zeigt einen nachvollziehbaren Synchronisationsplan und schreibt erst nach
+Ownerfreigabe deduplizierte Issues. Der Ablauf gilt nur für DEV/CI auf dem
+Default-Branch. Er verändert weder TST noch PRD und löst kein Deployment,
+Release oder Merge aus.
+
+Voraussetzungen sind ein erfolgreicher Default-Branch-Stand, aktivierte
+GitHub Actions und die dokumentierten Labels `security`,
+`security-deferred`, `fix-unavailable`, `fix-quarantined`, `fix-ready` sowie
+genau ein passendes `severity:*`-Label. Der Workflow benötigt keine
+Umgebungssecrets. `GITHUB_TOKEN` wird nur zur Laufzeit von GitHub bereitgestellt
+und darf nicht ausgegeben oder in ein Issue kopiert werden.
+
+1. Die Repositoryvariable `SECURITY_DEBT_APPLY` nicht anlegen oder auf einen
+   Wert ungleich `true` setzen.
+2. Unter **Actions → Security-debt tracking → Run workflow** einen manuellen
+   Lauf auf dem Default-Branch starten.
+3. Beide Jobs prüfen. Erwartet sind erfolgreiche Scanner und eine JSON-Liste
+   der geplanten Aktionen im Log. Es dürfen noch keine Issues erstellt,
+   geändert, geöffnet oder geschlossen werden.
+4. Bei Scanner-, Parser-, Deduplizierungs- oder Berechtigungsfehlern stoppen.
+   Nicht durch eine Ignore-, Alters- oder Dismissal-Ausnahme fortsetzen. Den
+   Bericht und das vorhandene Tracking zuerst korrigieren.
+5. Den Plan gegen Scannerstand, bestehende Issues, Ausschlusskriterien und
+   Fristen aus ADR-0018 prüfen. Erst nach ausdrücklicher Ownerfreigabe die
+   Actions-Repositoryvariable `SECURITY_DEBT_APPLY` exakt auf `true` setzen.
+6. Den Workflow erneut manuell ausführen. Erwartet sind `created`, `updated`,
+   `reopened` oder `closed` mit der jeweiligen Issue-Nummer.
+7. Unter **Issues** prüfen: je stabiler Identität höchstens ein offenes Issue,
+   automatischer Scannerblock aktuell, manuelle Risikoeinordnung unverändert
+   und Labels passend zum Zustand.
+
+Der Workflow läuft für Dependencies stündlich zur Minute 17 und für DEV-Images
+täglich um 01:43 UTC. Zusätzlich laufen beide Jobs nach einem Push auf `main`.
+GitHub kann geplante Läufe verzögern. Ein abgelaufener Prüfzeitpunkt hebt eine
+Zurückstellung auf; eine Verzögerung ist keine Fristverlängerung.
+
+**Fehlerbehandlung:** Ein roter Lauf oder ein doppelter Schlüssel ist kein
+sauberer Scan. In diesem Zustand dürfen Issues nicht manuell als erledigt
+geschlossen und Befunde nicht automatisch zurückgestellt werden. Zuständig
+sind der Beitragende der Änderung und der Projekteigentümer im Review.
+
+**Rollback:** `SECURITY_DEBT_APPLY` löschen oder auf einen anderen Wert als
+`true` setzen. Der nächste Lauf ist dann wieder read-only. Bereits erstellte
+Issues bleiben als Nachweis bestehen und werden nicht automatisch gelöscht.
+Der Workflow und sein Skript können anschließend gemeinsam revertiert werden;
+ohne funktionierende Synchronisation gilt keine automatische Zurückstellung
+als nachgewiesen.
+
+Pflegeverantwortlich ist der Projekteigentümer. Prüfstand ist der 2026-11-11.
+Bei Änderungen am pnpm-Audit-/Trivy-/Dependabot-Schema, an Issuefeldern,
+Fristen, GitHub-Berechtigungen oder Schedules sind Parser, Tests, diese
+Anleitung und ADR-0018 gemeinsam zu prüfen.
 
 Die GitHub-Preset-Regel **Dismiss low impact issues for development-scoped
 dependencies** muss für dieses Repository deaktiviert sein und deaktiviert

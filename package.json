@@ -39,7 +39,7 @@
     "test:coverage": "pnpm build && vitest run --config vitest.coverage.config.ts --coverage",
     "test:processes": "vitest run test/runtime-processes.test.ts",
     "test:toolchain": "vitest run test/toolchain-policy.test.ts",
-    "test:tools": "vitest run test/check-licenses.test.ts",
+    "test:tools": "vitest run test/check-licenses.test.ts test/security-debt-sync.test.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit && pnpm --recursive --if-present run typecheck"
   },
   "devDependencies": {

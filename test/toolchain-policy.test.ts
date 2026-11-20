@@ -1,11 +1,114 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
 const repositoryRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
+
+const requireFromRoot = createRequire(resolve(repositoryRoot, 'package.json'));
+
+interface GlobMatcher {
+  match(path: string, partial?: boolean): boolean;
+}
+
+interface MinimatchApi {
+  minimatch(path: string, pattern: string, options: { dot: boolean }): boolean;
+  Minimatch: new (pattern: string, options: Record<string, unknown>) => GlobMatcher;
+}
+
+function minimatchConsumers(): NodeRequire[] {
+  const eslint = createRequire(requireFromRoot.resolve('eslint'));
+  const typescriptEslint = createRequire(requireFromRoot.resolve('typescript-eslint'));
+  return [
+    eslint,
+    createRequire(eslint.resolve('@eslint/config-array')),
+    createRequire(typescriptEslint.resolve('@typescript-eslint/typescript-estree')),
+  ];
+}
+
+describe('qualified Minimatch consumer overrides', () => {
+  it('resolves the fixed version at every actual consumer edge', () => {
+    for (const consumer of minimatchConsumers()) {
+      const manifest = consumer('minimatch/package.json') as { version: string };
+      expect(manifest.version).toBe('11.0.7');
+    }
+  });
+
+  it('preserves file selection, ignores and partial directory traversal', () => {
+    const cases = [
+      ['apps/web/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}', 'apps/web/src/main.jsx', true],
+      ['apps/web/**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}', 'apps/api/src/main.ts', false],
+      ['**/dist/**', 'packages/config/dist/index.js', true],
+      ['**/dist/**', 'packages/config/src/index.ts', false],
+      ['**/*.{ts,tsx,mts,cts}', '.hidden.ts', true],
+      ['**/!(private)/*.ts', 'src/private/main.ts', false],
+      ['**/!(private)/*.ts', 'src/public/main.ts', true],
+    ] as const;
+    for (const consumer of minimatchConsumers()) {
+      const api = consumer('minimatch') as MinimatchApi;
+      for (const [pattern, path, expected] of cases) {
+        expect(api.minimatch(path, pattern, { dot: true }), `${pattern}: ${path}`).toBe(expected);
+        expect(new api.Minimatch(pattern, { dot: true, optimizationLevel: 2 }).match(path)).toBe(
+          expected,
+        );
+      }
+      const matcher = new api.Minimatch('apps/web/**/*.ts', { dot: true });
+      expect(matcher.match('apps/web/src', true)).toBe(true);
+      expect(matcher.match('apps/api/src', true)).toBe(false);
+      expect(matcher.match('apps/web/src')).toBe(false);
+    }
+  });
+
+  it('keeps actual ESLint client restrictions effective across JS and TS', async () => {
+    const { ESLint } = await import('eslint');
+    const eslint = new ESLint({ cwd: repositoryRoot });
+    for (const extension of ['ts', 'jsx', 'mjs']) {
+      const results = await eslint.lintText("import '@prisma/client';\n", {
+        filePath: `apps/web/src/minimatch-proof.${extension}`,
+      });
+      expect(
+        results.flatMap((result) => result.messages).map((message) => message.ruleId),
+      ).toContain('no-restricted-imports');
+    }
+    expect(await eslint.isPathIgnored('packages/config/dist/index.js')).toBe(true);
+    expect(await eslint.isPathIgnored('apps/web/src/minimatch-proof.ts')).toBe(false);
+  });
+
+  it('rejects glob amplification within a bounded subprocess', () => {
+    // Never run the vulnerable baseline on this input. A regression must fail
+    // within a memory/time budget rather than exhausting the CI runner.
+    const script = `
+      const { Minimatch } = require(process.argv[1]);
+      try {
+        new Minimatch('**/../a/b/'.repeat(30) + 'x', { optimizationLevel: 2 });
+        process.exitCode = 1;
+      } catch (error) {
+        if (!(error instanceof RangeError) || !error.message.includes('too many patterns')) {
+          throw error;
+        }
+        process.stdout.write('bounded');
+      }
+    `;
+    for (const consumer of minimatchConsumers()) {
+      expect(
+        execFileSync(
+          process.execPath,
+          [
+            '--max-old-space-size=128',
+            '--input-type=commonjs',
+            '-e',
+            script,
+            consumer.resolve('minimatch'),
+          ],
+          { encoding: 'utf8', timeout: 2000 },
+        ),
+      ).toBe('bounded');
+    }
+  });
+});
 
 const dockerfiles = ['containers/backend.Dockerfile', 'containers/web.Dockerfile'] as const;
 

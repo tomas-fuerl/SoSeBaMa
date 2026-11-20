@@ -73,12 +73,11 @@ strictPeerDependencies: true
 # sobald eine eingesetzte NestJS-Version selbst mindestens Multer 2.5.0
 # deklariert.
 #
-# brace-expansion 5.0.9 ist über GHSA-qhr7-859c-m2p7 und
-# GHSA-6j4f-fj2g-mc7p verwundbar. Es wird ausschließlich von minimatch 10.2.6
-# eingebracht; dessen ^5.0.0-Range erlaubt den korrigierten Patchstand 5.0.12.
-# Der Parent-Selector hält die Sicherheitsauflösung auf genau dieser Kante.
-# Entfernen, sobald die eingesetzte minimatch-Version selbst mindestens
-# brace-expansion 5.0.12 auflöst.
+# Minimatch 10.2.6 ist durch GHSA-g3hv-75wg-m249 betroffen. Die drei exakt
+# gepinnten Consumer werden nach separatem Kompatibilitätsnachweis auf 11.0.7
+# aufgelöst; kein globaler Major-Override. Nachweis und Entfernungsbedingungen:
+# docs/development/SUPPLY-CHAIN-CHECKS.md. Minimatch 11 bringt den sicheren
+# brace-expansion-Stand selbst mit; dessen bisheriger Override entfällt.
 #
 # qs 6.15.3 ist über GHSA-x5fp-wj9c-mxmx und GHSA-4mjr-xmp4-gh2g
 # verwundbar. Express 5.2.1 deklariert diesen Stand. Sein Parent-Selector
@@ -102,7 +101,9 @@ overrides:
   'source-map-js@': '1.2.2'
   'vite@': '8.2.4'
   '@nestjs/platform-express@11.1.29>multer': '2.5.0'
-  'minimatch@10.2.6>brace-expansion': '5.0.12'
+  'eslint@10.8.1>minimatch': '11.0.7'
+  '@eslint/config-array@0.23.5>minimatch': '11.0.7'
+  '@typescript-eslint/typescript-estree@8.67.0>minimatch': '11.0.7'
   'express@5.2.1>body-parser': '2.4.0'
   'express@5.2.1>proxy-addr': '2.0.8'
   'express@5.2.1>qs': '6.17.1'
