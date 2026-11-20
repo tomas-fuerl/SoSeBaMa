@@ -1,0 +1,200 @@
+name: Security-Debt-Finding
+description:
+  Befristet zurückgestellten oder noch nicht verwendbar behebbaren Security-Befund verfolgen
+title: 'security: [ADVISORY] PACKAGE in MANIFEST'
+labels:
+  - security
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Dieses Issue dokumentiert einen Security-Befund, keine automatische Risikoakzeptanz.
+        Keine Secrets, Token, privaten Infrastrukturwerte oder produktiven Daten eintragen.
+
+  - type: input
+    id: advisory
+    attributes:
+      label: Advisory oder CVE
+      description: Stabile GHSA-, CVE- oder Scannerkennung.
+      placeholder: GHSA-xxxx-xxxx-xxxx
+    validations:
+      required: true
+
+  - type: input
+    id: ecosystem
+    attributes:
+      label: Ökosystem
+      description: Beispielsweise npm, debian oder github-actions.
+      placeholder: npm
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Paket
+      placeholder: minimatch
+    validations:
+      required: true
+
+  - type: input
+    id: manifest
+    attributes:
+      label: Relevantes Manifest
+      description: Repositoryrelativer Pfad, der die betroffene Auflösung oder das Image bestimmt.
+      placeholder: pnpm-lock.yaml
+    validations:
+      required: true
+
+  - type: input
+    id: affected_version
+    attributes:
+      label: Betroffene Version
+      placeholder: 10.2.6
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - unknown
+        - critical
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Runtime- oder Development-Scope
+      options:
+        - runtime
+        - development
+        - build-or-container
+        - unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Advisory-Klassifikation
+      options:
+        - general
+        - malware
+        - unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reachability
+    attributes:
+      label: Erreichbarkeit oder Exposition
+      options:
+        - Nachweislich erreichbar
+        - Nicht nachgewiesen oder wirksam begrenzt
+        - Unbekannt
+    validations:
+      required: true
+
+  - type: dropdown
+    id: active_exploitation
+    attributes:
+      label: Aktive Ausnutzung
+      options:
+        - Ja
+        - Nein
+        - Unbekannt
+    validations:
+      required: true
+
+  - type: dropdown
+    id: patch_status
+    attributes:
+      label: Patchstatus
+      options:
+        - Kein Fix veröffentlicht
+        - Fix veröffentlicht, Veröffentlichungsquarantäne aktiv
+        - Fix veröffentlicht, Consumer-Kompatibilität ungeprüft
+        - Fix tatsächlich verwendbar
+        - Unbekannt
+    validations:
+      required: true
+
+  - type: input
+    id: fixed_version
+    attributes:
+      label: Veröffentlichte Fixversion
+      description: Leer lassen, wenn kein Fix veröffentlicht ist.
+      placeholder: 11.0.7
+
+  - type: input
+    id: first_found
+    attributes:
+      label: Erster Fund
+      description: RFC-3339-Zeitpunkt mit Zeitzone.
+      placeholder: 2026-11-11T10:00:00+01:00
+    validations:
+      required: true
+
+  - type: input
+    id: last_found
+    attributes:
+      label: Letzter Fund
+      description: RFC-3339-Zeitpunkt mit Zeitzone.
+      placeholder: 2026-11-11T10:00:00+01:00
+    validations:
+      required: true
+
+  - type: input
+    id: next_review_at
+    attributes:
+      label: Nächster Prüfzeitpunkt
+      description: Exakter RFC-3339-Zeitpunkt mit Zeitzone; nicht nur ein Datum.
+      placeholder: 2026-11-12T00:15:00+01:00
+    validations:
+      required: true
+
+  - type: input
+    id: usable_fix_at
+    attributes:
+      label: Verwendbarer Fix seit
+      description: RFC-3339-Zeitpunkt oder leer, solange der Fix nicht tatsächlich verwendbar ist.
+      placeholder: 2026-11-12T00:15:00+01:00
+
+  - type: textarea
+    id: deferral_reason
+    attributes:
+      label: Grund der Zurückstellung und Schutzmaßnahmen
+      description:
+        Erreichbarkeit, Exposition, Schutzmaßnahmen und Restunsicherheit konkret benennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: links
+    attributes:
+      label: Links zu Scan, PR und Ownerentscheidung
+      description: Nicht vorhandene Links ausdrücklich als noch offen kennzeichnen.
+      placeholder: |
+        - Scan: https://github.com/OWNER/REPOSITORY/actions/runs/RUN_ID
+        - PR: noch offen
+        - Ownerentscheidung: nicht erforderlich / noch offen
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Bestätigung
+      options:
+        - label: Development Dependencies wurden nicht pauschal als irrelevant behandelt.
+          required: true
+        - label: Es wurde keine permanente Auto-Dismissal- oder Altersausnahme eingerichtet.
+          required: true
+        - label: Das Issue wird erst nach einem regulären sauberen Scan geschlossen.
+          required: true
