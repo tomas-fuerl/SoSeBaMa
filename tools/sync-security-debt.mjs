@@ -1043,6 +1043,8 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
   let nextWriteAt = 0;
   /** @type {string | null} */
   let nextLink = null;
+  /** @type {Map<string, number>} */
+  const repositoryIds = new Map();
 
   /** @param {number} delay */
   async function wait(delay) {
@@ -1146,6 +1148,8 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
 
   /** @param {string} path @returns {Promise<unknown[]>} */
   async function listAll(path) {
+    const original = new URL(path, 'https://api.github.com');
+    const issueRepository = /^\/repos\/([^/]+\/[^/]+)\/issues$/u.exec(original.pathname)?.[1];
     /** @type {unknown[]} */
     const items = [];
     let current = path + (path.includes('?') ? '&' : '?') + 'per_page=100';
@@ -1159,17 +1163,44 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
       const next = nextLink?.match(/<([^>]+)>;\s*rel="next"/u)?.[1];
       if (!next) return items;
       const url = new URL(next);
-      if (
-        url.origin !== 'https://api.github.com' ||
-        url.pathname !== path.split('?')[0] ||
-        url.username ||
-        url.password
-      )
+      if (url.origin !== 'https://api.github.com' || url.username || url.password || url.hash)
         throw new GitHubSyncError('invalid-pagination-link');
-      const original = new URL(path, 'https://api.github.com');
+      if (url.pathname !== original.pathname) {
+        if (!issueRepository || !/^\/repositories\/[1-9]\d*\/issues$/u.test(url.pathname))
+          throw new GitHubSyncError('invalid-pagination-link');
+        let id = repositoryIds.get(issueRepository);
+        if (!id) {
+          const metadata = await request(`/repos/${issueRepository}`);
+          if (
+            !isRecord(metadata) ||
+            !Number.isSafeInteger(metadata.id) ||
+            typeof metadata.id !== 'number' ||
+            metadata.id <= 0 ||
+            typeof metadata.full_name !== 'string' ||
+            metadata.full_name.toLowerCase() !== issueRepository.toLowerCase()
+          )
+            throw new GitHubSyncError('invalid-repository-identity');
+          id = metadata.id;
+          repositoryIds.set(issueRepository, id);
+        }
+        if (url.pathname !== `/repositories/${id}/issues`)
+          throw new GitHubSyncError('invalid-pagination-link');
+      }
       for (const [key, value] of original.searchParams) {
         if (url.searchParams.get(key) !== value)
           throw new GitHubSyncError('changed-pagination-filter');
+      }
+      for (const [key, value] of url.searchParams) {
+        if (url.searchParams.getAll(key).length !== 1)
+          throw new GitHubSyncError('invalid-pagination-parameter');
+        if (original.searchParams.has(key)) continue;
+        if (
+          (key === 'per_page' && value === '100') ||
+          (key === 'page' && /^[1-9]\d*$/u.test(value)) ||
+          (['after', 'before'].includes(key) && /^[a-zA-Z0-9_=+-]{1,512}$/u.test(value))
+        )
+          continue;
+        throw new GitHubSyncError('invalid-pagination-parameter');
       }
       current = url.pathname + url.search;
     }

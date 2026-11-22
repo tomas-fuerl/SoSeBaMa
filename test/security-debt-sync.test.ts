@@ -748,6 +748,79 @@ function simulatedGitHub(limits = { batchSize: 2, maxWrites: 6 }) {
 }
 
 describe('bounded GitHub writes', () => {
+  it('reads 101 issues through a verified canonical repository ID and caches the identity', async () => {
+    const github = simulatedGitHub();
+    const seen: string[] = [];
+    github.intercept((_method, url) => {
+      seen.push(url.pathname);
+      if (url.pathname === '/repos/example/repository')
+        return Response.json({ id: 123, full_name: 'example/repository' });
+      if (url.pathname === '/repositories/123/issues') return Response.json([{ number: 101 }]);
+      return Response.json(
+        Array.from({ length: 100 }, (_, n) => ({ number: n + 1 })),
+        {
+          headers: {
+            Link: '<https://api.github.com/repositories/123/issues?state=all&sort=created&direction=asc&per_page=100&page=2>; rel="next"',
+          },
+        },
+      );
+    });
+    const path = '/repos/example/repository/issues?state=all&sort=created&direction=asc';
+    expect(await github.api.listAll(path)).toHaveLength(101);
+    expect(await github.api.listAll(path)).toHaveLength(101);
+    expect(seen.filter((path) => path === '/repos/example/repository')).toHaveLength(1);
+  });
+
+  it.each([
+    ['wrong ID', 'https://api.github.com/repositories/999/issues?state=all&per_page=100&page=2'],
+    ['foreign host', 'https://other.example/repositories/123/issues?state=all&per_page=100&page=2'],
+    [
+      'changed filter',
+      'https://api.github.com/repositories/123/issues?state=open&per_page=100&page=2',
+    ],
+    [
+      'duplicate filter',
+      'https://api.github.com/repositories/123/issues?state=all&state=open&per_page=100&page=2',
+    ],
+    [
+      'extra query',
+      'https://api.github.com/repositories/123/issues?state=all&per_page=100&page=2&unexpected=value',
+    ],
+    [
+      'invalid page',
+      'https://api.github.com/repositories/123/issues?state=all&per_page=100&page=-1',
+    ],
+  ])('rejects a canonical next link with %s before fetching it', async (_label, next) => {
+    const github = simulatedGitHub();
+    const seen: string[] = [];
+    github.intercept((_method, url) => {
+      seen.push(url.pathname);
+      if (url.pathname === '/repos/example/repository')
+        return Response.json({ id: 123, full_name: 'example/repository' });
+      return Response.json([], { headers: { Link: `<${next}>; rel="next"` } });
+    });
+    await expect(
+      github.api.listAll('/repos/example/repository/issues?state=all'),
+    ).rejects.toThrow();
+    expect(seen.every((path) => path.startsWith('/repos/example/repository'))).toBe(true);
+  });
+
+  it('rejects a mismatched repository metadata response', async () => {
+    const github = simulatedGitHub();
+    github.intercept((_method, url) =>
+      url.pathname === '/repos/example/repository'
+        ? Response.json({ id: 123, full_name: 'other/repository' })
+        : Response.json([], {
+            headers: {
+              Link: '<https://api.github.com/repositories/123/issues?state=all&page=2>; rel="next"',
+            },
+          }),
+    );
+    await expect(github.api.listAll('/repos/example/repository/issues?state=all')).rejects.toThrow(
+      'invalid-repository-identity',
+    );
+  });
+
   it('follows Dependabot cursors for both states without sending page', async () => {
     const github = simulatedGitHub();
     const paths: string[] = [];

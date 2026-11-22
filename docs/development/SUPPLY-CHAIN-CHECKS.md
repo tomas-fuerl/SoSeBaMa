@@ -598,7 +598,13 @@ Der Dependabot-Endpunkt verwendet Cursor-Paginierung über den
 Abruf enthalten. Ein expliziter `page`-Parameter erzeugte im Lauf
 45028255836 HTTP 400. Der gemeinsame Client folgt jetzt ausschließlich
 Folgelinks zur selben GitHub-API und demselben Endpunkt mit unveränderten
-Filtern. Ein fehlgeschlagener Teilabruf stoppt die Planung.
+Filtern. Bei Issue-Listen ist auch der kanonische Pfad
+`/repositories/{id}/issues` zulässig, wenn die ID zuvor über
+`GET /repos/{owner}/{repo}` mit passendem `full_name` bestätigt wurde.
+Die Identität wird pro Client zwischengespeichert. Zusätzliche Querywerte
+sind auf geprüfte Pagination-Parameter beschränkt. Ein fehlgeschlagener
+Teilabruf stoppt die Planung.
+[GitHub – Pagination](https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api)
 [GitHub REST – Dependabot Alerts](https://docs.github.com/en/rest/dependabot/alerts#list-dependabot-alerts-for-a-repository)
 
 Bei API-Fehlern enthält die Laufzusammenfassung Methode, bereinigten
