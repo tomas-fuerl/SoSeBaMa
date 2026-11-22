@@ -30,7 +30,7 @@ Architekturentscheidungen. Die verbindliche Einordnung steht in
 [ADR-0007](decisions/ADR-0007-pdf-verarbeitung-und-annotationen.md),
 [ADR-0010](decisions/ADR-0010-hintergrundaufgaben-loeschung-und-auditaufbewahrung.md),
 [ADR-0011](decisions/ADR-0011-logging-metriken-tracing-und-diagnose.md) und
-[ADR-0012](decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+[ADR-0017](decisions/ADR-0017-nginx-application-gateway.md).
 
 ## Systemkontext
 
@@ -42,7 +42,7 @@ Anwendungseingang.
 ```mermaid
 flowchart LR
     U[Angemeldeter Benutzer] --> I[Infrastruktur-Ingress]
-    I --> W[Caddy und Web-PWA]
+    I --> W[nginx und Web-PWA]
     W --> A[API]
     A --> P[(PostgreSQL)]
     A --> B[Backendexklusiver Binärspeicher]
@@ -54,7 +54,8 @@ flowchart LR
     V -->|Sicherer Prüfbericht| R
 ```
 
-Der Infrastruktur-Ingress stellt öffentliches TLS bereit. Caddy ist der interne
+Der Infrastruktur-Ingress stellt öffentliches TLS bereit. nginx ist gemäß
+[ADR-0017](decisions/ADR-0017-nginx-application-gateway.md) der interne
 Application Gateway. Nur das Backend erreicht Datenbank und Binärspeicher.
 
 ## Modularer Monolith und Laufzeitrollen
@@ -134,7 +135,7 @@ Infrastrukturwerte stehen nicht im Repository.
 
 TST darf einen getrennten geschützten Diagnosepfad besitzen. In PRD fehlen
 Diagnoseroute, Swagger und Debugports technisch. Siehe
-[ADR-0012](decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+[ADR-0017](decisions/ADR-0017-nginx-application-gateway.md).
 
 ## Authentifizierung und Autorisierung
 

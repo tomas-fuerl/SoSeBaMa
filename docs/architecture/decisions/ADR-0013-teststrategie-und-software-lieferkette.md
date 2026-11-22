@@ -88,6 +88,13 @@ Neue kritische oder hohe Schwachstellen blockieren. Kritische Befunde werden
 nie ungeklärt released. Zulässige hohe Befunde benötigen eine befristete
 dokumentierte Ausnahme.
 
+Seit 2026-11-11 präzisiert
+[ADR-0018](ADR-0018-befristete-security-zurueckstellung.md) diese Regel für
+Befunde ohne tatsächlich verwendbaren Fix. Automatische befristete
+Zurückstellung ist keine Risikoakzeptanz; CRITICAL, Malware, aktive Ausnutzung
+und nachweislich erreichbare HIGH-Befunde bleiben davon ausgeschlossen. Die
+übrigen Entscheidungen dieses ADR bleiben unverändert.
+
 Releases enthalten SPDX-SBOM, BuildKit-Provenienz und GitHub Artifact
 Attestations. Vor Promotion werden Digest und Attestierung geprüft.
 

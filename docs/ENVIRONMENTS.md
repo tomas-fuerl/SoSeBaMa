@@ -48,7 +48,7 @@ Erreichbarkeit vermittelt keine fachliche oder technische Berechtigung und
 keinen Zugriff auf andere Umgebungen oder Datenbanken.
 
 Der angenommene interne Anwendungspfad und die Containergrenzen stehen in
-[ADR-0012](architecture/decisions/ADR-0012-container-netz-secrets-und-deployment.md).
+[ADR-0017](architecture/decisions/ADR-0017-nginx-application-gateway.md).
 Private Härtungs- und Konfigurationswerte bleiben in der freigegebenen
 Betriebsumgebung und außerhalb des Repositorys.
 

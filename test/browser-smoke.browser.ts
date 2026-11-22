@@ -1,7 +1,7 @@
 import { expect, test, type ConsoleMessage, type Request } from '@playwright/test';
 
 /**
- * Chromium smoke of the SPA delivery through Caddy.
+ * Chromium smoke of the SPA delivery through the application gateway.
  *
  * This is the G3 share that no other check covers. `container:smoke` verifies
  * three health paths through the host ingress; none of them proves that the
@@ -61,8 +61,8 @@ test('serves the application shell at the site root', async ({ page }) => {
 });
 
 test('falls back to the application shell on an unknown route', async ({ page }) => {
-  // `try_files {path} /index.html` in Web.Caddyfile is what makes client-side
-  // routing work. Without this assertion the directive could be dropped and
+  // The web server's index.html fallback makes client-side routing work.
+  // Without this assertion the fallback could be dropped and
   // every health path would stay green.
   const problems = watchForProblems(page);
 
@@ -77,4 +77,24 @@ test('falls back to the application shell on an unknown route', async ({ page })
 
   expect(problems.consoleErrors, 'Konsolenfehler').toEqual([]);
   expect(problems.failedRequests, 'fehlgeschlagene Requests').toEqual([]);
+});
+
+test('preserves health, cache, and API path contracts through the gateway', async ({ request }) => {
+  const gateway = await request.get('/health/gateway');
+  expect(gateway.status()).toBe(200);
+  expect(await gateway.json()).toEqual({ role: 'gateway', status: 'ready' });
+
+  const web = await request.get('/health.json');
+  expect(web.status()).toBe(200);
+  expect(web.headers()['cache-control']).toBe('no-store');
+  expect(await web.json()).toEqual({ role: 'web', status: 'ready' });
+
+  // Query-bearing requests must reach the API, not the SPA fallback.
+  const api = await request.get('/api/health/ready?proof=nginx');
+  expect(api.status()).toBe(200);
+  expect(await api.json()).toMatchObject({ role: 'api', status: 'ready' });
+
+  const missingApi = await request.get('/api/route-that-does-not-exist');
+  expect(missingApi.status()).toBe(404);
+  expect(missingApi.headers()['content-type']).toContain('application/json');
 });
