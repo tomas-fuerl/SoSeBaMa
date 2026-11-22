@@ -614,8 +614,24 @@ describe('workflow trust boundary', () => {
       ),
     ).toHaveLength(2);
     expect(workflow.match(/ref: \$\{\{ github.sha \}\}/gu)).toHaveLength(2);
-    expect(workflow).toContain('security-events: read');
-    expect(workflow).not.toContain('secrets.');
+    const [workflowHeader, dependencyJob, imageJob] = workflow.split(
+      /^ {2}(?=dependencies:|images:)/mu,
+    );
+    expect(workflowHeader).toContain('\npermissions:\n  contents: read\n\njobs:\n');
+    expect(dependencyJob).toContain(
+      '\n    permissions:\n      contents: read\n      issues: write\n      vulnerability-alerts: read\n    steps:\n',
+    );
+    expect(imageJob).toContain(
+      '\n    permissions:\n      contents: read\n      issues: write\n    env:\n',
+    );
+    expect(workflow.match(/^\s+vulnerability-alerts: read$/gmu)).toHaveLength(1);
+    expect(workflow).not.toMatch(
+      /security-events:|permissions:\s*(?:read-all|write-all)|\bsecrets\s*(?:\.|\[)/u,
+    );
+    expect(workflow.match(/^\s+[A-Z_]*TOKEN: .+$/gmu)?.map((line) => line.trim())).toEqual([
+      'GITHUB_TOKEN: ${{ github.token }}',
+      'GITHUB_TOKEN: ${{ github.token }}',
+    ]);
     for (const use of workflow.matchAll(/^\s+uses:\s+(\S+)$/gmu)) {
       expect(use[1]).toMatch(/@[a-f\d]{40}$/u);
     }

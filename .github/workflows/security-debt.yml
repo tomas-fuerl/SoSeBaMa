@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      security-events: read
+      vulnerability-alerts: read
     steps:
       - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

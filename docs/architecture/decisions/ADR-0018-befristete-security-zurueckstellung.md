@@ -168,8 +168,9 @@ vollständig abbildet. Permanente Auto-Dismissals bleiben unzulässig.
 ## Security sowie DEV/TST/PRD
 
 Die Synchronisation läuft ausschließlich aus dem vertrauenswürdigen
-Default-Branch. Sie erhält `contents: read`, `security-events: read` und nur für
-Issues `issues: write`. Sie läuft nicht über `pull_request_target`, führt keinen
+Default-Branch. Die Sync-Jobs erhalten `contents: read` und `issues: write`.
+Der Dependency-Job erhält zusätzlich `vulnerability-alerts: read` für
+Dependabot. Sie läuft nicht über `pull_request_target`, führt keinen
 ungeprüften PR-Code mit Schreibrechten aus und erhält keine Umgebungssecrets.
 
 Die Entscheidung betrifft Development und CI. Sie ist keine TST-, PRD-,

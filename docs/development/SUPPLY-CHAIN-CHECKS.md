@@ -553,9 +553,12 @@ Release oder Merge aus.
 Voraussetzungen sind ein erfolgreicher Default-Branch-Stand, aktivierte
 GitHub Actions und die dokumentierten Labels `security`,
 `security-deferred`, `fix-unavailable`, `fix-quarantined`, `fix-ready` sowie
-genau ein passendes `severity:*`-Label. Der Workflow benötigt keine
-Umgebungssecrets. `GITHUB_TOKEN` wird nur zur Laufzeit von GitHub bereitgestellt
-und darf nicht ausgegeben oder in ein Issue kopiert werden.
+genau ein passendes `severity:*`-Label. Beide Jobs verwenden den regulären
+`GITHUB_TOKEN` mit `contents: read` und `issues: write`. Die Issue-Berechtigung
+ist für den separat freizugebenden Schreibmodus vorgesehen. Ausschließlich
+`dependency findings` erhält zusätzlich `vulnerability-alerts: read`, um
+Dependabot-Alerts zu lesen. Der Workflow benötigt keine zusätzlichen Tokens
+oder Secrets. [GitHub Actions – Token-Berechtigungen](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions)
 
 1. Die Repositoryvariable `SECURITY_DEBT_APPLY` nicht anlegen oder auf einen
    Wert ungleich `true` setzen.
@@ -569,7 +572,11 @@ und darf nicht ausgegeben oder in ein Issue kopiert werden.
    Bericht und das vorhandene Tracking zuerst korrigieren. Ein erfolgreicher
    lokaler Abruf mit Benutzerrechten belegt nicht, dass der Job-Token die
    [Dependabot-Alerts](https://docs.github.com/en/rest/dependabot/alerts#list-dependabot-alerts-for-a-repository)
-   lesen darf. Dafür ist der Dry-run auf GitHub erforderlich.
+   lesen darf. Dafür ist der Dry-run auf GitHub erforderlich. Bei HTTP 403
+   in der Phase `dependabot` den fehlgeschlagenen REST-Abruf und die
+   effektiven Token-Berechtigungen diagnostizieren. Wenn verfügbar,
+   `X-Accepted-GitHub-Permissions` auswerten. Tokens und Alert-Inhalte bleiben
+   aus dem Log. Der Abruffehler stoppt den Lauf vor der Planung.
 5. Den Plan gegen Scannerstand, bestehende Issues, Ausschlusskriterien und
    Fristen aus ADR-0018 prüfen. Erst nach ausdrücklicher Ownerfreigabe die
    Actions-Repositoryvariable `SECURITY_DEBT_APPLY` exakt auf `true` setzen.
