@@ -280,7 +280,8 @@ Trivy 0.74.0 mit Datenbank vom 2026-11-10 13:03 UTC meldet:
   ausdrücklich nicht als behoben oder als schwachstellenfrei dargestellt.
 - Browser-Testimage unverändert 8 fixbare HIGH-Zeilen; die weiter unten
   dokumentierte Ownerentscheidung vom 2026-11-10 akzeptiert sie befristet
-  unter expliziten Bedingungen. Der moderate Minimatch-Befund bleibt bestehen.
+  unter expliziten Bedingungen. Der moderate Minimatch-Befund bestand bei
+  diesem historischen Prüflauf fort.
 
 Der vollständige lokale Repository-Check mit 194 Tests, die drei Chromium-
 Smokes und der DNS-Wechsel bei unverändertem Gateway bestehen auf dem neuen
@@ -307,12 +308,12 @@ Debian-Versionen `libpcre2-8-0=10.42-1+deb12u2` und
 diese Übergangsmaßnahmen erneut zu prüfen und nachweislich überflüssige
 Paket-Upgrades zu entfernen.
 
-Der neue Scan vom 2026-11-10 meldete zusaetzlich `CVE-2026-109518` in
-`apt` und `libapt-pkg6.0` (jeweils 2.6.1). Beide Runtime-Stages aktualisieren
-deshalb gezielt auch diese Pakete auf 2.6.2. Die erneut betroffenen
-Go-Abhaengigkeiten des alten Caddy-2.11.6-Binaries werden durch das offizielle,
-per Multi-Arch-Digest gepinnte Caddy 2.11.9 ersetzt. Die Herkunft und
-Pullbarkeit wurden fuer amd64 und arm64 verifiziert.
+Der Scan vom 2026-11-10 meldete zusätzlich `CVE-2026-109518` in
+`apt` und `libapt-pkg6.0` (jeweils 2.6.1). Die damaligen Runtime-Stages
+aktualisierten beide Pakete auf 2.6.2. Vor dem Wechsel auf nginx wurde
+das betroffene Caddy-2.11.6-Binary durch das offizielle, per Multi-Arch-Digest
+gepinnte Caddy 2.11.9 ersetzt. Herkunft und Pullbarkeit wurden für amd64
+und arm64 verifiziert.
 
 Die drei neuen npm-Befunde `CVE-2026-111181` (body-parser),
 `CVE-2026-113872` (multer) und `CVE-2026-90711` (proxy-addr) werden mit
@@ -329,12 +330,11 @@ dieser Majorwechsel ist deshalb eine Sicherheitskorrektur der reinen
 Testlaufzeit. Vitest und sein Coverage-Paket werden gemeinsam auf 4.1.12
 gehoben, das die beiden gemeldeten Mocker-Advisories behebt.
 
-Auf dem veröffentlichten Stand `8ed648d` bleibt
-`GHSA-g3hv-75wg-m249` in minimatch 10 als moderater Befund offen.
-Der Fix liegt erst in 11.0.1; ESLint und typescript-eslint deklarieren
-weiterhin 10.x. Es wird kein ungepruefter transitiver Major erzwungen.
-Ein npm-Audit-Exit-Code 1 wird deshalb weiterhin transparent berichtet;
-ein bestandener HIGH/CRITICAL-Scan ersetzt diesen Restbefund nicht.
+Der historische Stand `8ed648d` enthielt
+`GHSA-g3hv-75wg-m249` in Minimatch 10 als moderaten Befund.
+Der Fix liegt ab 11.0.1 vor. Die damals deklarierten Consumer-Ranges lagen
+bei 10.x. Der historische Auditlauf meldete Exit 1. Der im folgenden
+Abschnitt dokumentierte Kompatibilitätsnachweis qualifiziert die Korrektur.
 
 Die [Hersteller-Advisory](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249)
 beschreibt CPU-/Speicherverstärkung durch angreifergesteuerte Globmuster bei
@@ -347,7 +347,7 @@ bleiben relevant. Der Befund wird weder dismissed noch von der Browserimage-
 Risikoakzeptanz erfasst. Bei Consumerupdates ist die sichere Auflösung erneut
 zu prüfen; kein ungeprüfter Minimatch-11-Override gegen deklarierte 10.x-Ranges.
 
-### Minimatch-11-Kandidat und noch offene Installationsqualifikation
+### Qualifikation der Minimatch-11-Overrides
 
 Der lokale Re-Review-Schnitt vom 2026-11-11 qualifiziert gezielt Minimatch
 11.0.7 für genau `eslint@10.8.1`, `@eslint/config-array@0.23.5` und
@@ -382,8 +382,9 @@ Das anschließende `pnpm audit --json` meldete bei 315 Abhängigkeiten null
 bekannte Befunde aller Schweregrade. Der
 [GitHub-Lauf 44771149563](https://github.com/tomas-fuerl/SoSeBaMa/actions/runs/44771149563)
 bestätigt sieben erfolgreiche PR-Checks. DNS-Wechsel und Worker-Ausfall mit
-Wiederanlauf wurden in der lokalen DEV-Prüfung nachgewiesen. Für Issue #64
-steht der Nachweis für den Stand mit den nachfolgenden Review-Korrekturen aus.
+Wiederanlauf wurden in der lokalen DEV-Prüfung nachgewiesen. Der Folgestand
+`060f1d0` bestätigte Frozen-Installation und befundfreies Audit erneut.
+[GitHub-Lauf 45021217321](https://github.com/tomas-fuerl/SoSeBaMa/actions/runs/45021217321)
 
 Die Parent-Selectoren gelten nur für die genannten Consumer-Versionen. Bei
 deren Updates muss der Override entweder entfallen, wenn Upstream sicher
@@ -411,9 +412,8 @@ Pins benötigen einen erfolgreichen frischen Build. Ist eine exakte Version
 nicht mehr verfügbar, wird der Buildfehler behoben und neu geprüft, nicht
 durch eine unversionierte Installation oder ein gelockertes Gate kaschiert.
 
-Diese Schritte erweitern vorhandene Prüfungen; es wird kein neuer Prüfer oder
-eine automatische Ignore-Regel eingeführt. Bis zur vollständigen Qualifikation
-des Minimatch-Kandidaten bleibt der Befund im veröffentlichten Stand offen.
+Diese Schritte nutzen die bestehenden Prüfungen. Der qualifizierte
+Minimatch-Fix führt keine neue Ignore-Regel ein.
 
 ### Priorisierte Neubewertung des Backend-CRITICAL-Befunds
 
@@ -465,7 +465,8 @@ docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock \
   caddy:2.11.9@sha256:0c2243efcf437ab7f7a978f1027fcf0d4f9be8a75df27b1b3fbc5dbe0ffa8cf0
 ```
 
-Erwarteter aktueller Befund: `usr/bin/caddy`, `CVE-2026-78661`, Exit-Code 1.
+Erwartung für diesen historischen Scan ist `CVE-2026-78661` in
+`usr/bin/caddy` mit Exit-Code 1.
 Ein Fehler beim Image- oder Datenbankbezug ist kein bestaetigter Scan.
 
 ## Hinweis zum Format der Ignoredatei
@@ -739,8 +740,9 @@ Härtungs-/Netzgrenzen. Ein lokaler amd64-Nachweis ist weder native arm64-
 Qualifikation noch veröffentlichter Final-Head-/AP-01-/TST-/PRD-Nachweis.
 Die unten unverändert dokumentierte befristete Ownerentscheidung gilt nur
 für das alte Herstellerartefakt und wird nicht auf neue Befunde übertragen.
-Minimatch bleibt separat offen. Keine Abnahme oder automatisches Schließen
-von #64 durch diese Bereinigung.
+Zum Zeitpunkt dieser Browser-Qualifikation war Minimatch separat offen.
+Die reguläre Installation und das befundfreie Audit sind im Abschnitt
+zur Qualifikation der Minimatch-11-Overrides dokumentiert.
 
 ### Lokaler Qualifikationsnachweis vom 2026-11-11
 
