@@ -192,6 +192,16 @@ read-only Scannerberichte geprüft. Regressionstests decken Deduplizierung,
 Statusübergänge, Fristen, Ausschlusskriterien, Reaktivierung und fail-closed
 Eingabevalidierung ab.
 
+Die Schreibverarbeitung ist serialisiert und durch Batches, Schreibversuche
+und ein Zeitbudget begrenzt. Ein Teillauf veröffentlicht die verbleibenden
+Aktionszahlen und setzt beim nächsten Lauf auf einem frischen Plan auf. Bei
+unklarer Schreibantwort geht der Zustandsabgleich vor. Der Projekteigentümer
+beurteilt einen unbestätigten Create vor der Wiederaufnahme. Die Grenzwerte,
+Retry-Regeln und das Verfahren stehen in den
+[Supply-Chain-Prüfungen](../../development/SUPPLY-CHAIN-CHECKS.md#große-pläne-und-wiederanlauf).
+Zum Post-Merge-Nachweis zählt der Dry-run mit dem tatsächlichen Job-Token
+auf `main`. Der lokale Dry-run und die PR-Quality-Gates sind eigene Nachweise.
+
 Der Rückbau deaktiviert den Synchronisationsworkflow und revertiert seine
 Repositorydateien. Bestehende Issues bleiben als Nachweis erhalten und werden
 nicht automatisch gelöscht. Ohne funktionierende Synchronisation gelten

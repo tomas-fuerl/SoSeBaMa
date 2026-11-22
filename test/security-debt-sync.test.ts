@@ -1,13 +1,16 @@
-import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyActions,
   canonicalFinding,
   classifyFinding,
+  createGitHubClient,
   deduplicateFindings,
   parseCompletePnpmAuditReport,
   parseCompleteTrivyReport,
@@ -16,6 +19,7 @@ import {
   parseTrivyReport,
   planSynchronization,
   remediationDeadline,
+  runReport,
   SecurityDebtReportError,
   securityDebtKey,
 } from '../tools/sync-security-debt.mjs';
@@ -598,11 +602,15 @@ describe('workflow trust boundary', () => {
     );
 
     expect(workflow).not.toMatch(/^\s*pull_request(?:_target)?:/mu);
-    expect(workflow).toContain("vars.SECURITY_DEBT_APPLY == 'true'");
+    expect(workflow).toContain('SECURITY_DEBT_APPLY: ${{ vars.SECURITY_DEBT_APPLY }}');
+    expect(workflow.match(/\[\[ "\$SECURITY_DEBT_APPLY" == 'true' \]\]/gu)).toHaveLength(2);
+    expect(workflow).toContain('cancel-in-progress: false');
+    expect(workflow).toContain('needs: dependencies');
+    expect(workflow.match(/timeout-minutes: 4$/gmu)).toHaveLength(2);
     expect(workflow.match(/^\s+issues: write$/gmu)).toHaveLength(2);
     expect(
       workflow.match(
-        /github.ref == 'refs\/heads\/main' && github.event.repository.default_branch == 'main'/gu,
+        /github.ref == 'refs\/heads\/main'\s*&&\s*github.event.repository.default_branch == 'main'/gu,
       ),
     ).toHaveLength(2);
     expect(workflow.match(/ref: \$\{\{ github.sha \}\}/gu)).toHaveLength(2);
@@ -628,10 +636,438 @@ describe('workflow trust boundary', () => {
           GITHUB_ACTIONS: 'true',
           GITHUB_REPOSITORY: 'example/repository',
           GITHUB_REF: 'refs/heads/feature',
+          GITHUB_WORKFLOW_REF:
+            'example/repository/.github/workflows/security-debt.yml@refs/heads/feature',
+          SECURITY_DEBT_APPLY: 'true',
         },
       },
     );
     expect(result.status).toBe(2);
     expect(result.stderr).toContain('trusted main-branch');
+  });
+});
+
+const repository = 'example/repository';
+type Plan = ReturnType<typeof planSynchronization>;
+type Issue = { number: number; state: string; title: string; body: string; labels: string[] };
+
+function plans(count: number, issues: Issue[] = [], runAt = now) {
+  const findings = Array.from({ length: count }, (_, n) =>
+    finding({ packageName: `fixture-${n}` }),
+  );
+  return planSynchronization(findings, issues, ['dependabot'], { now: runAt });
+}
+
+function simulatedGitHub(limits = { batchSize: 2, maxWrites: 6 }) {
+  const issues: Issue[] = [];
+  const waits: number[] = [];
+  const requests: string[] = [];
+  const report = runReport(true);
+  let clock = now.getTime();
+  let intercept:
+    ((method: string, url: URL, request: RequestInit) => Response | undefined) | undefined;
+  let lostCreates = 0;
+  let lostPatches = 0;
+  const api = createGitHubClient('fixture-token', report, limits, {
+    now: () => clock,
+    sleep: async (delay) => {
+      waits.push(delay);
+      clock += delay;
+    },
+    fetcher: async (resource, raw) => {
+      const url = new URL(String(resource));
+      const request = raw ?? {};
+      const method = request.method ?? 'GET';
+      requests.push(method);
+      const override = intercept?.(method, url, request);
+      if (override) return override;
+      const number = Number(url.pathname.split('/').at(-1));
+      if (method === 'GET') {
+        if (number) return Response.json(issues.find((issue) => issue.number === number));
+        const page = Number(url.searchParams.get('page') ?? 1);
+        return Response.json(issues.slice((page - 1) * 100, page * 100));
+      }
+      const body = JSON.parse(String(request.body));
+      if (method === 'POST') {
+        const issue = { number: issues.length + 1, state: 'open', ...body };
+        issues.push(issue);
+        if (lostCreates > 0) {
+          lostCreates -= 1;
+          throw new Error('private network error');
+        }
+        return Response.json(issue, { status: 201 });
+      }
+      const issue = issues.find((item) => item.number === number);
+      if (!issue) return Response.json({}, { status: 404 });
+      Object.assign(issue, body);
+      if (lostPatches > 0) {
+        lostPatches -= 1;
+        return Response.json({}, { status: 503 });
+      }
+      return Response.json(issue);
+    },
+  });
+  return {
+    api,
+    issues,
+    report,
+    requests,
+    waits,
+    apply: (plan: Plan, snapshot = structuredClone(issues)) =>
+      applyActions(repository, api, plan, snapshot, report, limits),
+    intercept: (handler: NonNullable<typeof intercept>) => {
+      intercept = handler;
+    },
+    loseCreate: () => {
+      lostCreates += 1;
+    },
+    losePatch: () => {
+      lostPatches += 1;
+    },
+  };
+}
+
+describe('bounded GitHub writes', () => {
+  it('processes multiple batches serially and leaves no pending actions on completion', async () => {
+    const github = simulatedGitHub();
+    const report = await github.apply(plans(5));
+    expect(report).toMatchObject({
+      status: 'complete',
+      batches: 3,
+      planned: 5,
+      writeAttempts: 5,
+      succeeded: { create: 5 },
+      pending: { create: 0 },
+    });
+    expect(github.requests).toEqual(['GET', 'POST', 'POST', 'GET', 'POST', 'POST', 'GET', 'POST']);
+    expect(github.waits).toEqual([1000, 1000, 1000, 1000]);
+  });
+
+  it('reports the unprocessed actions and their first key when the write limit is reached', async () => {
+    const github = simulatedGitHub({ batchSize: 2, maxWrites: 2 });
+    const report = await github.apply(plans(5));
+    expect(report).toMatchObject({
+      status: 'partial',
+      reason: 'write-limit',
+      planned: 5,
+      succeeded: { create: 2 },
+      pending: { create: 3 },
+      stoppedAction: { type: 'create', key: expect.stringMatching(/^[a-f\d]{64}$/u) },
+    });
+    expect(github.issues).toHaveLength(2);
+    const resumed = simulatedGitHub();
+    resumed.issues.push(...github.issues);
+    const freshPlan = plans(5, resumed.issues, new Date(now.getTime() + 86_400_000));
+    expect(freshPlan.map(({ type }) => type)).toEqual(['create', 'create', 'create']);
+    expect((await resumed.apply(freshPlan)).status).toBe('complete');
+    expect(resumed.issues).toHaveLength(5);
+  });
+
+  it('reports progress by batch for a first-run backlog above one thousand findings', async () => {
+    const limits = { batchSize: 10, maxWrites: 40 };
+    const github = simulatedGitHub(limits);
+    const progress: string[] = [];
+    const report = await applyActions(
+      repository,
+      github.api,
+      plans(1277),
+      [],
+      github.report,
+      limits,
+      (message) => progress.push(message),
+    );
+    expect(progress).toHaveLength(4);
+    expect(JSON.parse(progress.at(-1) ?? '{}')).toMatchObject({
+      event: 'batch-finished',
+      batches: 4,
+      succeeded: { create: 40 },
+      pending: { create: 1237 },
+    });
+    expect(report).toMatchObject({ status: 'partial', reason: 'write-limit', writeAttempts: 40 });
+  });
+
+  it('respects HTTP 429 Retry-After and counts retry writes in the budget', async () => {
+    const github = simulatedGitHub();
+    let rejected = false;
+    github.intercept((method) => {
+      if (method !== 'POST' || rejected) return;
+      rejected = true;
+      return Response.json({}, { status: 429, headers: { 'Retry-After': '7' } });
+    });
+    expect(await github.apply(plans(1))).toMatchObject({
+      status: 'complete',
+      writeAttempts: 2,
+      retries: 1,
+      retryReasons: { 'secondary-rate-limit': 1 },
+    });
+    expect(github.waits).toEqual([7000]);
+  });
+
+  it('backs off for secondary limits and stops if the next wait exceeds the job budget', async () => {
+    const github = simulatedGitHub();
+    github.intercept(() =>
+      Response.json({ message: 'You have exceeded a secondary rate limit' }, { status: 403 }),
+    );
+    await expect(github.api.request('/fixture')).rejects.toThrow(
+      'time-budget:secondary-rate-limit',
+    );
+    expect(github.waits).toEqual([60_000]);
+    expect(github.report.retries).toBe(1);
+  });
+
+  it('honors primary reset time and gives up after two retries for temporary read errors', async () => {
+    const primary = simulatedGitHub();
+    let calls = 0;
+    primary.intercept(() => {
+      if (calls++ > 0) return;
+      return Response.json(
+        {},
+        {
+          status: 403,
+          headers: {
+            'x-ratelimit-remaining': '0',
+            'x-ratelimit-reset': String(now.getTime() / 1000 + 8),
+            'Retry-After': '3',
+          },
+        },
+      );
+    });
+    await expect(primary.api.request('/fixture')).resolves.toEqual([]);
+    expect(primary.waits).toEqual([9000]);
+    expect(primary.report.retryReasons).toEqual({ 'primary-rate-limit': 1 });
+    const server = simulatedGitHub();
+    server.intercept(() => Response.json({}, { status: 503 }));
+    await expect(server.api.request('/fixture')).rejects.toThrow('retry-budget:http-503');
+    expect(server.waits).toEqual([1000, 2000]);
+  });
+
+  it.each([401, 403])('does not retry HTTP %s permission errors', async (status) => {
+    const github = simulatedGitHub();
+    github.intercept((method) =>
+      method === 'POST' ? Response.json({ message: 'sensitive response' }, { status }) : undefined,
+    );
+    const report = await github.apply(plans(1));
+    expect(report).toMatchObject({
+      status: 'failed',
+      reason: `http-${status}`,
+      retries: 0,
+      pending: { create: 1 },
+    });
+    expect(JSON.stringify(report)).not.toContain('sensitive response');
+  });
+
+  it('retains confirmed progress and stops on a rejected write', async () => {
+    const github = simulatedGitHub();
+    github.intercept((method) =>
+      method === 'POST' && github.issues.length === 1
+        ? Response.json({}, { status: 403 })
+        : undefined,
+    );
+    expect(await github.apply(plans(4))).toMatchObject({
+      status: 'partial',
+      reason: 'http-403',
+      succeeded: { create: 1 },
+      pending: { create: 3 },
+    });
+  });
+
+  it('reconciles a Create with a lost response without issuing another POST', async () => {
+    const github = simulatedGitHub();
+    github.loseCreate();
+    expect(await github.apply(plans(1))).toMatchObject({
+      status: 'complete',
+      reconciled: 1,
+      succeeded: { create: 1 },
+      writeAttempts: 1,
+    });
+    expect(github.requests).toEqual(['GET', 'POST', 'GET']);
+    expect(plans(1, github.issues)).toEqual([]);
+  });
+
+  it('stops on an unconfirmed Create and checks for a late Issue before any new POST', async () => {
+    const github = simulatedGitHub();
+    const [action] = plans(1);
+    if (action?.type !== 'create') throw new Error('Expected a create action.');
+    github.intercept((method) =>
+      method === 'POST' ? Response.json({}, { status: 502 }) : undefined,
+    );
+    expect(await github.apply([action])).toMatchObject({
+      status: 'failed',
+      reason: 'unconfirmed:ambiguous-http-502',
+      pending: { create: 1 },
+    });
+    expect(github.requests).toEqual(['GET', 'POST', 'GET']);
+    const resumed = simulatedGitHub();
+    resumed.issues.push({ number: 8, state: 'closed', ...action });
+    expect(await resumed.apply([action])).toMatchObject({
+      status: 'failed',
+      reason: 'tracking-changed-before-create',
+      writeAttempts: 0,
+    });
+    expect(plans(1, resumed.issues)[0]?.type).toBe('reopen');
+  });
+
+  it('finds a matching issue on a later page before attempting to create', async () => {
+    const github = simulatedGitHub();
+    const [action] = plans(1);
+    if (action?.type !== 'create') throw new Error('Expected a create action.');
+    for (let n = 0; n < 100; n += 1) {
+      github.issues.push({
+        number: n + 1,
+        state: 'open',
+        title: 'Other issue',
+        body: '',
+        labels: [],
+      });
+    }
+    github.issues.push({ number: 101, state: 'open', ...action, labels: [] });
+    expect(await github.apply([action])).toMatchObject({
+      reason: 'tracking-changed-before-create',
+      writeAttempts: 0,
+    });
+    expect(github.requests).toEqual(['GET', 'GET']);
+  });
+
+  it('records a reopen and a scanner-confirmed close independently', async () => {
+    const github = simulatedGitHub();
+    const [first, second] = plans(2);
+    if (first?.type !== 'create' || second?.type !== 'create')
+      throw new Error('Expected create actions.');
+    github.issues.push(
+      { number: 1, state: 'closed', ...first },
+      { number: 2, state: 'open', ...second },
+    );
+    const plan = plans(1, github.issues);
+    expect(await github.apply(plan)).toMatchObject({
+      status: 'complete',
+      succeeded: { reopen: 1, close: 1 },
+      pending: { reopen: 0, close: 0 },
+    });
+    expect(github.issues.map(({ state }) => state)).toEqual(['open', 'closed']);
+  });
+
+  it('reconciles an ambiguous update, keeps manual notes and avoids a repeat update', async () => {
+    const github = simulatedGitHub();
+    const [create] = plans(1);
+    if (create?.type !== 'create') throw new Error('Expected a create action.');
+    github.issues.push({
+      number: 7,
+      state: 'open',
+      ...create,
+      title: 'Previous title',
+      body: create.body + '\nManual notes.',
+    });
+    github.losePatch();
+    const plan = plans(1, github.issues);
+    expect(await github.apply(plan)).toMatchObject({
+      status: 'complete',
+      reconciled: 1,
+      succeeded: { update: 1 },
+      writeAttempts: 1,
+    });
+    expect(github.issues).toHaveLength(1);
+    expect(github.issues[0]?.body).toContain('Manual notes.');
+    expect(plans(1, github.issues, new Date(now.getTime() + 86_400_000))).toEqual([]);
+  });
+
+  it('leaves a concurrent human edit intact and records the remaining update', async () => {
+    const github = simulatedGitHub();
+    const [create] = plans(1);
+    if (create?.type !== 'create') throw new Error('Expected a create action.');
+    github.issues.push({ number: 3, state: 'open', ...create, title: 'Previous title' });
+    const baseline = structuredClone(github.issues);
+    const plan = plans(1, baseline);
+    github.issues[0]!.body += '\nManual review added after planning.';
+    expect(await github.apply(plan, baseline)).toMatchObject({
+      status: 'failed',
+      reason: 'tracking-changed-before-update',
+      writeAttempts: 0,
+      pending: { update: 1 },
+    });
+    expect(github.issues[0]?.body).toContain('Manual review added after planning.');
+  });
+});
+
+describe('workflow CLI summary and write gate', () => {
+  function cli(report: unknown, apply: boolean, enabled = false) {
+    const directory = mkdtempSync(join(tmpdir(), 'security-debt-test-'));
+    const file = join(directory, 'audit.json');
+    const simulatedFetch = `globalThis.fetch = async (_, request) => {
+      if (request.method !== "GET") console.error("UNEXPECTED_WRITE");
+      return Response.json([]);
+    }`;
+    const preload = 'data:text/javascript,' + encodeURIComponent(simulatedFetch);
+    try {
+      writeFileSync(file, JSON.stringify(report));
+      return spawnSync(
+        process.execPath,
+        [
+          '--import',
+          preload,
+          resolve(repositoryRoot, 'tools/sync-security-debt.mjs'),
+          `--pnpm-audit=${file}`,
+          ...(apply ? ['--apply'] : []),
+        ],
+        {
+          encoding: 'utf8',
+          env: {
+            GITHUB_TOKEN: 'fixture-token',
+            GITHUB_ACTIONS: 'true',
+            GITHUB_REPOSITORY: repository,
+            GITHUB_REF: 'refs/heads/main',
+            GITHUB_WORKFLOW_REF: `${repository}/.github/workflows/security-debt.yml@refs/heads/main`,
+            SECURITY_DEBT_APPLY: enabled ? 'true' : 'false',
+          },
+        },
+      );
+    } finally {
+      rmSync(directory, { recursive: true });
+    }
+  }
+
+  it('keeps the dry-run JSON on stdout and never writes even with the apply variable present', () => {
+    const result = cli(
+      {
+        advisories: {
+          1: {
+            github_advisory_id: 'GHSA-aaaa-bbbb-cccc',
+            module_name: 'demo',
+            vulnerable_versions: '<1.0.0',
+            severity: 'high',
+          },
+        },
+        metadata: {
+          totalDependencies: 1,
+          vulnerabilities: { info: 0, low: 0, moderate: 0, high: 1, critical: 0 },
+        },
+      },
+      false,
+      true,
+    );
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject([{ type: 'create' }]);
+    expect(JSON.parse(result.stderr)).toMatchObject({
+      mode: 'dry-run',
+      status: 'complete',
+      pending: { create: 1 },
+      writeAttempts: 0,
+    });
+  });
+
+  it('refuses apply without explicit opt-in even on the trusted ref', () => {
+    expect(cli({}, true).status).toBe(2);
+  });
+
+  it('marks failed scanner validation and leaves GitHub untouched', () => {
+    const result = cli({ advisories: {} }, true, true);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).not.toContain('UNEXPECTED_WRITE');
+    expect(JSON.parse(result.stderr.trimEnd().split('\n').at(-1) ?? '{}')).toMatchObject({
+      status: 'failed',
+      reason: 'invalid-scan-or-plan',
+      planned: null,
+      writeAttempts: 0,
+    });
   });
 });

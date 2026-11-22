@@ -583,6 +583,62 @@ täglich um 01:43 UTC. Zusätzlich laufen beide Jobs nach einem Push auf `main`.
 GitHub kann geplante Läufe verzögern. Ein abgelaufener Prüfzeitpunkt hebt eine
 Zurückstellung auf; eine Verzögerung ist keine Fristverlängerung.
 
+#### Große Pläne und Wiederanlauf
+
+- **Schreibbudget.** Standardmäßig verarbeitet jeder Sync-Job Batches zu 10
+  Aktionen mit höchstens 40 HTTP-Schreibversuchen insgesamt. `--batch-size`
+  erlaubt 1 bis 25, `--max-writes` 1 bis 100. Retries zählen zum Schreibbudget.
+  Ein Workflowlauf mit beiden Jobs hat mit Standardwerten eine Obergrenze
+  von 80 Schreibversuchen. Nach einem unvollständigen Dependency-Job entfällt
+  der Image-Job in diesem Lauf. Der separate Image-Zeitplan bleibt wirksam.
+  Updates, Wiederöffnungen und belegte Schließungen haben Vorrang vor neuen
+  Issues. Unveränderte Befunde erzeugen keine PATCH-Anfrage allein für einen
+  neueren Zeitstempel oder Run-Link. Das Issue behält den zuletzt publizierten
+  Nachweis, die Laufzusammenfassung zählt alle aktuell erkannten Befunde.
+- **Laufzeit.** Workflowläufe desselben Repositorys sind serialisiert, ein
+  laufender Sync wird durch einen neu geplanten Lauf nicht abgebrochen. Bei
+  gemeinsamen Läufen folgt der Image-Job auf den Dependency-Job. Er startet
+  nach einem erfolgreichen oder planbedingt übersprungenen Dependency-Job.
+  Pro Sync stehen 150 Sekunden für API-Aufrufe und Wartezeiten zur Verfügung,
+  pro Anfrage höchstens 10 Sekunden. Das Sync-Schrittlimit beträgt vier
+  Minuten. Zwischen Schreibanfragen liegt mindestens eine Sekunde.
+- **API-Limits.** Bei primärem HTTP 403/429 mit Restbudget null beachtet der
+  Client das Reset-Datum. Bei sekundärem 403/429 wartet er mindestens bis
+  zum gültigen `Retry-After`. Ohne Wartehinweis beginnt der exponentielle
+  Backoff bei 60 Sekunden. Ein gegebenenfalls späterer Reset geht vor.
+  Pro Anfrage sind höchstens zwei Retries im Zeit- und Schreibbudget zulässig.
+  Temporäre Lese- und Transportfehler werden mit kurzem Backoff wiederholt.
+  Authentifizierungs- und gewöhnliche Berechtigungsfehler führen zum Abbruch.
+  [GitHubs REST-Rate-Limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
+- **Unklare Schreibantwort.** Bei Netzwerk- oder Serverfehlern nach einem
+  Schreibversuch liest der Client den GitHub-Zustand erneut. Bei positiver
+  Bestätigung zählt die Aktion als ausgeführt. Ein unbestätigtes Ergebnis
+  stoppt den Lauf. Insbesondere wird keine zweite POST-Anfrage mit dem
+  unbestätigten Create im selben Lauf gesendet.
+- **Wiederanlauf.** Vor einem Neustart nach unbestätigtem Create prüft der
+  Projekteigentümer den im Log angegebenen Finding-Schlüssel im tatsächlichen
+  Issue-Bestand. Anschließend erzeugt ein neuer Lauf den Plan aus frischen
+  Scans und dem aktuellen Bestand. Vor jedem Create-Batch wird der Bestand
+  erneut einschließlich geschlossener Issues gelesen. Vor PATCH wird der
+  betroffene Issue-Stand abgeglichen. Änderungen seit Planung führen zum
+  Abbruch und bleiben erhalten. Die API bietet für Issues keine atomare
+  Create-Operation nach Finding-Schlüssel. Der Abgleich und die
+  Workflow-Serialisierung begrenzen die Gefahr durch verspätet sichtbare
+  Ergebnisse oder parallele manuelle Änderungen.
+- **Laufbericht.** Der Dry-run gibt den geplanten Aktionssatz als JSON aus.
+  Der Schreibmodus protokolliert den Fortschritt nach jedem abgeschlossenen
+  Batch.
+  Beide Modi schreiben eine separate JSON-Zusammenfassung mit Phase, Anzahl
+  erkannter Findings, geplantem und verbleibendem Umfang, Erfolgen je
+  Aktionstyp, tatsächlichen Schreibversuchen, Retries und Abbruchgrund.
+  `complete` bedeutet im Dry-run vollständig geplante Aktionen und im
+  Schreibmodus bestätigte Erledigung aller geplanten Aktionen.
+  `partial` (Exit 3) kennzeichnet offene Aktionen nach Fortschritt oder
+  erreichtem Schreibbudget. `failed` (Exit 1) kennzeichnet einen Fehler
+  vor bestätigtem Fortschritt. Prüfe vor einem neuen Lauf die Phase,
+  den Grund und gegebenenfalls den Schlüssel der ersten offenen Aktion.
+  Scannerfehler und fehlende Scannerabdeckung erlauben keine Schließung.
+
 **Fehlerbehandlung:** Ein roter Lauf oder ein doppelter Schlüssel ist kein
 sauberer Scan. In diesem Zustand dürfen Issues nicht manuell als erledigt
 geschlossen und Befunde nicht automatisch zurückgestellt werden. Zuständig

@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: security-debt-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: security-debt-${{ github.repository }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -67,16 +67,17 @@ jobs:
           ignore-unfixed: false
           trivyignores: .trivyignore.yaml
       - name: Synchronize dependency Security-Debt issues
+        timeout-minutes: 4
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           SCAN_URL:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SYNC_MODE: ${{ vars.SECURITY_DEBT_APPLY == 'true' && '--apply' || '' }}
+          SECURITY_DEBT_APPLY: ${{ vars.SECURITY_DEBT_APPLY }}
         run: |
           sync_args=()
-          if [[ -n "$SYNC_MODE" ]]; then
-            sync_args+=("$SYNC_MODE")
+          if [[ "$SECURITY_DEBT_APPLY" == 'true' ]]; then
+            sync_args+=(--apply)
           fi
           node tools/sync-security-debt.mjs "${sync_args[@]}" \
             --dependabot \
@@ -87,9 +88,12 @@ jobs:
 
   images:
     name: image findings
+    needs: dependencies
     if: >-
-      github.ref == 'refs/heads/main' && github.event.repository.default_branch == 'main' &&
-      (github.event_name != 'schedule' || github.event.schedule == '43 1 * * *')
+      always() && !cancelled() && (needs.dependencies.result == 'success' ||
+      needs.dependencies.result == 'skipped') && github.ref == 'refs/heads/main' &&
+      github.event.repository.default_branch == 'main' && (github.event_name != 'schedule' ||
+      github.event.schedule == '43 1 * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -165,6 +169,7 @@ jobs:
           ignore-unfixed: false
           trivyignores: .trivyignore.yaml
       - name: Synchronize image Security-Debt issues
+        timeout-minutes: 4
         env:
           BACKEND_IMAGE: ${{ steps.app-images.outputs.backend }}
           WEB_IMAGE: ${{ steps.app-images.outputs.web }}
@@ -173,11 +178,11 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           SCAN_URL:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SYNC_MODE: ${{ vars.SECURITY_DEBT_APPLY == 'true' && '--apply' || '' }}
+          SECURITY_DEBT_APPLY: ${{ vars.SECURITY_DEBT_APPLY }}
         run: |
           sync_args=()
-          if [[ -n "$SYNC_MODE" ]]; then
-            sync_args+=("$SYNC_MODE")
+          if [[ "$SECURITY_DEBT_APPLY" == 'true' ]]; then
+            sync_args+=(--apply)
           fi
           node tools/sync-security-debt.mjs "${sync_args[@]}" \
             "--trivy=trivy-backend.json::containers/backend.Dockerfile::trivy-image-backend::$BACKEND_IMAGE" \

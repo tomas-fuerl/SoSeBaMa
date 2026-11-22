@@ -2,6 +2,7 @@
 
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { setTimeout as pause } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 
 /**
@@ -45,6 +46,7 @@ import { pathToFileURL } from 'node:url';
  *   body?: string,
  *   labels?: IssueLabel[],
  *   title?: string,
+ *   pull_request?: unknown,
  * }} TrackedIssue
  * @typedef {{ type: 'create', title: string, body: string, labels: string[] }} CreateAction
  * @typedef {{
@@ -58,6 +60,24 @@ import { pathToFileURL } from 'node:url';
  * @typedef {CreateAction | UpdateAction | CloseAction} SynchronizationAction
  * @typedef {{ now?: Date | string | number, scanUrl?: string }} SynchronizationOptions
  * @typedef {{ method?: string, body?: Record<string, unknown> }} GitHubRequestOptions
+ * @typedef {{ batchSize: number, maxWrites: number }} BatchLimits
+ * @typedef {{ create: number, update: number, reopen: number, close: number }} Counts
+ * @typedef {{
+ *   mode: 'dry-run' | 'apply',
+ *   status: 'complete' | 'partial' | 'failed',
+ *   findings: number | null,
+ *   planned: number | null,
+ *   succeeded: Counts,
+ *   pending: Counts | null,
+ *   writeAttempts: number,
+ *   retries: number,
+ *   retryReasons: Record<string, number>,
+ *   batches: number,
+ *   reconciled: number,
+ *   reason: string | null,
+ *   stoppedAction: { type: SynchronizationAction['type'], key?: string | undefined, number?: number } | null,
+ *   stage: string,
+ * }} RunReport
  * @typedef {{
  *   apply: boolean,
  *   dependabot: boolean,
@@ -66,12 +86,21 @@ import { pathToFileURL } from 'node:url';
  *   repository?: string,
  *   scanUrl?: string,
  *   help?: boolean,
+ *   batchSize: number,
+ *   maxWrites: number,
  * }} CliOptions
  */
 
 const AUTO_START = '<!-- security-debt:auto:start -->';
 const AUTO_END = '<!-- security-debt:auto:end -->';
 const KEY_PREFIX = 'security-debt-key:v1:';
+const DEFAULT_BATCH_LIMITS = { batchSize: 10, maxWrites: 40 };
+const API_BUDGET_MS = 150_000;
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 2;
+const WRITE_INTERVAL_MS = 1000;
+const TRANSIENT_SERVER_ERRORS = new Set([500, 502, 503, 504]);
+const ISSUE_INVENTORY_QUERY = 'state=all&sort=created&direction=asc';
 const MANAGED_LABELS = new Set([
   'security',
   'security-deferred',
@@ -750,7 +779,6 @@ function displayList(values, fallback = 'nicht gemeldet') {
  */
 function automaticBlock(key, finding, metadata, scanUrl, classification) {
   const deadline = classification.deadline?.toISOString() ?? 'noch nicht gestartet';
-  const references = uniqueStrings([...finding.references, ...(scanUrl ? [scanUrl] : [])]);
   const data = JSON.stringify(metadata);
   return `${AUTO_START}
 <!-- ${KEY_PREFIX}${key} -->
@@ -771,7 +799,8 @@ function automaticBlock(key, finding, metadata, scanUrl, classification) {
 - Automatischer Zustand: \`${classification.status}\`
 - Befristet nicht blockierend: ${classification.deferred ? 'ja' : 'nein'}
 - Umsetzungsfrist nach verwendbarem Fix: ${deadline}
-- Nachweise: ${displayList(references, 'noch offen')}
+- Nachweise: ${displayList(finding.references, 'noch offen')}
+- Scanlauf: ${scanUrl ?? 'noch offen'}
 
 Der automatische Zustand ist keine Risikoakzeptanz. Unvollständige manuelle
 Risikoeinordnung bleibt fail-closed.
@@ -865,6 +894,27 @@ function issueKey(issue) {
   return identity ? securityDebtKey(identity) : undefined;
 }
 
+/** @param {TrackedIssue} issue */
+function issueLabels(issue) {
+  return uniqueStrings(
+    (issue.labels ?? []).map((label) => (typeof label === 'string' ? label : label.name)),
+  );
+}
+
+/** @param {string | undefined} body */
+function scannerContent(body) {
+  const match = body?.match(
+    /<!-- security-debt:auto:start -->[\s\S]*?<!-- security-debt:auto:end -->/u,
+  );
+  return match?.[0]
+    .replace(/^<!-- security-debt-metadata: (.+) -->$/mu, (_, value) => {
+      const metadata = JSON.parse(value);
+      delete metadata.lastSeen;
+      return JSON.stringify(metadata);
+    })
+    .replace(/^-(?: Letzter Fund| Scanlauf): .*\n/gmu, '');
+}
+
 /**
  * @param {unknown} findingsInput
  * @param {unknown} issuesInput
@@ -879,18 +929,7 @@ export function planSynchronization(findingsInput, issuesInput, checkedSourcesIn
   const scanUrl = optionalString(options.scanUrl);
   const checkedSources = new Set(checkedSourcesInput);
   const deduplicated = deduplicateFindings(findingsInput);
-  /** @type {Map<string, TrackedIssue>} */
-  const existing = new Map();
-
-  for (const issueInput of issuesInput) {
-    if (!isRecord(issueInput)) throw new SecurityDebtReportError('Malformed issue.');
-    const issue = /** @type {TrackedIssue} */ (issueInput);
-    const key = issueKey(issue);
-    if (!key) continue;
-    if (existing.has(key))
-      throw new SecurityDebtReportError(`Duplicate Security-Debt issues for key ${key}.`);
-    existing.set(key, issue);
-  }
+  const existing = indexIssues(issuesInput);
 
   /** @type {SynchronizationAction[]} */
   const actions = [];
@@ -919,13 +958,16 @@ export function planSynchronization(findingsInput, issuesInput, checkedSourcesIn
     );
     const block = automaticBlock(key, finding, metadata, scanUrl, classification);
     const body = replaceAutomaticBlock(issue?.body, block);
-    const existingLabels = Array.isArray(issue?.labels)
-      ? issue.labels
-          .map((label) => (typeof label === 'string' ? label : label.name))
-          .filter((label) => typeof label === 'string')
-      : [];
+    const existingLabels = issue ? issueLabels(issue) : [];
     const labels = desiredLabels(existingLabels, finding, classification);
     const title = `security: [${finding.advisoryId}] ${finding.packageName} in ${finding.manifestPath}`;
+    if (
+      issue?.state === 'open' &&
+      issue.title === title &&
+      JSON.stringify(existingLabels) === JSON.stringify(labels) &&
+      scannerContent(issue.body) === scannerContent(body)
+    )
+      continue;
     actions.push(
       issue
         ? {
@@ -947,85 +989,333 @@ export function planSynchronization(findingsInput, issuesInput, checkedSourcesIn
       actions.push({ type: 'close', number: issue.number });
     }
   }
-  return actions;
+  // Resume work that changes an existing security state before draining new findings.
+  return actions.toSorted((a, b) => Number(a.type === 'create') - Number(b.type === 'create'));
 }
 
-/**
- * @param {string} path
- * @param {string} token
- * @param {GitHubRequestOptions} [options]
- * @returns {Promise<unknown>}
+class GitHubSyncError extends Error {
+  /** @param {string} reason @param {boolean} [ambiguous] @param {string} [message] */
+  constructor(reason, ambiguous = false, message = reason) {
+    super(message);
+    this.reason = reason;
+    this.ambiguous = ambiguous;
+  }
+}
+
+/** @param {Response} response @param {number} now @param {number} retry */
+async function rateLimit(response, now, retry) {
+  if (![403, 429].includes(response.status)) return undefined;
+  const retryAfter = response.headers.get('retry-after');
+  const primary = response.headers.get('x-ratelimit-remaining') === '0';
+  const message = await response.json().catch(() => undefined);
+  const secondary =
+    response.status === 429 ||
+    retryAfter !== null ||
+    (isRecord(message) &&
+      typeof message.message === 'string' &&
+      /secondary rate limit|abuse detection/iu.test(message.message));
+  if (!primary && !secondary) return undefined;
+  const resetHeader = response.headers.get('x-ratelimit-reset');
+  const reset = primary && resetHeader ? Number(resetHeader) * 1000 - now + 1000 : NaN;
+  const after =
+    retryAfter === null
+      ? NaN
+      : /^\d+$/u.test(retryAfter)
+        ? Number(retryAfter) * 1000
+        : Date.parse(retryAfter) - now;
+  const waits = [reset, after].filter(Number.isFinite);
+  return {
+    reason: primary ? 'primary-rate-limit' : 'secondary-rate-limit',
+    delay:
+      waits.length > 0
+        ? Math.max(retry === 0 ? 0 : 1000 * 2 ** retry, ...waits)
+        : 60_000 * 2 ** retry,
+  };
+}
+
+/** @param {string} token @param {RunReport} report @param {BatchLimits} limits
+ * @param {{fetcher?: typeof fetch, sleep?: (ms: number) => Promise<unknown>, now?: () => number}} [runtime]
  */
-async function githubRequest(path, token, options = {}) {
-  /** @type {RequestInit} */
-  const request = {
-    method: options.method ?? 'GET',
-    headers: {
+export function createGitHubClient(token, report, limits, runtime = {}) {
+  const { fetcher = fetch, sleep = pause, now = Date.now } = runtime;
+  const deadline = now() + API_BUDGET_MS;
+  let nextWriteAt = 0;
+
+  /** @param {number} delay */
+  async function wait(delay) {
+    if (delay >= deadline - now()) throw new GitHubSyncError('time-budget');
+    if (delay > 0) await sleep(delay);
+  }
+
+  /** @param {string} path @param {GitHubRequestOptions} [options] @returns {Promise<unknown>} */
+  async function request(path, options = {}) {
+    const method = options.method ?? 'GET';
+    const writing = method !== 'GET';
+    const headers = {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
       'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'SoSeBaMa-security-debt-sync',
-    },
-  };
-  if (options.body) request.body = JSON.stringify(options.body);
-  const response = await fetch(`https://api.github.com${path}`, request);
-  if (!response.ok) {
-    throw new Error(
-      `GitHub API ${options.method ?? 'GET'} ${path} failed with ${response.status}.`,
-    );
+    };
+    for (let retry = 0; ; retry += 1) {
+      if (writing) {
+        if (report.writeAttempts >= limits.maxWrites) throw new GitHubSyncError('write-limit');
+        await wait(Math.max(0, nextWriteAt - now()));
+        report.writeAttempts += 1;
+      }
+      const remaining = deadline - now();
+      if (remaining <= 0) throw new GitHubSyncError('time-budget');
+      /** @type {{ reason: string, delay: number } | undefined} */
+      let transient;
+      /** @type {Response | undefined} */
+      let response;
+      try {
+        response = await fetcher(`https://api.github.com${path}`, {
+          method,
+          headers,
+          redirect: 'error',
+          body: options.body ? JSON.stringify(options.body) : null,
+          signal: AbortSignal.timeout(Math.min(REQUEST_TIMEOUT_MS, remaining)),
+        });
+        if (response.ok) return response.status === 204 ? undefined : await response.json();
+      } catch {
+        if (writing) throw new GitHubSyncError('ambiguous-write', true);
+        transient = { reason: 'transport-or-response', delay: 1000 * 2 ** retry };
+      } finally {
+        if (writing) nextWriteAt = now() + WRITE_INTERVAL_MS;
+      }
+      if (response && !transient) {
+        transient = await rateLimit(response, now(), retry);
+        if (!transient && TRANSIENT_SERVER_ERRORS.has(response.status)) {
+          if (writing) throw new GitHubSyncError(`ambiguous-http-${response.status}`, true);
+          transient = { reason: `http-${response.status}`, delay: 1000 * 2 ** retry };
+        }
+        if (!transient) {
+          if (writing && response.status >= 500)
+            throw new GitHubSyncError(`ambiguous-http-${response.status}`, true);
+          throw new GitHubSyncError(`http-${response.status}`);
+        }
+      }
+      if (!transient) throw new GitHubSyncError('missing-response');
+      if (retry >= MAX_RETRIES) throw new GitHubSyncError(`retry-budget:${transient.reason}`);
+      if (writing && report.writeAttempts >= limits.maxWrites)
+        throw new GitHubSyncError(`write-limit:${transient.reason}`);
+      if (transient.delay >= deadline - now())
+        throw new GitHubSyncError(`time-budget:${transient.reason}`);
+      await wait(transient.delay);
+      report.retries += 1;
+      report.retryReasons[transient.reason] = (report.retryReasons[transient.reason] ?? 0) + 1;
+    }
   }
-  if (response.status === 204) return undefined;
-  return response.json();
+
+  /** @param {string} path @returns {Promise<unknown[]>} */
+  async function listAll(path) {
+    /** @type {unknown[]} */
+    const items = [];
+    for (let page = 1; ; page += 1) {
+      const separator = path.includes('?') ? '&' : '?';
+      const batch = await request(`${path}${separator}per_page=100&page=${page}`);
+      if (!Array.isArray(batch)) throw new GitHubSyncError('invalid-github-list');
+      items.push(...batch);
+      if (batch.length < 100) return items;
+    }
+  }
+  return { request, listAll };
 }
 
-/** @param {string} path @param {string} token @returns {Promise<unknown[]>} */
-async function listAll(path, token) {
-  /** @type {unknown[]} */
-  const items = [];
-  for (let page = 1; ; page += 1) {
-    const separator = path.includes('?') ? '&' : '?';
-    const batch = await githubRequest(`${path}${separator}per_page=100&page=${page}`, token);
-    if (!Array.isArray(batch)) throw new Error(`GitHub API ${path} did not return a list.`);
-    items.push(...batch);
-    if (batch.length < 100) return items;
+/** @returns {Counts} */
+function emptyCounts() {
+  return { create: 0, update: 0, reopen: 0, close: 0 };
+}
+
+/** @param {boolean} apply @returns {RunReport} */
+export function runReport(apply) {
+  return {
+    mode: apply ? 'apply' : 'dry-run',
+    status: 'failed',
+    findings: null,
+    planned: null,
+    succeeded: emptyCounts(),
+    pending: null,
+    writeAttempts: 0,
+    retries: 0,
+    retryReasons: {},
+    batches: 0,
+    reconciled: 0,
+    reason: null,
+    stoppedAction: null,
+    stage: 'inputs',
+  };
+}
+
+/** @param {SynchronizationAction[]} actions */
+function countActions(actions) {
+  const counts = emptyCounts();
+  for (const action of actions) counts[action.type] += 1;
+  return counts;
+}
+
+/** @param {unknown} input @returns {TrackedIssue} */
+function trackedIssue(input) {
+  if (
+    !isRecord(input) ||
+    !Number.isSafeInteger(input.number) ||
+    !['open', 'closed'].includes(String(input.state))
+  ) {
+    throw new GitHubSyncError('invalid-github-issue');
   }
+  return /** @type {TrackedIssue} */ (input);
+}
+
+/** @param {unknown[]} inputs */
+function indexIssues(inputs) {
+  /** @type {Map<string, TrackedIssue>} */
+  const indexed = new Map();
+  for (const input of inputs) {
+    const issue = trackedIssue(input);
+    if (issue.pull_request) continue;
+    const key = issueKey(issue);
+    if (!key) continue;
+    if (indexed.has(key))
+      throw new GitHubSyncError(
+        'duplicate-tracking-key',
+        false,
+        `Duplicate Security-Debt issues for key ${key}.`,
+      );
+    indexed.set(key, issue);
+  }
+  return indexed;
+}
+
+/** @param {TrackedIssue} a @param {TrackedIssue} b */
+function sameIssue(a, b) {
+  return (
+    a.number === b.number &&
+    a.state === b.state &&
+    a.body === b.body &&
+    a.title === b.title &&
+    JSON.stringify(issueLabels(a)) === JSON.stringify(issueLabels(b))
+  );
+}
+
+/** @param {SynchronizationAction} action @param {TrackedIssue} issue */
+function actionConfirmed(action, issue) {
+  if (action.type === 'close') return issue.number === action.number && issue.state === 'closed';
+  return sameIssue(issue, {
+    number: action.type === 'create' ? issue.number : action.number,
+    state: 'open',
+    title: action.title,
+    body: action.body,
+    labels: action.labels,
+  });
 }
 
 /**
  * @param {string} repository
- * @param {string} token
+ * @param {ReturnType<typeof createGitHubClient>} api
  * @param {SynchronizationAction[]} actions
+ * @param {unknown[]} originalIssues
+ * @param {RunReport} report
+ * @param {BatchLimits} limits
+ * @param {(message: string) => void} [logBatch]
  */
-async function applyActions(repository, token, actions) {
-  for (const action of actions) {
-    if (action.type === 'create') {
-      const created = await githubRequest(`/repos/${repository}/issues`, token, {
-        method: 'POST',
-        body: { title: action.title, body: action.body, labels: action.labels },
-      });
-      if (!isRecord(created) || typeof created.number !== 'number') {
-        throw new Error('GitHub did not return the created issue number.');
+export async function applyActions(
+  repository,
+  api,
+  actions,
+  originalIssues,
+  report,
+  limits,
+  logBatch,
+) {
+  report.planned = actions.length;
+  report.pending = countActions(actions);
+  const path = `/repos/${repository}/issues`;
+  const originals = new Map(originalIssues.map(trackedIssue).map((issue) => [issue.number, issue]));
+  const createdKeys = new Set();
+  let completed = 0;
+  try {
+    while (completed < actions.length) {
+      if (report.writeAttempts >= limits.maxWrites) throw new GitHubSyncError('write-limit');
+      const batch = actions.slice(completed, completed + limits.batchSize);
+      report.batches += 1;
+      const existing = batch.some((action) => action.type === 'create')
+        ? indexIssues(await api.listAll(`${path}?${ISSUE_INVENTORY_QUERY}`))
+        : new Map();
+      for (const action of batch) {
+        const creating = action.type === 'create';
+        const key = creating ? keyFromBody(action.body) : undefined;
+        const endpoint = creating ? path : `${path}/${action.number}`;
+        if (creating) {
+          if (!key) throw new GitHubSyncError('missing-create-key');
+          if (existing.has(key) || createdKeys.has(key))
+            throw new GitHubSyncError('tracking-changed-before-create');
+        } else {
+          const previous = originals.get(action.number);
+          const current = trackedIssue(await api.request(endpoint));
+          if (!previous || !sameIssue(previous, current))
+            throw new GitHubSyncError('tracking-changed-before-update');
+        }
+        const body =
+          action.type === 'close'
+            ? { state: 'closed', state_reason: 'completed' }
+            : {
+                title: action.title,
+                body: action.body,
+                labels: action.labels,
+                ...(action.type === 'reopen' ? { state: 'open' } : {}),
+              };
+        try {
+          const result = await api.request(endpoint, { method: creating ? 'POST' : 'PATCH', body });
+          if (
+            !isRecord(result) ||
+            !Number.isSafeInteger(result.number) ||
+            !actionConfirmed(action, /** @type {TrackedIssue} */ (result))
+          ) {
+            throw new GitHubSyncError('ambiguous-response', true);
+          }
+        } catch (error) {
+          if (!(error instanceof GitHubSyncError) || !error.ambiguous) throw error;
+          let current;
+          try {
+            current = creating
+              ? indexIssues(await api.listAll(`${path}?${ISSUE_INVENTORY_QUERY}`)).get(key ?? '')
+              : trackedIssue(await api.request(endpoint));
+          } catch {
+            throw new GitHubSyncError(`unconfirmed:${error.reason}:reconciliation-failed`);
+          }
+          if (!current || !actionConfirmed(action, current))
+            throw new GitHubSyncError(`unconfirmed:${error.reason}`);
+          report.reconciled += 1;
+        }
+        if (creating && key) createdKeys.add(key);
+        report.succeeded[action.type] += 1;
+        report.pending[action.type] -= 1;
+        completed += 1;
       }
-      console.log(`created #${created.number}`);
-      continue;
+      logBatch?.(
+        JSON.stringify({
+          event: 'batch-finished',
+          batches: report.batches,
+          succeeded: report.succeeded,
+          pending: report.pending,
+          writeAttempts: report.writeAttempts,
+        }),
+      );
     }
-    const body =
-      action.type === 'close'
-        ? { state: 'closed', state_reason: 'completed' }
-        : {
-            title: action.title,
-            body: action.body,
-            labels: action.labels,
-            ...(action.type === 'reopen' ? { state: 'open' } : {}),
-          };
-    await githubRequest(`/repos/${repository}/issues/${action.number}`, token, {
-      method: 'PATCH',
-      body,
-    });
-    const verb =
-      action.type === 'reopen' ? 'reopened' : action.type === 'update' ? 'updated' : 'closed';
-    console.log(`${verb} #${action.number}`);
+    report.status = 'complete';
+  } catch (error) {
+    report.reason = error instanceof GitHubSyncError ? error.reason : 'unexpected-sync-error';
+    report.status = completed > 0 || report.reason.startsWith('write-limit') ? 'partial' : 'failed';
+    const stopped = actions[completed];
+    if (stopped)
+      report.stoppedAction =
+        stopped.type === 'create'
+          ? { type: stopped.type, key: keyFromBody(stopped.body) }
+          : { type: stopped.type, number: stopped.number };
   }
+  return report;
 }
 
 /** @returns {string} */
@@ -1037,19 +1327,35 @@ Usage:
     [--pnpm-audit=PATH]
     [--trivy=PATH::MANIFEST::SOURCE[::IMAGE_ID]]
     [--repository=OWNER/REPOSITORY] [--scan-url=URL]
+    [--batch-size=1..25] [--max-writes=1..100]
 
-Default mode is a read-only dry-run. --apply requires GITHUB_TOKEN.
+Default mode is a read-only dry-run. Apply requires the trusted workflow
+and SECURITY_DEBT_APPLY=true. Defaults: 10 actions per batch, 40 write attempts per job.
 
 Exit codes:
   0  reports valid and synchronization planned or applied
   1  scanner, validation, tracking, or GitHub API failure
-  2  invalid command line`;
+  2  invalid command line or untrusted invocation
+  3  incomplete apply; outstanding actions remain`;
+}
+
+/** @param {string} value @param {number} maximum */
+function boundedInteger(value, maximum) {
+  if (!/^[1-9]\d*$/u.test(value) || Number(value) > maximum)
+    throw new SecurityDebtReportError(`Expected an integer between 1 and ${maximum}.`);
+  return Number(value);
 }
 
 /** @param {string[]} arguments_ @returns {CliOptions} */
 function parseArguments(arguments_) {
   /** @type {CliOptions} */
-  const options = { apply: false, dependabot: false, pnpmAudit: [], trivy: [] };
+  const options = {
+    apply: false,
+    dependabot: false,
+    pnpmAudit: [],
+    trivy: [],
+    ...DEFAULT_BATCH_LIMITS,
+  };
   for (const argument of arguments_) {
     if (argument === '--apply') options.apply = true;
     else if (argument === '--dependabot') options.dependabot = true;
@@ -1061,8 +1367,12 @@ function parseArguments(arguments_) {
       options.trivy.push(/** @type {[string, string, string, string?]} */ (parts));
     } else if (argument.startsWith('--repository=')) options.repository = argument.slice(13);
     else if (argument.startsWith('--scan-url=')) options.scanUrl = argument.slice(11);
+    else if (argument.startsWith('--batch-size='))
+      options.batchSize = boundedInteger(argument.slice(13), 25);
+    else if (argument.startsWith('--max-writes='))
+      options.maxWrites = boundedInteger(argument.slice(13), 100);
     else if (argument === '--help' || argument === '-h') options.help = true;
-    else throw new SecurityDebtReportError(`Unknown argument: ${argument}`);
+    else throw new SecurityDebtReportError('Unknown command line argument.');
   }
   return options;
 }
@@ -1108,22 +1418,27 @@ async function runCli() {
       process.env.GITHUB_REPOSITORY !== repository ||
       process.env.GITHUB_REF !== 'refs/heads/main' ||
       process.env.GITHUB_WORKFLOW_REF !==
-        `${repository}/.github/workflows/security-debt.yml@refs/heads/main`)
+        `${repository}/.github/workflows/security-debt.yml@refs/heads/main` ||
+      process.env.SECURITY_DEBT_APPLY !== 'true')
   ) {
     console.error('--apply requires the trusted main-branch Security-debt workflow.');
     return 2;
   }
 
+  const report = runReport(options.apply);
+  const api = token ? createGitHubClient(token, report, options) : undefined;
   try {
     /** @type {Finding[]} */
     const findings = [];
     const checkedSources = new Set();
+    report.stage = 'pnpm-audit';
     for (const path of options.pnpmAudit) {
       if (checkedSources.has('pnpm-audit'))
         throw new SecurityDebtReportError('Duplicate scanner source: pnpm-audit.');
       findings.push(...parseCompletePnpmAuditReport(await readJson(path)));
       checkedSources.add('pnpm-audit');
     }
+    report.stage = 'trivy';
     for (const [path, manifest, source, imageId] of options.trivy) {
       if (checkedSources.has(source))
         throw new SecurityDebtReportError(`Duplicate scanner source: ${source}.`);
@@ -1131,10 +1446,11 @@ async function runCli() {
       checkedSources.add(source);
     }
     if (options.dependabot) {
-      if (!token) throw new Error('--dependabot requires GITHUB_TOKEN for read access.');
+      report.stage = 'dependabot';
+      if (!api) throw new GitHubSyncError('missing-dependabot-read-token');
       const alerts = [
-        ...(await listAll(`/repos/${repository}/dependabot/alerts?state=open`, token)),
-        ...(await listAll(`/repos/${repository}/dependabot/alerts?state=auto_dismissed`, token)),
+        ...(await api.listAll(`/repos/${repository}/dependabot/alerts?state=open`)),
+        ...(await api.listAll(`/repos/${repository}/dependabot/alerts?state=auto_dismissed`)),
       ];
       findings.push(...parseDependabotAlerts(alerts));
       checkedSources.add('dependabot');
@@ -1142,24 +1458,36 @@ async function runCli() {
     if (checkedSources.size === 0)
       throw new SecurityDebtReportError('At least one scanner source is required.');
 
-    const issues = token
-      ? await listAll(`/repos/${repository}/issues?state=all&labels=security`, token)
+    report.findings = deduplicateFindings(findings).length;
+    report.stage = 'issue-inventory';
+    const issues = api
+      ? await api.listAll(`/repos/${repository}/issues?${ISSUE_INVENTORY_QUERY}`)
       : [];
     const synchronizationOptions = options.scanUrl ? { scanUrl: options.scanUrl } : {};
+    report.stage = 'planning';
     const actions = planSynchronization(findings, issues, checkedSources, synchronizationOptions);
     if (options.apply) {
-      if (!token) throw new Error('--apply requires GITHUB_TOKEN.');
-      await applyActions(repository, token, actions);
-    } else {
-      const summaries = actions.map((action) =>
-        Object.fromEntries(Object.entries(action).filter(([key]) => key !== 'body')),
+      if (!api) throw new GitHubSyncError('missing-write-token');
+      report.stage = 'applying';
+      await applyActions(repository, api, actions, issues, report, options, (message) =>
+        console.error(message),
       );
-      console.log(JSON.stringify(summaries, null, 2));
+      if (report.status === 'complete') return 0;
+      return report.status === 'partial' ? 3 : 1;
     }
+    report.planned = actions.length;
+    report.pending = countActions(actions);
+    report.status = 'complete';
+    const summaries = actions.map((action) =>
+      Object.fromEntries(Object.entries(action).filter(([key]) => key !== 'body')),
+    );
+    console.log(JSON.stringify(summaries, null, 2));
     return 0;
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
+    report.reason = error instanceof GitHubSyncError ? error.reason : 'invalid-scan-or-plan';
     return 1;
+  } finally {
+    console.error(JSON.stringify(report));
   }
 }
 
