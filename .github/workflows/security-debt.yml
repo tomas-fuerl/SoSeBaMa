@@ -19,7 +19,9 @@ permissions:
 jobs:
   dependencies:
     name: dependency findings
-    if: github.event_name != 'schedule' || github.event.schedule == '17 * * * *'
+    if: >-
+      github.ref == 'refs/heads/main' && github.event.repository.default_branch == 'main' &&
+      (github.event_name != 'schedule' || github.event.schedule == '17 * * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -30,6 +32,7 @@ jobs:
       - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -49,12 +52,15 @@ jobs:
           fi
       - name: Collect Trivy dependency report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_INCLUDE_DEV_DEPS: 'true'
         with:
           version: v0.74.0
           scan-type: fs
-          scan-ref: .
+          scan-ref: pnpm-lock.yaml
           scanners: vuln
           format: json
+          list-all-pkgs: 'true'
           output: trivy-fs.json
           exit-code: '0'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -81,7 +87,9 @@ jobs:
 
   images:
     name: image findings
-    if: github.event_name != 'schedule' || github.event.schedule == '43 1 * * *'
+    if: >-
+      github.ref == 'refs/heads/main' && github.event.repository.default_branch == 'main' &&
+      (github.event_name != 'schedule' || github.event.schedule == '43 1 * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -93,6 +101,7 @@ jobs:
       - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -101,7 +110,11 @@ jobs:
       - name: Activate pinned pnpm
         run: corepack enable && corepack prepare pnpm@11.18.0 --activate
       - name: Build DEV application images
-        run: pnpm container:build
+        id: app-images
+        run: |
+          pnpm container:build
+          printf 'backend=%s\n' "$(docker image inspect sosebama-backend:dev --format '{{.Id}}')" >> "$GITHUB_OUTPUT"
+          printf 'web=%s\n' "$(docker image inspect sosebama-web:dev --format '{{.Id}}')" >> "$GITHUB_OUTPUT"
       - name: Build sanitized browser image
         id: browser-image
         run: |
@@ -112,9 +125,10 @@ jobs:
         with:
           version: v0.74.0
           scan-type: image
-          image-ref: sosebama-backend:dev
+          image-ref: ${{ steps.app-images.outputs.backend }}
           scanners: vuln
           format: json
+          list-all-pkgs: 'true'
           output: trivy-backend.json
           exit-code: '0'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -126,9 +140,10 @@ jobs:
           skip-setup-trivy: true
           version: v0.74.0
           scan-type: image
-          image-ref: sosebama-web:dev
+          image-ref: ${{ steps.app-images.outputs.web }}
           scanners: vuln
           format: json
+          list-all-pkgs: 'true'
           output: trivy-web.json
           exit-code: '0'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -143,6 +158,7 @@ jobs:
           image-ref: ${{ steps.browser-image.outputs.id }}
           scanners: vuln
           format: json
+          list-all-pkgs: 'true'
           output: trivy-browser.json
           exit-code: '0'
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -150,6 +166,9 @@ jobs:
           trivyignores: .trivyignore.yaml
       - name: Synchronize image Security-Debt issues
         env:
+          BACKEND_IMAGE: ${{ steps.app-images.outputs.backend }}
+          WEB_IMAGE: ${{ steps.app-images.outputs.web }}
+          BROWSER_IMAGE: ${{ steps.browser-image.outputs.id }}
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           SCAN_URL:
@@ -161,8 +180,8 @@ jobs:
             sync_args+=("$SYNC_MODE")
           fi
           node tools/sync-security-debt.mjs "${sync_args[@]}" \
-            --trivy=trivy-backend.json::containers/backend.Dockerfile::trivy-image-backend \
-            --trivy=trivy-web.json::containers/web.Dockerfile::trivy-image-web \
-            --trivy=trivy-browser.json::containers/browser.Dockerfile::trivy-image-browser \
+            "--trivy=trivy-backend.json::containers/backend.Dockerfile::trivy-image-backend::$BACKEND_IMAGE" \
+            "--trivy=trivy-web.json::containers/web.Dockerfile::trivy-image-web::$WEB_IMAGE" \
+            "--trivy=trivy-browser.json::containers/browser.Dockerfile::trivy-image-browser::$BROWSER_IMAGE" \
             "--repository=$REPOSITORY" \
             "--scan-url=$SCAN_URL"

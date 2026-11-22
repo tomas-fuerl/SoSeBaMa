@@ -374,13 +374,16 @@ verwundbare Baseline. Die neue transitive Abhängigkeit
 `BlueOak-1.0.0`. Der alte brace-expansion-Override entfällt, weil Minimatch
 11.0.7 selbst 5.0.12 auflöst.
 
-**Lokaler Nachweis vom 20.11.2026:** Die frische Frozen-Installation des
-Kandidaten unter Node 24.21.0 und pnpm 11.18.0 bestand nach Ablauf der
+**Nachweis für `1845d1e` vom 20.11.2026:** Die frische Frozen-Installation
+unter Node 24.21.0 und pnpm 11.18.0 bestand nach Ablauf der
 Veröffentlichungswartefrist mit `--ignore-scripts` und
 `--strict-peer-dependencies`. Die Auflösung enthält keine Altersausnahme.
 Das anschließende `pnpm audit --json` meldete bei 315 Abhängigkeiten null
-bekannte Befunde. Die Abschlussqualifikation mit G3 und GitHub-Pflichtchecks
-auf dem finalen Commit steht für Issue #64 aus.
+bekannte Befunde aller Schweregrade. Der
+[GitHub-Lauf 44771149563](https://github.com/tomas-fuerl/SoSeBaMa/actions/runs/44771149563)
+bestätigt sieben erfolgreiche PR-Checks. DNS-Wechsel und Worker-Ausfall mit
+Wiederanlauf wurden in der lokalen DEV-Prüfung nachgewiesen. Für Issue #64
+steht der Nachweis für den Stand mit den nachfolgenden Review-Korrekturen aus.
 
 Die Parent-Selectoren gelten nur für die genannten Consumer-Versionen. Bei
 deren Updates muss der Override entweder entfallen, wenn Upstream sicher
@@ -511,11 +514,32 @@ entfernt die Zurückstellungslabel. Die Verwendbarkeit wird anschließend
 nach den Kriterien aus [ADR-0018](../architecture/decisions/ADR-0018-befristete-security-zurueckstellung.md)
 bewertet.
 
-Die Synchronisation läuft ausschließlich geplant oder nach einem Push auf den
-Default-Branch. Der PR-Workflow erhält keine schreibenden Issue-Rechte. Vor dem
-ersten schreibenden Lauf wird der Dry-run geprüft. Ein Issue wird erst nach
-einem erfolgreichen autoritativen Scan ohne den Befund geschlossen und bei
-erneutem Fund wieder geöffnet.
+Eine automatische Zurückstellung setzt ein offenes Issue, einen eindeutigen
+Scanner-Scope, die erfolgreiche Prüfung seiner bisherigen Quellen und einen
+fristgerechten nächsten Termin voraus. Ohne Fix rechnet die Synchronisation
+ab der dokumentierten letzten Risikoprüfung oder ab dem ersten Fund. Eine
+Quarantäne-Zurückstellung endet zum belegten Quarantäneende. Für `fix-ready`
+sind eine gemeldete Fixversion, das bestätigte Datum der Verwendbarkeit und
+ein Link zum Nachweis erforderlich. Die Synchronisation prüft diese Angaben
+auf Vollständigkeit. Die Registry-Quarantäne, Consumer-Kompatibilität und
+Frozen-Installation werden weiterhin fachlich qualifiziert. Ihre technische
+Automatisierung ist ein späterer Schritt.
+
+Die Synchronisation läuft geplant, nach einem Push oder manuell ausschließlich
+auf `main`, solange `main` der Default-Branch ist. Jeder Job verwendet den von
+GitHub ausgewiesenen Commit des Ereignisses. Vor dem ersten schreibenden Lauf
+wird der Dry-run geprüft. Ein Issue wird geschlossen, wenn alle früher
+meldenden Scanner erfolgreich erneut geprüft wurden und den Befund nicht mehr
+melden. Bei erneutem Fund wird dasselbe Issue wieder geöffnet.
+
+Der Workflow scannt das Lockfile einschließlich Entwicklungsabhängigkeiten.
+Ein Trivy-Bericht muss das erwartete Lockfile oder die konkrete Image-ID
+und die erwarteten über Paketlisten belegten Scanobjekte enthalten. Beim
+Backend gehören OS- und Node-Pakete dazu.
+Ein Bericht ohne Befunde kann vollständig sein, ein Bericht ohne die
+erwarteten Paketlisten bricht die Synchronisation ab. Für lokale CLI-Läufe
+erhalten Image-Berichte zusätzlich zum Quellnamen die erwartete Image-ID
+als vierten Teil von `--trivy=DATEI::MANIFEST::QUELLE::IMAGE_ID`.
 
 #### Synchronisation prüfen und aktivieren
 
@@ -541,7 +565,10 @@ und darf nicht ausgegeben oder in ein Issue kopiert werden.
    geändert, geöffnet oder geschlossen werden.
 4. Bei Scanner-, Parser-, Deduplizierungs- oder Berechtigungsfehlern stoppen.
    Nicht durch eine Ignore-, Alters- oder Dismissal-Ausnahme fortsetzen. Den
-   Bericht und das vorhandene Tracking zuerst korrigieren.
+   Bericht und das vorhandene Tracking zuerst korrigieren. Ein erfolgreicher
+   lokaler Abruf mit Benutzerrechten belegt nicht, dass der Job-Token die
+   [Dependabot-Alerts](https://docs.github.com/en/rest/dependabot/alerts#list-dependabot-alerts-for-a-repository)
+   lesen darf. Dafür ist der Dry-run auf GitHub erforderlich.
 5. Den Plan gegen Scannerstand, bestehende Issues, Ausschlusskriterien und
    Fristen aus ADR-0018 prüfen. Erst nach ausdrücklicher Ownerfreigabe die
    Actions-Repositoryvariable `SECURITY_DEBT_APPLY` exakt auf `true` setzen.

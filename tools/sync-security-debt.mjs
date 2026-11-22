@@ -24,7 +24,10 @@ import { pathToFileURL } from 'node:url';
  *   activeExploitation: string,
  *   patchStatus: string,
  *   nextReviewAt: Date | undefined,
+ *   reviewedAt: Date | undefined,
+ *   quarantineEndsAt: Date | undefined,
  *   usableFixAt: Date | undefined,
+ *   fixQualification: string | undefined,
  *   deferralReason: string | undefined,
  * }} Assessment
  * @typedef {{ status: string, deferred: boolean, deadline?: Date }} Classification
@@ -59,7 +62,7 @@ import { pathToFileURL } from 'node:url';
  *   apply: boolean,
  *   dependabot: boolean,
  *   pnpmAudit: string[],
- *   trivy: [path: string, manifest: string, source: string][],
+ *   trivy: [path: string, manifest: string, source: string, imageId?: string][],
  *   repository?: string,
  *   scanUrl?: string,
  *   help?: boolean,
@@ -87,6 +90,11 @@ const SEVERITY_ORDER = new Map([
   ['high', 2],
   ['critical', 3],
   ['unknown', 4],
+]);
+const TRIVY_IMAGE_MANIFESTS = new Map([
+  ['trivy-image-backend', 'containers/backend.Dockerfile'],
+  ['trivy-image-web', 'containers/web.Dockerfile'],
+  ['trivy-image-browser', 'containers/browser.Dockerfile'],
 ]);
 
 export class SecurityDebtReportError extends Error {
@@ -224,7 +232,12 @@ export function deduplicateFindings(inputs) {
     findings.set(key, {
       ...previous,
       severity: highestSeverity(previous.severity, finding.severity),
-      scope: previous.scope === finding.scope ? previous.scope : 'mixed',
+      scope:
+        previous.scope === 'unknown'
+          ? finding.scope
+          : finding.scope === 'unknown' || previous.scope === finding.scope
+            ? previous.scope
+            : 'mixed',
       classification:
         previous.classification === 'malware' || finding.classification === 'malware'
           ? 'malware'
@@ -264,6 +277,40 @@ export function parsePnpmAuditReport(report, manifestPath = 'pnpm-lock.yaml') {
     throw new SecurityDebtReportError('pnpm audit report must contain an advisories object.');
   }
   return parseNpmStyleVulnerabilities(report.vulnerabilities, manifestPath);
+}
+
+/** @param {unknown} report @returns {Finding[]} */
+export function parseCompletePnpmAuditReport(report) {
+  const metadata = isRecord(report) && isRecord(report.metadata) ? report.metadata : undefined;
+  const dependencies = metadata?.dependencies;
+  const total =
+    metadata?.totalDependencies ?? (isRecord(dependencies) ? dependencies.total : undefined);
+  const counts = metadata?.vulnerabilities;
+  if (
+    !isRecord(report) ||
+    report.error ||
+    typeof total !== 'number' ||
+    !Number.isInteger(total) ||
+    total <= 0 ||
+    !isRecord(counts)
+  ) {
+    throw new SecurityDebtReportError('pnpm audit report lacks a successful scan summary.');
+  }
+  const severityCounts = ['info', 'low', 'moderate', 'high', 'critical'].map(
+    (severity) => counts[severity],
+  );
+  if (
+    !severityCounts.every(
+      (count) => typeof count === 'number' && Number.isInteger(count) && count >= 0,
+    )
+  ) {
+    throw new SecurityDebtReportError('pnpm audit report has an incomplete severity summary.');
+  }
+  const findings = parsePnpmAuditReport(report);
+  if (findings.length === 0 && severityCounts.some((count) => count !== 0)) {
+    throw new SecurityDebtReportError('pnpm audit findings are missing from a nonempty summary.');
+  }
+  return findings;
 }
 
 /**
@@ -393,6 +440,54 @@ export function parseTrivyReport(report, manifestPath, source) {
 }
 
 /**
+ * @param {unknown} report
+ * @param {string} manifest
+ * @param {string} source
+ * @param {string} [imageId]
+ * @returns {Finding[]}
+ */
+export function parseCompleteTrivyReport(report, manifest, source, imageId) {
+  if (!isRecord(report) || report.SchemaVersion !== 2 || !Array.isArray(report.Results)) {
+    throw new SecurityDebtReportError(`Invalid Trivy report for ${source}.`);
+  }
+  const filesystem = source === 'trivy-fs';
+  const expectedManifest = filesystem ? 'pnpm-lock.yaml' : TRIVY_IMAGE_MANIFESTS.get(source);
+  if (
+    manifest !== expectedManifest ||
+    (filesystem ? imageId !== undefined : !/^sha256:[a-f\d]{64}$/u.test(imageId ?? '')) ||
+    report.ArtifactName !== (filesystem ? expectedManifest : imageId) ||
+    report.ArtifactType !== (filesystem ? 'filesystem' : 'container_image')
+  ) {
+    throw new SecurityDebtReportError(`Unexpected Trivy artifact for ${source}.`);
+  }
+  const inventories = report.Results.filter(
+    (result) => isRecord(result) && Array.isArray(result.Packages) && result.Packages.length > 0,
+  );
+  const expectedInventory = filesystem
+    ? inventories.some(
+        (result) =>
+          result.Class === 'lang-pkgs' && result.Type === 'pnpm' && result.Target === manifest,
+      )
+    : inventories.some(
+        (result) =>
+          result.Class === 'os-pkgs' &&
+          typeof result.Target === 'string' &&
+          result.Target.startsWith(`${imageId} (`),
+      );
+  const missingBackendPackages =
+    source === 'trivy-image-backend' &&
+    !inventories.some((result) => result.Class === 'lang-pkgs' && result.Type === 'node-pkg');
+  if (
+    !expectedInventory ||
+    missingBackendPackages ||
+    inventories.length !== report.Results.length
+  ) {
+    throw new SecurityDebtReportError(`Incomplete Trivy package coverage for ${source}.`);
+  }
+  return parseTrivyReport(report, manifest, source);
+}
+
+/**
  * Trivy often reports a CVE as VulnerabilityID while its reference list also
  * contains the GHSA used by pnpm and Dependabot. Prefer that alias so all
  * three sources converge on one identity when the report provides it.
@@ -475,11 +570,15 @@ function fieldValue(body, label) {
 function timestamp(value) {
   if (
     typeof value !== 'string' ||
-    !/T.+(?:Z|[+-]\d{2}:\d{2})$/u.test(value) ||
+    !/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/u.test(
+      value,
+    ) ||
     Number.isNaN(Date.parse(value))
   ) {
     return undefined;
   }
+  const day = value.slice(0, 10);
+  if (new Date(day).toISOString().slice(0, 10) !== day) return undefined;
   return new Date(value);
 }
 
@@ -490,7 +589,10 @@ export function parseAssessment(body) {
     activeExploitation: fieldValue(body, 'Aktive Ausnutzung') ?? 'Unbekannt',
     patchStatus: fieldValue(body, 'Patchstatus') ?? 'Unbekannt',
     nextReviewAt: timestamp(fieldValue(body, 'Nächster Prüfzeitpunkt')),
+    reviewedAt: timestamp(fieldValue(body, 'Letzte Risikoprüfung')),
+    quarantineEndsAt: timestamp(fieldValue(body, 'Ende der Veröffentlichungsquarantäne')),
     usableFixAt: timestamp(fieldValue(body, 'Verwendbarer Fix seit')),
+    fixQualification: fieldValue(body, 'Nachweis zur Fixqualifikation'),
     deferralReason: fieldValue(body, 'Grund der Zurückstellung und Schutzmaßnahmen'),
   };
 }
@@ -528,9 +630,10 @@ export function remediationDeadline(severity, usableFixAt) {
  * @param {unknown} findingInput
  * @param {Partial<Assessment> | undefined} assessmentInput
  * @param {Date | string | number} [nowInput]
+ * @param {Date} [firstSeen]
  * @returns {Classification}
  */
-export function classifyFinding(findingInput, assessmentInput, nowInput = new Date()) {
+export function classifyFinding(findingInput, assessmentInput, nowInput = new Date(), firstSeen) {
   const finding = canonicalFinding(findingInput);
   const assessment = assessmentInput ?? {};
   const now = nowInput instanceof Date ? nowInput : new Date(nowInput);
@@ -543,7 +646,13 @@ export function classifyFinding(findingInput, assessmentInput, nowInput = new Da
     (finding.severity === 'high' && assessment.reachability === 'Nachweislich erreichbar');
   if (excluded) return { status: 'owner-decision-required', deferred: false };
 
-  if (assessment.patchStatus === 'Fix tatsächlich verwendbar' && assessment.usableFixAt) {
+  if (
+    assessment.patchStatus === 'Fix tatsächlich verwendbar' &&
+    finding.fixedVersions.length > 0 &&
+    assessment.usableFixAt &&
+    assessment.usableFixAt <= now &&
+    /^https:\/\/\S+$/u.test(assessment.fixQualification ?? '')
+  ) {
     return {
       status: 'fix-ready',
       deferred: false,
@@ -554,7 +663,10 @@ export function classifyFinding(findingInput, assessmentInput, nowInput = new Da
   let status = 'needs-assessment';
   if (assessment.patchStatus === 'Kein Fix veröffentlicht' && finding.fixedVersions.length === 0) {
     status = 'fix-unavailable';
-  } else if (assessment.patchStatus === 'Fix veröffentlicht, Veröffentlichungsquarantäne aktiv') {
+  } else if (
+    assessment.patchStatus === 'Fix veröffentlicht, Veröffentlichungsquarantäne aktiv' &&
+    finding.fixedVersions.length > 0
+  ) {
     status = 'fix-quarantined';
   }
 
@@ -563,14 +675,25 @@ export function classifyFinding(findingInput, assessmentInput, nowInput = new Da
     assessment.reachability === 'Nicht nachgewiesen oder wirksam begrenzt';
   const reason = optionalString(assessment.deferralReason);
   const hasReason = Boolean(reason && !['Noch zu bewerten.', '_No response_'].includes(reason));
-  const reviewIsCurrent = assessment.nextReviewAt instanceof Date && assessment.nextReviewAt > now;
+  const reviewFrom = assessment.reviewedAt ?? firstSeen ?? now;
+  const nextReview = assessment.nextReviewAt;
+  const reviewInTime =
+    nextReview &&
+    nextReview > now &&
+    reviewFrom <= now &&
+    (!firstSeen || reviewFrom >= firstSeen) &&
+    (status === 'fix-quarantined'
+      ? nextReview.getTime() === assessment.quarantineEndsAt?.getTime()
+      : nextReview <= remediationDeadline(finding.severity, reviewFrom));
   return {
     status,
-    deferred:
+    deferred: Boolean(
       ['fix-unavailable', 'fix-quarantined'].includes(status) &&
+      ['runtime', 'development', 'build-or-container'].includes(finding.scope) &&
       riskAssessed &&
       hasReason &&
-      reviewIsCurrent,
+      reviewInTime,
+    ),
   };
 }
 
@@ -622,11 +745,10 @@ function displayList(values, fallback = 'nicht gemeldet') {
  * @param {Finding} finding
  * @param {FindingMetadata} metadata
  * @param {string | undefined} scanUrl
- * @param {Partial<Assessment>} assessment
+ * @param {Classification} classification
  * @returns {string}
  */
-function automaticBlock(key, finding, metadata, scanUrl, assessment) {
-  const classification = classifyFinding(finding, assessment, new Date(metadata.lastSeen));
+function automaticBlock(key, finding, metadata, scanUrl, classification) {
   const deadline = classification.deadline?.toISOString() ?? 'noch nicht gestartet';
   const references = uniqueStrings([...finding.references, ...(scanUrl ? [scanUrl] : [])]);
   const data = JSON.stringify(metadata);
@@ -676,7 +798,19 @@ Unbekannt
 
 Unbekannt
 
+### Letzte Risikoprüfung
+
+Unbekannt
+
+### Ende der Veröffentlichungsquarantäne
+
+Unbekannt
+
 ### Verwendbarer Fix seit
+
+Unbekannt
+
+### Nachweis zur Fixqualifikation
 
 Unbekannt
 
@@ -776,8 +910,14 @@ export function planSynchronization(findingsInput, issuesInput, checkedSourcesIn
       lastSeen: now.toISOString(),
     };
     const assessment = parseAssessment(issue?.body ?? '');
-    const classification = classifyFinding(finding, assessment, now);
-    const block = automaticBlock(key, finding, metadata, scanUrl, assessment);
+    const firstSeen = timestamp(metadata.firstSeen);
+    const classification = classifyFinding(finding, assessment, now, firstSeen);
+    classification.deferred &&= Boolean(
+      issue?.state === 'open' &&
+      firstSeen &&
+      metadata.sources.every((source) => checkedSources.has(source)),
+    );
+    const block = automaticBlock(key, finding, metadata, scanUrl, classification);
     const body = replaceAutomaticBlock(issue?.body, block);
     const existingLabels = Array.isArray(issue?.labels)
       ? issue.labels
@@ -895,7 +1035,7 @@ function usage() {
 Usage:
   node tools/sync-security-debt.mjs [--apply] [--dependabot]
     [--pnpm-audit=PATH]
-    [--trivy=PATH::MANIFEST::SOURCE]
+    [--trivy=PATH::MANIFEST::SOURCE[::IMAGE_ID]]
     [--repository=OWNER/REPOSITORY] [--scan-url=URL]
 
 Default mode is a read-only dry-run. --apply requires GITHUB_TOKEN.
@@ -916,9 +1056,9 @@ function parseArguments(arguments_) {
     else if (argument.startsWith('--pnpm-audit=')) options.pnpmAudit.push(argument.slice(13));
     else if (argument.startsWith('--trivy=')) {
       const parts = argument.slice(8).split('::');
-      if (parts.length !== 3 || parts.some((part) => part === ''))
+      if (![3, 4].includes(parts.length) || parts.some((part) => part === ''))
         throw new SecurityDebtReportError('Invalid --trivy argument.');
-      options.trivy.push(/** @type {[string, string, string]} */ (parts));
+      options.trivy.push(/** @type {[string, string, string, string?]} */ (parts));
     } else if (argument.startsWith('--repository=')) options.repository = argument.slice(13);
     else if (argument.startsWith('--scan-url=')) options.scanUrl = argument.slice(11);
     else if (argument === '--help' || argument === '-h') options.help = true;
@@ -962,17 +1102,32 @@ async function runCli() {
     console.error('--apply requires GITHUB_TOKEN.');
     return 2;
   }
+  if (
+    options.apply &&
+    (process.env.GITHUB_ACTIONS !== 'true' ||
+      process.env.GITHUB_REPOSITORY !== repository ||
+      process.env.GITHUB_REF !== 'refs/heads/main' ||
+      process.env.GITHUB_WORKFLOW_REF !==
+        `${repository}/.github/workflows/security-debt.yml@refs/heads/main`)
+  ) {
+    console.error('--apply requires the trusted main-branch Security-debt workflow.');
+    return 2;
+  }
 
   try {
     /** @type {Finding[]} */
     const findings = [];
     const checkedSources = new Set();
     for (const path of options.pnpmAudit) {
-      findings.push(...parsePnpmAuditReport(await readJson(path)));
+      if (checkedSources.has('pnpm-audit'))
+        throw new SecurityDebtReportError('Duplicate scanner source: pnpm-audit.');
+      findings.push(...parseCompletePnpmAuditReport(await readJson(path)));
       checkedSources.add('pnpm-audit');
     }
-    for (const [path, manifest, source] of options.trivy) {
-      findings.push(...parseTrivyReport(await readJson(path), manifest, source));
+    for (const [path, manifest, source, imageId] of options.trivy) {
+      if (checkedSources.has(source))
+        throw new SecurityDebtReportError(`Duplicate scanner source: ${source}.`);
+      findings.push(...parseCompleteTrivyReport(await readJson(path), manifest, source, imageId));
       checkedSources.add(source);
     }
     if (options.dependabot) {

@@ -160,11 +160,31 @@ body:
       required: true
 
   - type: input
+    id: reviewed_at
+    attributes:
+      label: Letzte Risikoprüfung
+      description: RFC-3339-Zeitpunkt der dokumentierten erneuten Risikoprüfung.
+      placeholder: 2026-11-11T10:00:00+01:00
+
+  - type: input
+    id: quarantine_ends_at
+    attributes:
+      label: Ende der Veröffentlichungsquarantäne
+      description: Belegter RFC-3339-Zeitpunkt, falls der Fix in Quarantäne ist.
+      placeholder: 2026-11-12T00:15:00+01:00
+
+  - type: input
     id: usable_fix_at
     attributes:
       label: Verwendbarer Fix seit
       description: RFC-3339-Zeitpunkt oder leer, solange der Fix nicht tatsächlich verwendbar ist.
       placeholder: 2026-11-12T00:15:00+01:00
+
+  - type: input
+    id: fix_qualification
+    attributes:
+      label: Nachweis zur Fixqualifikation
+      description: HTTPS-Link auf dokumentierte Quarantäne-, Kompatibilitäts- und Frozen-Prüfung.
 
   - type: textarea
     id: deferral_reason
