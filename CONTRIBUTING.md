@@ -18,8 +18,9 @@ Pfade oder andere lokale Infrastrukturwerte enthalten.
 
 ### Branch-Namensschema
 
-Branch-Namen verwenden ein passendes Präfix und eine kurze Beschreibung in
-Kleinbuchstaben, zum Beispiel:
+Für Arbeitspakete gilt `ap-XX/<kurze-beschreibung>` gemäß
+[AGENTS.md](AGENTS.md#git--und-github-grenzen). Für andere Beiträge gelten kurze
+Branch-Namen in Kleinbuchstaben, zum Beispiel:
 
 - `feat/` für neue fachliche Funktionen,
 - `fix/` für Fehlerkorrekturen,

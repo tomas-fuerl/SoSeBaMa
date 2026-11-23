@@ -1,0 +1,124 @@
+name: Decision Issue
+description:
+  Eine neue Entscheidung außerhalb genehmigter Anforderungen oder angenommener ADRs vorbereiten
+title: 'decision: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Dieses Formular dient neuen Entscheidungen. Bestehende Anforderungen und angenommene ADRs bleiben verbindlich.
+        Neue fachliche Anforderungen gehören in ein Feature Proposal. Keine Secrets, privaten Infrastrukturwerte oder produktiven Daten eintragen.
+
+  - type: input
+    id: work_package
+    attributes:
+      label: Betroffenes Arbeitspaket
+      placeholder: AP-XX und zugehöriges Issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Konkrete Entscheidungsfrage und Ausgangslage
+      description: Frage, Anlass und betroffene Grenzen beschreiben.
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Bestehende verbindliche Anforderungen
+      description: Genehmigte Vorgaben benennen und erklären, welche Frage offen bleibt.
+    validations:
+      required: true
+
+  - type: textarea
+    id: analysis
+    attributes:
+      label: Technische Analyse und Entscheidungskriterien
+      description: Nachweise, Unsicherheiten und messbare Kriterien nennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Optionen und Abwägung
+      description:
+        Mindestens zwei realistische Optionen mit Vor- und Nachteilen anhand derselben Kriterien
+        bewerten. Den Status quo einbeziehen, soweit sinnvoll.
+    validations:
+      required: true
+
+  - type: textarea
+    id: security_privacy
+    attributes:
+      label: Sicherheits- und Datenschutzfolgen
+      description: Auswirkungen und Schutzmaßnahmen je Option benennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: operations
+    attributes:
+      label: Kosten- und Betriebsfolgen
+      description: Laufende Kosten, Lizenzen, Betrieb und DEV, TST und PRD berücksichtigen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Migration und Rückbau
+    validations:
+      required: true
+
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Empfehlung von Codex
+      description: Bevorzugte Option, Gründe, Bedingungen und verbleibende Unsicherheit benennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Auswirkungen bei Nichtentscheidung und blockierte Aufgaben
+      description: Folgen sowie zugehörige Issues oder PRs angeben.
+    validations:
+      required: true
+
+  - type: textarea
+    id: independent
+    attributes:
+      label: Unabhängig fortsetzbare Aufgaben
+      description: Zulässige Aufgaben und ihre Abgrenzung benennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Referenzen auf ADRs, Issues und PRs
+    validations:
+      required: true
+
+  - type: textarea
+    id: owner_decision
+    attributes:
+      label: Verbindliche Eigentümerentscheidung
+      description:
+        Initialen Status übernehmen. Der Eigentümer dokumentiert die Entscheidung separat. Codex
+        verlinkt ausschließlich den verifizierten Nachweis und die Umsetzung.
+      value: Entscheidung ausstehend
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Beispiel für eine Eigentümeraktion: `FREIGEGEBEN: Option B im folgenden Scope: <Scope>. Es gelten: <Bedingungen>.`
+        Der Eigentümer hält den genehmigten Inhalt in der Aktion selbst fest oder verlinkt eine unveränderliche Fassung. Änderungen daran benötigen eine neue Entscheidung.
+        Der Wortlaut und Labels allein reichen nicht. Vor Umsetzung prüft Codex die menschliche Eigentümeraktion gemäß Projekt-Governance. Eine gemeinsam genutzte Identität ohne eindeutigen Nachweis ist ein Sicherheitsblocker. Codex markiert das Issue nicht selbst als genehmigt.

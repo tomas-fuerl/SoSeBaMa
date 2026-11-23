@@ -1,0 +1,100 @@
+name: Feature Proposal
+description: Eine neue fachliche Anforderung außerhalb des genehmigten Scopes vorschlagen
+title: 'feature proposal: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Dieses Formular sammelt fachliche Vorschläge. Die Umsetzung und Aufnahme in die verbindliche Roadmap setzen eine nachweisbare Eigentümerentscheidung voraus.
+        Keine Secrets, privaten Infrastrukturwerte oder produktiven Daten eintragen.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem, fachlicher Nutzen und betroffene Benutzergruppen
+      description:
+        Ausgangslage, gewünschtes fachliches Ergebnis und konkrete Zielgruppen beschreiben.
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Bestehende Produktanforderungen
+      description: Betroffene genehmigte Anforderungen und ihre Kennungen nennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Neu vorgeschlagene Anforderungen
+      description: Neuen Scope, Nicht-Ziele und überprüfbares fachliches Verhalten benennen.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Vorgeschlagene Einordnung
+      options:
+        - MVP
+        - Post-MVP
+    validations:
+      required: true
+
+  - type: textarea
+    id: domain
+    attributes:
+      label: Auswirkungen auf bestehende Fachmodelle
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture_security
+    attributes:
+      label: Architektur-, Security- und Datenschutzfolgen
+      description: Gegebenenfalls offene Entscheidungen oder ADR-Bedarf verlinken.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Abhängigkeiten und Alternativen
+      description: Betroffene Arbeitspakete, Voraussetzungen und realistische Alternativen nennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: estimate
+    attributes:
+      label: Aufwand und Unsicherheit
+      description: Schätzung, Annahmen und wesentliche Unbekannte benennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Empfehlung von Codex
+      description: Fachliche Einordnung und Gründe für die vorgeschlagene Option nennen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: owner_decision
+    attributes:
+      label: Explizite Eigentümerentscheidung
+      description:
+        Initialen Status übernehmen. Der Eigentümer dokumentiert Freigabe, Scope und Bedingungen in
+        seiner Aktion oder verlinkt eine unveränderliche Fassung. Codex verlinkt den verifizierten
+        Nachweis.
+      value: Entscheidung ausstehend
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Codex bereitet die Entscheidung vor. Vor Roadmap-Änderung oder Implementierung gilt die Identitäts- und Berechtigungsprüfung aus der Projekt-Governance.
