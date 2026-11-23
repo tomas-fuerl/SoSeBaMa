@@ -119,5 +119,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        Beispiel für eine Eigentümeraktion: `FREIGEGEBEN: Option B unter den im Issue dokumentierten Bedingungen.`
+        Beispiel für eine Eigentümeraktion: `FREIGEGEBEN: Option B im folgenden Scope: <Scope>. Es gelten: <Bedingungen>.`
+        Der Eigentümer hält den genehmigten Inhalt in der Aktion selbst fest oder verlinkt eine unveränderliche Fassung. Änderungen daran benötigen eine neue Entscheidung.
         Der Wortlaut und Labels allein reichen nicht. Vor Umsetzung prüft Codex die menschliche Eigentümeraktion gemäß Projekt-Governance. Eine gemeinsam genutzte Identität ohne eindeutigen Nachweis ist ein Sicherheitsblocker. Codex markiert das Issue nicht selbst als genehmigt.

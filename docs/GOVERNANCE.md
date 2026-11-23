@@ -152,9 +152,13 @@ Vor einer Aktivierung legt der Projekteigentümer einen innerhalb von GitHub
 nachprüfbaren Nachweisweg fest. Codex prüft die von GitHub ausgewiesene
 stabile Akteur-ID gegen die bestätigte Eigentümeridentität und deren
 Berechtigung für die konkrete Entscheidung. Bewertet werden der verlinkte
-Originalnachweis, der genehmigte Scope und seine Bedingungen. Der verwendete
-Nachweisweg muss Codex technisch daran hindern, die menschliche
-Eigentümeraktion selbst zu erzeugen oder zu ändern. Ein getrenntes,
+Originalnachweis, der genehmigte Scope und seine Bedingungen. Die Aktion
+nennt die genehmigte Option, den Scope und die Bedingungen selbst oder
+verweist auf eine unveränderliche, eindeutig bezeichnete Fassung. Bei
+einer inhaltlichen Änderung ist für die geänderte Fassung eine neue
+Eigentümerentscheidung erforderlich. Das gilt auch für Umfang und
+Laufzeit der Rahmenfreigabe. Der Nachweisweg muss Codex technisch daran
+hindern, die menschliche Eigentümeraktion selbst zu erzeugen oder zu ändern. Ein getrenntes,
 eingeschränktes Codex-Schreibkonto und ein nur dem Eigentümer zugänglicher
 Freigabezugang sind ein möglicher Nachweisweg.
 
@@ -173,10 +177,12 @@ in aktiver Codex-Bearbeitung oder unter laufender Codex-Reviewbetreuung sein,
 einschließlich Drafts und solcher, die auf CI oder Eigentümerreview warten.
 Codex macht die Betreuung im PR kenntlich. Dependabot- und fremde PRs zählen,
 sobald Codex sie aktiv zur Bearbeitung übernimmt. Unklare Zuordnungen sind
-vor dem Eröffnen eines weiteren PRs zu klären. Ohne eine nachprüfbare,
-vom Eigentümer festgelegte Koordination paralleler Threads eröffnet nur ein
-Codex-Thread neue Entwicklungs-PRs für dieses Repository. Das Limit wird
-unmittelbar vor dem Eröffnen oder Wiederaufnehmen eines PRs geprüft.
+vor der nächsten Belegung eines Platzes zu klären. Ohne eine nachprüfbare,
+vom Eigentümer festgelegte Koordination paralleler Threads belegt nur ein
+benannter Codex-Thread Plätze für dieses Repository. Unmittelbar vor dem
+Eröffnen, Wiederaufnehmen oder Übernehmen eines PRs prüft derselbe Thread
+das Limit und dokumentiert die Belegung im PR, bevor er den nächsten Platz
+vergeben kann.
 
 Am Limit bearbeitet Codex bestehende PRs und deren Reviews oder führt
 unabhängige Untersuchungen ohne weiteren Implementierungs-PR durch. Der
