@@ -68,11 +68,28 @@ Codex erstellt oder aktualisiert den Draft-PR und füllt den
 enthält auch ausstehende Prüfungen oder Entscheidungen, Restrisiken und
 genau eine Mergeempfehlung für den aktuellen PR-Head und die aktuelle Basis.
 Ändert sich der Head oder die Basis, sind betroffene Nachweise und die
-Empfehlung für die neue Kombination erneut zu prüfen. Bis alle Voraussetzungen einer positiven Empfehlung
-belegt sind, bleibt die Empfehlung entsprechend negativ oder verweist
-auf die ausstehende Eigentümerentscheidung. Der PR bleibt bis zur
+Empfehlung für die neue Kombination erneut zu prüfen. Bis alle Voraussetzungen
+belegt sind, bleibt die Empfehlung negativ oder verweist auf die
+ausstehende Eigentümerentscheidung. Der PR bleibt bis zur
 Eigentümeraktion im Draft-Status, soweit keine ausdrückliche Repository-Regel
 etwas anderes zulässt.
+
+Wenn `main` vor dem Merge weiterläuft und für die neue Kombination
+kein gültiger CI-Nachweis vorliegt:
+
+1. Den bisherigen Nachweis als veraltet kennzeichnen.
+2. Mit `git fetch origin main` die Basis aktualisieren und im sauberen,
+   autorisierten Arbeitsbranch mit `git merge origin/main` integrieren.
+   Konflikte im Arbeitsbranch lösen oder den Blocker im PR dokumentieren.
+3. Betroffene lokale Prüfungen wiederholen und den Arbeitsbranch mit
+   normalem Push aktualisieren. Dadurch startet PR-CI auf dem neuen
+   Kandidaten. Eine Wiederholung eines alten Laufs prüft dessen
+   ursprünglichen Stand.
+4. In GitHub den Lauf für den neuen Head und die im Checkout geprüfte
+   Kombination verifizieren. Bei einem synthetischen Merge-Commit SHA und
+   Eltern abgleichen, etwa über `refs/pull/<PR-NUMMER>/merge` und die
+   Checkout-Ausgabe des Laufs. Die Eltern müssen mit aktueller Basis und
+   Head übereinstimmen. Danach den PR-Bericht aktualisieren.
 
 ## F. Eigentümeraktion
 

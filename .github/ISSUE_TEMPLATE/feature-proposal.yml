@@ -87,8 +87,9 @@ body:
     attributes:
       label: Explizite Eigentümerentscheidung
       description:
-        Initialen Status übernehmen. Der Eigentümer dokumentiert Freigabe, Scope und Bedingungen
-        separat. Codex verlinkt ausschließlich den verifizierten Nachweis.
+        Initialen Status übernehmen. Der Eigentümer dokumentiert Freigabe, Scope und Bedingungen in
+        seiner Aktion oder verlinkt eine unveränderliche Fassung. Codex verlinkt den verifizierten
+        Nachweis.
       value: Entscheidung ausstehend
     validations:
       required: true
