@@ -1,41 +1,77 @@
+# Codex-Entwicklungsreport
+
+<!-- Bei anderen Beiträgen gelten die vorhandenen PR-Pflichtbereiche ebenfalls. -->
+
 ## Ziel
 
-<!-- Issue und genau ein beobachtbares Ergebnis nennen. -->
+<!-- Genau ein beobachtbares Ergebnis nennen. -->
 
-Teil von #
+- Zugehöriges Issue:
+- Arbeitspaket:
+- Ziel:
+- Umgesetzter Scope:
+- Nicht-Ziele:
+- Branch und Basis (Ref und Basis-SHA):
+- Geprüfter Commit-SHA:
+- Aktive Codex-Betreuung (ja oder nein, mit Grund bei Beendigung):
 
 ## Änderungen
 
-<!-- Geänderten Teilschnitt und Wirkung knapp und vollständig nennen. -->
+- Implementierte Änderungen:
+- Betroffene Dateien oder Module:
+- Erfüllte Akzeptanzkriterien:
+- Nicht erfüllte Akzeptanzkriterien:
 
 ## Verifikation
 
 - [ ] `git status --short` und vollständigen Diff geprüft
 - [ ] `git diff --check` ohne Befund
-- [ ] relevante Format-, Lint-, Typ-, Test- und Build-Prüfungen bestanden
+- [ ] Relevante Format-, Lint-, Typ-, Test- und Build-Prüfungen bestanden
 - [ ] Dokumentationslinks geprüft, falls Dokumentation geändert wurde
-- [ ] keine Secrets oder privaten Infrastrukturwerte enthalten
+- [ ] Keine Secrets oder privaten Infrastrukturwerte enthalten
 
-Ausgeführte Prüfungen und Ergebnisse:
+| Prüfart | Tatsächlich ausgeführter Befehl oder Nachweisweg | Ergebnis | Commit-SHA | CI- oder Testreport |
+| --- | --- | --- | --- | --- |
+| | | | | |
 
-<!-- Nicht ausgeführte relevante Prüfungen mit Grund, Risiko und Nachholung -->
-<!-- nennen. Nicht betroffene Prüfarten müssen nicht einzeln aufgezählt werden. -->
+<!-- Je relevanter Prüfung eine Zeile. Ausstehende und nicht ausführbare
+Prüfungen mit Grund, Auswirkung und geplantem Nachweis erfassen. Nur
+tatsächlich bestandene Prüfungen als bestanden ausweisen. -->
+
+## Reviewprotokoll
+
+- Codex-Selbstreview (SHA und Umfang):
+- Unabhängiges Review (tatsächliche Herkunft, SHA und Nachweis):
+- Automatisierte Prüfungen (Verweis auf Prüfnachweise):
+- Eigentümerreview (GitHub-Review und SHA oder ausstehend):
+
+<!-- Fehlende Reviews ausdrücklich ausweisen. Eigene Prüfung als
+Selbstreview erfassen. Im Finding dessen Quelle benennen. -->
+
+| ID | Schweregrad | Finding | Fundstelle | Maßnahme | Nachprüfung | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |
 
 ## Auswirkungen
 
-<!-- Je Zeile konkret antworten. "Nicht betroffen" ist mit kurzem Grund -->
-<!-- zulässig. Neue Entscheidungen oder Ausnahmen benötigen ADR bzw. -->
-<!-- dokumentierte Eigentümerentscheidung. -->
+<!-- Je Zeile konkret antworten. Fehlende Auswirkungen kurz begründen.
+Neue Entscheidungen oder Ausnahmen benötigen ADR oder dokumentierte
+Eigentümerentscheidung nach Projekt-Governance. -->
 
 - Benutzer und Entwickler:
+- Fachliche Anforderungen:
 - Security und Datenschutz:
-- Daten, Verträge und Migrationen:
+- Öffentliche Verträge:
+- Daten und Migrationen:
 - DEV, TST und PRD:
-- Beobachtbarkeit und Betrieb:
+- Betrieb und Observability:
+- Lizenzen und Abhängigkeiten:
+- Rückbaufolgen (siehe Rollback):
 
 ## Reuse und Entscheidungen
 
 - Wiederverwendete oder erweiterte Lösung:
+- Suchumfang und geprüfte Alternativen:
 - Neue Abhängigkeiten, Skripte oder Automatisierungen:
 - Neue oder geänderte Entscheidungen und Ausnahmen:
 
@@ -49,4 +85,28 @@ Ausgeführte Prüfungen und Ergebnisse:
 
 ## Verbleibende Risiken
 
-<!-- Offene Annahmen, Blocker und bewusst spätere Nachweise nennen. -->
+- Offene Findings und Annahmen:
+- Fehlende Verifikationen:
+- Bekannte Abhängigkeiten und Integrationssperren:
+- Ausstehende Eigentümerentscheidungen:
+- Spätere Abnahmen:
+
+## Mergeempfehlung
+
+- Kennung:
+- Begründung und geprüfter SHA:
+
+<!-- Genau eine Kennung eintragen:
+MERGE_EMPFOHLEN nur, wenn alle für den PR-Scope verbindlichen
+Akzeptanzkriterien, alle erforderlichen Prüfungen einschließlich GitHub-Checks
+auf dem geprüften Kandidaten und sämtliche Abhängigkeits- und Integrationssperren
+erfüllt sind. Es gibt keine offenen blockierenden Findings und keine ungelöste
+Eigentümerentscheidung, die die Integration verhindert.
+OWNER_ENTSCHEIDUNG_ERFORDERLICH, wenn eine ausstehende Entscheidung des
+Eigentümers die Integration blockiert. Technische Blocker weiterhin offenlegen.
+NICHT_MERGEN in den übrigen blockierten Fällen, etwa bei ausstehenden oder
+fehlgeschlagenen Checks. Ein Teilnachweis ist keine vollständige Abnahme.
+Betroffene Prüfungen und Empfehlung nach jedem relevanten Commit auf dem
+neuen SHA wiederholen. Der PR bleibt bis zur Eigentümeraktion ein Draft,
+soweit keine ausdrückliche Repository-Regel etwas anderes zulässt.
+Die Empfehlung erteilt keine Merge-Freigabe. Nur der Eigentümer mergt. -->

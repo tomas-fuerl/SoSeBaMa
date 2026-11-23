@@ -1,64 +1,120 @@
 # AI-First-Workflow
 
-## Ziel
+Der Projekteigentümer verantwortet Anforderungen, Entscheidungen, Endprüfung
+und Merge. Codex wählt, implementiert und prüft freigegebene technische
+Arbeit. [Modell C](GOVERNANCE.md#codex-autonomiemodell-c) setzt eine aktive
+Rahmenfreigabe voraus. Bis dahin gilt das Einzelfreigabeverfahren aus
+[AGENTS.md](../AGENTS.md). GitHub ist der einzige verbindliche Projektkanal.
+Die erforderlichen Informationen für die Endprüfung stehen in Issue und PR.
 
-AI-First bedeutet, Assistenzsysteme bewusst für Analyse, Umsetzung,
-Dokumentation und Prüfung einzusetzen. Es bedeutet nicht, Verantwortung oder
-Review an ein Modell abzugeben. Eine benannte Person bleibt für Scope,
-Entscheidungen und Freigabe verantwortlich.
+## A. Goal starten
 
-## Verbindliche Rollen
+Der Projekteigentümer startet das [Codex Goal](CODEX-GOAL.md) oder setzt es
+fort. Codex gleicht `main`, offene Issues und PRs, Eigentümerentscheidungen,
+CI- und Prüfergebnisse, Abhängigkeiten und Integrationssperren mit der
+[Roadmap](architecture/IMPLEMENTATION-ROADMAP.md) ab. Vor autonomer Arbeit
+prüft Codex die Gültigkeit der Rahmenfreigabe.
 
-- Tomas verantwortet Anforderungen, Freigaben, manuelle Endprüfung und Merge.
-- ChatGPT Web strukturiert Anforderungen und prüft Arbeitsergebnisse read-only.
-- Codex setzt begrenzte Arbeitspakete um, prüft und dokumentiert sie, darf aber
-  keinen Pull Request mergen.
+## B. Arbeit auswählen
 
-## End-to-End-Standardablauf
+1. Bearbeitbare Sicherheits- und Integrationsblocker zuerst behandeln.
+2. Technisch notwendige Voraussetzungen als Nächstes bearbeiten.
+3. Danach die nächste ausführbare Roadmap-Aufgabe wählen.
 
-1. Tomas definiert die Anforderung gemeinsam mit ChatGPT Web.
-2. Die Anforderung wird als GitHub-Issue mit eindeutigem Scope und messbaren
-   Akzeptanzkriterien angelegt.
-3. ChatGPT erstellt daraus ein begrenztes Codex-Arbeitspaket ohne verdeckte
-   Erweiterung des Issue-Scopes.
-4. Codex arbeitet auf einem eigenen Feature-Branch, niemals direkt auf `main`.
-5. Codex führt die vorgeschriebenen Prüfungen tatsächlich aus.
-6. Codex erstellt oder aktualisiert ein lokales, durch `.gitignore`
-   ausgeschlossenes `TASK-RESULT.md`.
-7. Codex committet und pusht ausschließlich bei entsprechendem Auftrag.
-8. Codex erstellt bei entsprechendem Auftrag einen Draft Pull Request.
-9. ChatGPT prüft Issue, Diff, Prüfnachweise, Dokumentation und Security
-   ausschließlich read-only.
-10. Codex bearbeitet erforderliche Findings auf demselben Feature-Branch.
-11. Tomas führt die manuelle Endprüfung durch.
-12. Tomas führt ausschließlich einen Squash Merge aus.
-13. Codex und ChatGPT dürfen den Pull Request nicht mergen.
-14. Releases und Deployments benötigen separate, ausdrücklich freigegebene
-    Arbeitspakete.
+Scope, Freigaben, maximal drei aktive Codex-PRs und bestehende
+Integrationssperren begrenzen die Auswahl. Entwicklung und Review auf einem
+isolierten Branch setzen eine bestehende Freigabe für diese Arbeit voraus.
+Eine Integrationssperre bleibt bis zu ihrem dokumentierten Wegfall wirksam.
+Die Voraussetzungen und kumulativen Abnahmen der Roadmap gelten weiter.
 
-## Sichere Kontextgrenzen
+Codex hält neue Entscheidungsfragen im
+[Decision Issue](../.github/ISSUE_TEMPLATE/decision.yml) fest. Neue
+fachliche Anforderungen außerhalb des freigegebenen Scopes gehören in ein
+[Feature Proposal](../.github/ISSUE_TEMPLATE/feature-proposal.yml).
+Ein Vorschlag ändert die Roadmap erst durch eine dokumentierte
+Eigentümerentscheidung und die entsprechende Aktualisierung. Bestehende
+Security-Debt-Fälle verwenden den [etablierten Prozess](development/SUPPLY-CHAIN-CHECKS.md)
+und das [Security-Debt-Formular](../.github/ISSUE_TEMPLATE/security-debt.yml).
+Blocker werden mit Grund, Abhängigkeit und nächstem möglichen Schritt
+festgehalten. Unabhängige freigegebene Arbeit geht weiter.
 
-Assistenzsysteme erhalten niemals:
+## C. Implementieren
 
-- Secrets oder Zugangsdaten von der Synology,
-- Inhalte realer Environment- oder Authentifizierungsdateien,
-- produktive Daten,
-- reale interne Domains, IP-Adressen, Hostnamen oder Infrastrukturpfade,
-- vertrauliche Sicherheitsmeldungen außerhalb des dafür freigegebenen Wegs.
+Codex hält das zugeordnete Issue aktuell und arbeitet auf einem eigenen
+Branch vom aktuellen `main`. Pro Issue ist ein enger, überprüfbarer Scope
+mit messbaren Akzeptanzkriterien festgelegt. Die Regeln zu Security,
+Dokumentation, Tests und [Reuse-first](REUSE-FIRST.md) gelten weiter.
+Codex erstellt oder aktualisiert das lokale ignorierte `TASK-RESULT.md`.
 
-Beispiele verwenden deutlich erkennbare Platzhalter. Ausgaben und Diffs werden
-vor Veröffentlichung auf versehentlich übernommene Werte geprüft.
+Das Repository ist öffentlich. Codex hält Secrets, Zugangsdaten, reale
+Environment- und Authentifizierungsdateien, produktive Daten, private
+Infrastrukturwerte und vertrauliche Sicherheitsmeldungen aus GitHub,
+Doku, Diffs und Prüfausgaben heraus. Für Beispiele dienen neutrale
+Platzhalter. DEV, TST und PRD bleiben getrennt.
 
-## Qualitätsregeln
+## D. Prüfen
 
-- Generierte Inhalte werden wie fremde Beiträge vollständig reviewed.
-- Prüfungen werden tatsächlich ausgeführt und nicht nur vorgeschlagen.
-- Fehlende Evidenz wird als offene Annahme benannt.
-- Keine Technologie wird allein aufgrund eines Modellvorschlags festgelegt.
-- Sicherheitskritische oder irreversible Schritte benötigen eine bewusste
-  menschliche Freigabe.
-- Automatisierung wird nicht dupliziert, nur weil Neuerstellung schneller
-  erscheint.
+Codex führt die relevanten Prüfungen aus und dokumentiert Befehl oder
+Nachweisweg, Ergebnis und Commit-SHA. Ausstehende oder nicht ausführbare
+Prüfungen erhalten eine Begründung. Codex prüft Issue, Diff, Tests,
+Dokumentation und Security im strukturierten Selbstreview und behebt
+blockierende Findings vor einer positiven Mergeempfehlung. Ein durchgeführtes
+unabhängiges Review wird mit Herkunft und Nachweis separat erfasst.
 
-Ausnahmen benötigen die dokumentierte Eigentümerentscheidung aus
-[GOVERNANCE.md](GOVERNANCE.md).
+## E. Reviewbereiten Draft bereitstellen
+
+Codex erstellt oder aktualisiert den Draft-PR und füllt den
+[Entwicklungsreport](../.github/pull_request_template.md) aus. Der Bericht
+enthält auch ausstehende Prüfungen oder Entscheidungen, Restrisiken und
+genau eine SHA-bezogene Mergeempfehlung. Nach einem relevanten Commit sind
+die bisherigen Nachweise und die Empfehlung für den neuen Kandidaten
+erneut zu prüfen. Bis alle Voraussetzungen einer positiven Empfehlung
+belegt sind, bleibt die Empfehlung entsprechend negativ oder verweist
+auf die ausstehende Eigentümerentscheidung. Der PR bleibt bis zur
+Eigentümeraktion im Draft-Status, soweit keine ausdrückliche Repository-Regel
+etwas anderes zulässt.
+
+## F. Eigentümeraktion
+
+Der Eigentümer prüft den Bericht in GitHub, kommentiert, fordert Änderungen
+an, lehnt den PR ab oder gibt ihn frei und führt den Squash Merge selbst
+durch. Der Wortlaut `FREIGEGEBEN` delegiert keinen Merge. Eigentümerentscheidungen
+sind nach [Governance](GOVERNANCE.md#eigentümeraktionen-verifizieren) zu
+verifizieren. Releases und Deployments erfordern eigene freigegebene
+Arbeitspakete außerhalb der Modell-C-Schreibbefugnis.
+
+## G. Fortsetzen
+
+Beim nächsten Abgleich liest Codex neue oder geänderte Reviews, Entscheidungen,
+Issues, Anforderungen, Merges und CI-Ergebnisse. Nach jedem Eigentümer-Merge
+wird der aktuelle Stand von `main` samt Abhängigkeiten erneut geprüft.
+Erst ein nachgewiesener Merge und die jeweils erforderlichen Abnahmen
+erfüllen eine Integrationsvoraussetzung. Codex arbeitet Review-Findings
+auf dem vorhandenen Branch ab oder wählt die nächste zulässige Aufgabe.
+
+## H. Goal pausieren oder beenden
+
+Bei einer planbaren Unterbrechung hält Codex den letzten geprüften SHA,
+offene Checks, Blocker und nächste Schritte im betroffenen Issue oder PR
+fest, soweit das Schreiben noch autorisiert ist. Der Eigentümer pausiert
+oder beendet das Goal über die Codex-Steuerung. Bei einem sofortigen Stopp
+gilt der zuletzt veröffentlichte Stand. Codex erzeugt keine separat
+weiterlaufende Automatisierung. Bereits ausgelöste externe CI-Jobs können
+weiterlaufen. Beim Fortsetzen beginnt Codex wieder mit dem GitHub-Abgleich.
+
+## GitHub-Status
+
+| Zustand | Verbindlicher Ablageort |
+| --- | --- |
+| Technische Aufgabe | Zugeordnetes offenes Issue mit Scope und Akzeptanzkriterien |
+| Entscheidung erforderlich | Verlinktes Decision Issue mit konkreter Frage oder Feature Proposal bei neuer Fachanforderung |
+| Eigentümerfreigabe ausstehend | Entscheidungs- oder Vorschlagsissue mit ausstehender Entscheidung bis zum verifizierten Eigentümernachweis |
+| Reviewbereit | Draft-PR mit vollständigem Entwicklungsreport für den aktuellen SHA und Hinweis auf die gewünschte Eigentümerprüfung |
+| Blockiert | Betroffenes Issue oder PR mit Blocker, Abhängigkeit und nächstem zulässigen Schritt |
+
+`Reviewbereit` und Mergefähigkeit werden unabhängig beurteilt. Draft-Status,
+Reviews und Kommentare bleiben die vorhandenen GitHub-Mechanismen. Labels
+wie `bug`, `documentation` oder `enhancement` erleichtern die Navigation.
+Für Security-Debt gelten die bestehenden fachlichen Labels. Modell C
+benötigt keine neuen Statuslabels und leitet Freigaben ausschließlich aus
+dem verifizierten Eigentümernachweis ab.
