@@ -14,7 +14,11 @@
 - Branch und Basis (Ref und Basis-SHA):
 - Geprüfter PR-Head-SHA:
 - CI-Kandidat (getestete Basis, Head und bei Merge-Prüfung synthetischer Merge-SHA):
-- Aktive Codex-Betreuung (ja oder nein, mit Grund bei Beendigung):
+- WIP-Zuordnung (von Codex erstellt, zulässig übernommen mit Nachweis oder unzugeordnet):
+
+<!-- Zugeordnete offene PRs belegen bis zum nachgewiesenen Merge oder
+Schließen einen Platz. Die Zuordnung bleibt bei Draft, CI, Review,
+Wartezeit, Pause und Übergabe bestehen. -->
 
 ## Änderungen
 
@@ -98,15 +102,24 @@ Eigentümerentscheidung nach Projekt-Governance. -->
 - Begründung und geprüfter SHA:
 
 <!-- Genau eine Kennung eintragen:
-MERGE_EMPFOHLEN nur, wenn alle für den PR-Scope verbindlichen
-Akzeptanzkriterien, alle erforderlichen Prüfungen einschließlich GitHub-Checks
-auf dem geprüften Kandidaten und sämtliche Abhängigkeits- und Integrationssperren
-erfüllt sind. Es gibt keine offenen blockierenden Findings und keine ungelöste
-Eigentümerentscheidung, die die Integration verhindert.
-OWNER_ENTSCHEIDUNG_ERFORDERLICH, wenn eine ausstehende Entscheidung des
-Eigentümers die Integration blockiert. Technische Blocker weiterhin offenlegen.
-NICHT_MERGEN in den übrigen blockierten Fällen, etwa bei ausstehenden oder
-fehlgeschlagenen Checks. Ein Teilnachweis ist keine vollständige Abnahme.
+MERGE_EMPFOHLEN gilt, wenn sämtliche verbindlichen Akzeptanzkriterien,
+Prüfungen einschließlich GitHub-Checks, Sicherheits-, Abhängigkeits- und
+Integrationsbedingungen für den Kandidaten erfüllt sind. Blockierende
+Findings sind behoben und zusätzliche Eigentümerentscheidungen geklärt.
+Die reguläre Endprüfung und der Merge durch den Eigentümer stehen noch
+aus und sind mit einer positiven technischen Empfehlung vereinbar.
+NICHT_MERGEN gilt bei fehlenden oder nicht erfüllten technischen,
+sicherheitsbezogenen oder Verifikationsvoraussetzungen, etwa bei roter
+oder ausstehender CI, veralteten Nachweisen, offenen blockierenden Findings
+oder nicht erfüllten Integrationsbedingungen. Ein Teilnachweis ist keine
+vollständige Abnahme.
+OWNER_ENTSCHEIDUNG_ERFORDERLICH gilt, wenn vor der Integration eine
+zusätzliche fachliche, architektonische, sicherheitsbezogene oder
+Governance-Entscheidung nötig ist. Konkrete Entscheidungsfrage, untersuchte
+Optionen und ausstehende Eigentümeraktion verlinken. Treffen beide
+Blockerarten zu, diese Kennung verwenden und technische Blocker
+zusätzlich offen ausweisen. Der reguläre Mergevorbehalt allein genügt
+für diese Kennung nicht.
 Eine positive Empfehlung gilt nur für die dokumentierte Kombination aus
 PR-Head und aktueller PR-Basis. Bei Änderungen am Head oder an der Basis
 die bisherige Empfehlung verwerfen, betroffene Prüfungen auf dem neuen
