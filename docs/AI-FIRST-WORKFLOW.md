@@ -128,8 +128,12 @@ Draft kann erst nach dem Wechsel zu `Ready for review` gemergt werden.
    Prüfungen erfolgreich sind. Bei fehlenden, ausstehenden oder
    fehlgeschlagenen Prüfungen den Merge stoppen. Eine zulässige Abweichung
    muss zuvor ausdrücklich nach [Governance](GOVERNANCE.md#ausnahmen)
-   entschieden und dokumentiert sein. Verbindliche GitHub-Bedingungen und
-   Security-Gates bleiben wirksam.
+   entschieden und dokumentiert sein. Vor dem Merge auch die verbindlichen
+   Akzeptanzkriterien, Sicherheits- und Integrationsbedingungen prüfen.
+   Bei einer offenen Abhängigkeit oder einem unerfüllten Gate der
+   [Roadmap](architecture/IMPLEMENTATION-ROADMAP.md) den Merge stoppen.
+   Für die Integration von AP-02 muss die Abnahme von AP-01 nachgewiesen
+   sein. Verbindliche GitHub-Bedingungen und Security-Gates bleiben wirksam.
 6. Ausschließlich selbst `Squash and merge` ausführen und bestätigen.
 7. Den GitHub-Status `Merged` und den zugehörigen Commit auf `main`
    prüfen. Offene fachliche oder betriebliche Abnahmen separat festhalten.
