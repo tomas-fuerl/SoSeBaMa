@@ -66,9 +66,9 @@ unabhängiges Review wird mit Herkunft und Nachweis separat erfasst.
 Codex erstellt oder aktualisiert den Draft-PR und füllt den
 [Entwicklungsreport](../.github/pull_request_template.md) aus. Der Bericht
 enthält auch ausstehende Prüfungen oder Entscheidungen, Restrisiken und
-genau eine SHA-bezogene Mergeempfehlung. Nach einem relevanten Commit sind
-die bisherigen Nachweise und die Empfehlung für den neuen Kandidaten
-erneut zu prüfen. Bis alle Voraussetzungen einer positiven Empfehlung
+genau eine Mergeempfehlung für den aktuellen PR-Head und die aktuelle Basis.
+Ändert sich der Head oder die Basis, sind betroffene Nachweise und die
+Empfehlung für die neue Kombination erneut zu prüfen. Bis alle Voraussetzungen einer positiven Empfehlung
 belegt sind, bleibt die Empfehlung entsprechend negativ oder verweist
 auf die ausstehende Eigentümerentscheidung. Der PR bleibt bis zur
 Eigentümeraktion im Draft-Status, soweit keine ausdrückliche Repository-Regel

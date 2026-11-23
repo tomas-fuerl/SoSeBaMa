@@ -12,7 +12,8 @@
 - Umgesetzter Scope:
 - Nicht-Ziele:
 - Branch und Basis (Ref und Basis-SHA):
-- Geprüfter Commit-SHA:
+- Geprüfter PR-Head-SHA:
+- CI-Kandidat (getestete Basis, Head und bei Merge-Prüfung synthetischer Merge-SHA):
 - Aktive Codex-Betreuung (ja oder nein, mit Grund bei Beendigung):
 
 ## Änderungen
@@ -106,7 +107,11 @@ OWNER_ENTSCHEIDUNG_ERFORDERLICH, wenn eine ausstehende Entscheidung des
 Eigentümers die Integration blockiert. Technische Blocker weiterhin offenlegen.
 NICHT_MERGEN in den übrigen blockierten Fällen, etwa bei ausstehenden oder
 fehlgeschlagenen Checks. Ein Teilnachweis ist keine vollständige Abnahme.
-Betroffene Prüfungen und Empfehlung nach jedem relevanten Commit auf dem
-neuen SHA wiederholen. Der PR bleibt bis zur Eigentümeraktion ein Draft,
+Eine positive Empfehlung gilt nur für die dokumentierte Kombination aus
+PR-Head und aktueller PR-Basis. Bei Änderungen am Head oder an der Basis
+die bisherige Empfehlung verwerfen, betroffene Prüfungen auf dem neuen
+Kandidaten wiederholen und den Bericht aktualisieren. Bei CI auf einem
+synthetischen Merge-Commit dessen SHA und beide Eltern dokumentieren.
+Der PR bleibt bis zur Eigentümeraktion ein Draft,
 soweit keine ausdrückliche Repository-Regel etwas anderes zulässt.
 Die Empfehlung erteilt keine Merge-Freigabe. Nur der Eigentümer mergt. -->

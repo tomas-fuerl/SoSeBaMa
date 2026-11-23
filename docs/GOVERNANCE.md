@@ -129,8 +129,9 @@ Regelwerks. Das Issue enthält:
 
 Codex prüft vor jeder Schreibaktion anhand des aktuellen GitHub-Stands, ob
 das Regelwerk auf `main` gilt, die Freigabe ausdrücklich aktiviert wurde,
-der dokumentierte Überprüfungs- und Ablaufzeitpunkt noch nicht erreicht
-ist, kein Widerruf vorliegt und die Aktion im freigegebenen Umfang liegt.
+der dokumentierte Beginn erreicht ist, Überprüfung und Ablauf noch nicht
+fällig sind, kein Widerruf vorliegt und die Aktion im freigegebenen Umfang
+liegt. Vor dem dokumentierten Beginn unterbleiben autonome Schreibaktionen.
 Die Rahmenfreigabe ersetzt Einzelfreigaben für gewöhnliche Entwicklungscommits,
 Pushes und Draft-PRs erst ab wirksamer Aktivierung und nur in diesem Umfang.
 Frühere Einzelfreigaben und Eigentümerentscheidungen behalten ihren jeweiligen

@@ -80,8 +80,8 @@ Eigentümerentscheidungen Vorrang.
 - Änderungen selbst prüfen und Findings korrigieren. Den
   [Codex-Entwicklungsreport](.github/pull_request_template.md) mit Prüfnachweisen,
   Reviewprotokoll und Mergeempfehlung ausfüllen. Eigenes Review als Selbstreview
-  kennzeichnen. Nach jedem relevanten Commit die betroffenen Prüfungen und
-  Empfehlung auf dem neuen Commit erneut bewerten.
+  kennzeichnen. Nach Änderungen am PR-Head oder an der aktuellen Basis
+  betroffene Prüfungen und Mergeempfehlung auf der neuen Kombination bewerten.
 - Blocker am Issue oder PR dokumentieren und unabhängige zulässige Arbeit unter
   dem WIP-Limit fortsetzen. Der Projekteigentümer führt sämtliche Merges aus.
 
