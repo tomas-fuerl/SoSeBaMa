@@ -23,8 +23,11 @@ TST, PRD.
 
 - Jede Umgebung hat eigene Konfiguration, Secrets, Datenbestände, Dateien,
   Identitäten, Berechtigungen, Netze und Volumes.
-- Secrets werden ausschließlich auf der Synology gespeichert. Repository und
-  Artefakte enthalten keine Secret-Werte.
+- Secrets der Laufzeitumgebungen bleiben ausschließlich auf der Synology.
+  Für dedizierte lokale Entwicklungs- und Automatisierungszugänge gelten die
+  Auflagen von
+  [ADR-0019](architecture/decisions/ADR-0019-lokale-entwicklungszugaenge.md).
+  Repository und Artefakte enthalten keine Secret-Werte.
 - Produktive Daten werden weder in DEV noch in TST verwendet.
 - Ein Übergang zwischen Umgebungen überträgt nur geprüfte, nicht vertrauliche
   Artefakte und ausdrücklich vorgesehene Konfiguration, niemals Daten oder

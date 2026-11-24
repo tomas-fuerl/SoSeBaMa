@@ -19,8 +19,12 @@ Die Meldung soll knapp enthalten:
 ## Verbindliche Sicherheitsbasis
 
 - Das Repository und alle GitHub-Inhalte sind öffentlich zu behandeln.
-- Secrets existieren ausschließlich auf der Synology. Sie werden weder
-  versioniert noch in Beispieldateien mit realistischen Werten abgebildet.
+- Secrets der Laufzeitumgebungen DEV, TST und PRD bleiben ausschließlich auf
+  der Synology. Für dedizierte lokale Entwicklungs- und Automatisierungszugänge
+  gelten die Auflagen von
+  [ADR-0019](docs/architecture/decisions/ADR-0019-lokale-entwicklungszugaenge.md).
+- Secret-Werte und realistisch aussehende Beispielzugangsdaten bleiben aus dem
+  Repository ausgeschlossen.
 - DEV, TST und PRD verwenden getrennte Konfigurationen, Daten, Secrets und
   Zugriffswege. Produktive Daten werden nicht nach DEV oder TST kopiert.
 - Portainer darf über einen eigenen gehärteten externen Zugang erreichbar sein.
@@ -70,7 +74,9 @@ Weitere verbindliche Details stehen in
 
 ## Reaktion auf versehentliche Offenlegung
 
-1. Wert auf der Synology unverzüglich sperren oder rotieren.
+1. Betroffenen Zugang unverzüglich beim ausstellenden Dienst sperren oder
+   rotieren. Bei lokalen Zugangsdaten betroffene Schlüssel und aktive Tokens
+   widerrufen.
 2. Projekteigentümer vertraulich informieren.
 3. Reichweite und betroffene Umgebungen feststellen.
 4. Öffentliche Inhalte ohne erneute Verbreitung des Werts bereinigen.
