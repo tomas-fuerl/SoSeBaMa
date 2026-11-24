@@ -18,8 +18,14 @@ Eigentümerentscheidungen Vorrang.
 - Das Repository ist öffentlich. Inhalte müssen bereits vor dem Commit als
   öffentlich behandelbar sein.
 - Secrets, Zugangsdaten, private Schlüssel und produktive Konfigurationswerte
-  werden ausschließlich auf der Synology gespeichert und niemals in
-  Repository, Issues, Pull Requests, Logs, Prompts oder Artefakte übernommen.
+  werden grundsätzlich ausschließlich auf der Synology gespeichert. Nach
+  Annahme von [ADR-0019](docs/architecture/decisions/ADR-0019-lokale-entwicklungszugaenge.md)
+  dürfen dedizierte Entwicklungs- und Automatisierungszugänge unter dessen
+  Auflagen auf ausdrücklich freigegebenen, abgesicherten Entwicklungsgeräten
+  verwaltet werden. Die Gerätefreigabe erteilt keine autonome Schreibbefugnis.
+- Secrets, Zugangsdaten, private Schlüssel und produktive Konfigurationswerte
+  bleiben aus Repository, Issues, Pull Requests, Logs, Prompts und Artefakten
+  ausgeschlossen.
 - DEV, TST und PRD bleiben bei Konfiguration, Daten, Secrets und Zugriffswegen
   strikt getrennt.
 - PRD erhält keine Debugzugänge.

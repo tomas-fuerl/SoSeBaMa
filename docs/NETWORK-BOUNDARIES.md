@@ -133,4 +133,7 @@ Vor Freigabe werden ohne reale Infrastrukturwerte dokumentiert:
 
 Domains, IP-Adressen, Hostnamen, Ports, Zugangsdaten und Härtungsparameter
 bleiben außerhalb des öffentlichen Repositorys. Betriebswerte und Secrets
-verbleiben ausschließlich in der freigegebenen Synology-Konfiguration.
+der Laufzeitumgebungen verbleiben ausschließlich in der freigegebenen
+Synology-Konfiguration. Für die Verwahrung dedizierter lokaler
+Entwicklungs- und Automatisierungszugänge gilt
+[ADR-0019](architecture/decisions/ADR-0019-lokale-entwicklungszugaenge.md).
