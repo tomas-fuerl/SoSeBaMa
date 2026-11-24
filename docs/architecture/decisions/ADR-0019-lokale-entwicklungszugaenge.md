@@ -80,15 +80,28 @@ Die dauerhafte Speicherortregel aktiviert keine Rahmenfreigabe. Für autonome
 Schreibaktionen führt ein vom Codex-Prozess technisch getrennter, vom
 Eigentümer kontrollierter Pfad die freigegebene Aktion selbst aus und hält
 Schreibcredentials außerhalb des Codex-Prozesses. Vor jeder Aktion prüft er
-den aktuellen GitHub-Eigentümernachweis, Repository, Ziel, Operation, Scope,
-Beginn, Überprüfungstermin, Ablauf und Widerruf.
+den aktuellen Stand von `main` und den GitHub-Originalnachweis nach der
+[Verifikation von Eigentümeraktionen](../../GOVERNANCE.md#eigentümeraktionen-verifizieren).
+Die Prüfung gleicht die stabile GitHub-Akteur-ID mit der bestätigten
+Eigentümeridentität ab. Scope und Auflagen müssen in der Eigentümeraktion
+selbst stehen oder dort unveränderlich referenziert sein. Die Aktion muss
+für Repository, Operation und konkretes Ziel, etwa Branch oder Issue,
+freigegeben sein. Beginn, Überprüfungstermin und Ablaufdatum müssen
+eindeutig mit Zeitzone bestimmbar sein. Vor jeder Aktion wird außerdem
+auf Widerruf geprüft.
 
 Bei fehlendem, unklarem oder unerreichbarem Nachweis sowie bei Fälligkeit,
 Ablauf oder Widerruf verweigert der Pfad autonome Schreibaktionen und die
 Neuausstellung von Schreibcredentials. Der Eigentümer braucht einen
-unmittelbaren Sperrweg. Bereits ausgestellte Schreibcredentials sind
-einzubeziehen. Danach gilt wieder die Einzelfreigabe. Die technische
-Durchsetzung ist vor einer autonomen Aktivierung nachzuweisen.
+unmittelbaren Sperrweg. Die zuständige Rolle muss alle noch gültigen
+Schreibtokens eindeutig erfassen und einzeln widerrufen können oder einen
+gleichwertigen Sperrmechanismus für sämtliche betroffenen Tokens nachweisen.
+GitHubs [Token-Widerruf](https://docs.github.com/en/rest/apps/installations#revoke-an-installation-access-token)
+wirkt für das beim Aufruf verwendete Installationstoken. Die Erfassung
+enthält ausschließlich Metadaten. Beim Einzelwiderruf bleiben die dafür
+benötigten Tokens innerhalb des getrennten Pfads geschützt.
+Anschließend gilt wieder die Einzelfreigabe. Die Rahmenfreigabe darf erst
+nach bestandenem technischem Nachweis aktiviert werden.
 
 ## Folgen und Risiken
 
@@ -122,19 +135,37 @@ aus [ADR-0017](ADR-0017-nginx-application-gateway.md) gelten weiter.
 2. Die zuständige Rolle weist Geräteschutz, Benutzertrennung,
    Repository-Scope, Merge-Sperre, Token-Erneuerung und Wiederanlauf ohne
    produktive Daten nach. Bestehende Mechanismen werden zuerst geprüft.
-3. Vor autonomen Schreibaktionen weist die zuständige Rolle einen
-   zulässigen Schreibvorgang und Ablehnungen bei falscher Identität oder
-   überschrittenem Scope, fehlendem Nachweis, Fälligkeit, Ablauf und
-   Widerruf nach. Die Prüfung schließt alternative Schreibpfade und
-   bereits ausgestellte Credentials ein. Ergebnisse enthalten nur
-   Zeitpunkt, Aktion und Ergebnis.
+3. Vor Aktivierung einer Rahmenfreigabe prüft die zuständige Rolle einen
+   zulässigen Schreibvorgang mit nicht produktiven Mitteln. Negativtests
+   prüfen die Ablehnung bei falscher Akteur-ID, veränderter Entscheidungsfassung,
+   überschrittenem Scope, fehlendem oder unerreichbarem Nachweis, Fälligkeit,
+   Ablauf und Widerruf. Ein vor der Sperre gültiges Schreibtoken darf
+   danach keine autonome Mutation mehr erlauben. Aus dem Codex-Prozess
+   müssen der direkte Lesezugriff auf den privaten Schlüssel, der Zugriff
+   auf vorhandene Schreibcredentials und ein nicht autorisierter
+   Signier- oder Schreibweg scheitern. Das Prüfprotokoll erfasst
+   Zeitpunkt, Aktion und Ergebnis ohne Zugangsdaten.
 4. Bei Verlust oder Entzug der Gerätefreigabe sperrt die zuständige Rolle
    den Zugang, widerruft Schlüssel und Tokens und entfernt lokale Kopien.
    Überprüfung und Wiederanlauf erfolgen mit nicht produktiven Mitteln.
-5. Beim Rückbau der Speicherortregel widerruft der Eigentümer zuerst eine
-   betroffene aktive Rahmenfreigabe. Anschließend veranlasst er die
-   kontrollierte Rückkehr zur Synology-Speicherpflicht und führt die
-   Dokumentation über einen Revert-PR zurück.
+5. Für den vollständigen Rückbau der Speicherortregel gilt diese Reihenfolge.
+
+   1. Der Eigentümer widerruft eine betroffene aktive Rahmenfreigabe und
+      entzieht allen betroffenen Geräten die Freigabe für die lokalen Zugänge.
+   2. Die zuständige Rolle sperrt betroffene Zugänge und die Ausstellung
+      neuer Tokens, widerruft aktive Tokens und rotiert die Schlüssel am
+      ausstellenden Dienst. Die Rückkehr zur Einzelfreigabe ist zu prüfen.
+   3. Die zuständige Rolle entfernt lokale Kopien einschließlich betroffener
+      Sicherungen und Zwischenspeicher sicher oder macht sie nachweislich
+      unbrauchbar.
+   4. Vor Wiederaufnahme der betroffenen Zugänge prüft die zuständige Rolle
+      mit nicht produktiven Mitteln, dass alte Schlüssel und bereits vor der
+      Sperre ausgestellte Tokens unwirksam sind und ausgeschlossene Geräte
+      keine neuen Tokens erhalten. Bei einer Abweichung bleiben die Zugänge
+      gesperrt und der Eigentümer entscheidet über das weitere Vorgehen.
+   5. Der Eigentümer veranlasst bei weiter benötigten Zugängen die kontrollierte
+      Rückkehr zur Synology-Speicherpflicht mit frisch ausgestellten
+      Zugangsdaten und führt die Dokumentation über einen Revert-PR zurück.
 
 ## Offene Annahmen
 
