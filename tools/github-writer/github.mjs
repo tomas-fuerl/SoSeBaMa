@@ -16,8 +16,35 @@ const permission = {
   'draft.create': 'pull_requests',
 };
 
-export function github(config, signAppJwt, fetcher = fetch) {
-  async function call(path, { method = 'GET', token, payload, status = 200 } = {}) {
+async function retryAt(response, now) {
+  if (response.status !== 403 && response.status !== 429) return undefined;
+  const header = response.headers.get('retry-after');
+  const remaining = response.headers.get('x-ratelimit-remaining');
+  if (response.status === 403 && remaining !== '0' && header === null) {
+    const body = await response.json().catch(() => undefined);
+    if (
+      typeof body?.message !== 'string' ||
+      !/secondary rate limit|abuse detection/i.test(body.message)
+    ) {
+      return undefined;
+    }
+  }
+  const reset = remaining === '0' ? response.headers.get('x-ratelimit-reset') : null;
+  const after = /^\d+$/.test(header) ? now + Number(header) * 1000 : Date.parse(header);
+  const deadline = /^\d+$/.test(reset) ? Number(reset) * 1000 : NaN;
+  const waits = [after, deadline].filter((value) => Number.isFinite(value) && value > now);
+  return waits.length ? Math.max(...waits) : now + 60_000;
+}
+
+export function github(config, signAppJwt, fetcher = fetch, readToken, now = Date.now) {
+  let readBlockedUntil = 0;
+  function rateLimited() {
+    return Object.assign(new Error('GitHub read rate limited'), { code: 'READ_RATE_LIMITED' });
+  }
+  async function call(
+    path,
+    { method = 'GET', token, payload, status = 200, proofRead = false } = {},
+  ) {
     const response = await fetcher(`https://api.github.com${path}`, {
       method,
       redirect: 'error',
@@ -33,7 +60,12 @@ export function github(config, signAppJwt, fetcher = fetch) {
       body: payload ? JSON.stringify(payload) : undefined,
     });
     if (response.status !== status) {
-      await response.body?.cancel();
+      const blockedUntil = proofRead ? await retryAt(response, now()) : undefined;
+      if (!response.bodyUsed) await response.body?.cancel();
+      if (blockedUntil !== undefined) {
+        readBlockedUntil = Math.max(readBlockedUntil, blockedUntil);
+        throw rateLimited();
+      }
       throw new Error('GitHub request failed');
     }
     return status === 204 ? undefined : response.json();
@@ -44,23 +76,45 @@ export function github(config, signAppJwt, fetcher = fetch) {
     return { [key]: value };
   }
 
-  const get = (path) => call(root + path);
+  async function get(path, token) {
+    if (now() < readBlockedUntil) throw rateLimited();
+    return call(root + path, { token, proofRead: true });
+  }
+
+  async function readCredential() {
+    if (now() < readBlockedUntil) throw rateLimited();
+    if (typeof readToken !== 'function') throw new Error('Missing read-only credential provider');
+    const deadline = new AbortController();
+    try {
+      const token = await Promise.race([
+        readToken(),
+        delay(10000, undefined, { signal: deadline.signal, ref: false }),
+      ]);
+      if (typeof token !== 'string' || !/^[A-Za-z0-9_.-]+$/.test(token)) {
+        throw new Error('Read-only GitHub credential unavailable');
+      }
+      return token;
+    } finally {
+      deadline.abort();
+    }
+  }
   const post = (path, payload, token) =>
     call(root + path, { method: 'POST', token, payload, status: 201 });
 
   return {
     async evidence() {
+      const token = await readCredential();
       const [repo, main, original, decisionIssue] = await Promise.all([
-        get(''),
-        get('/git/ref/heads/main'),
-        get(`/issues/comments/${config.approvalComment}`),
-        get(`/issues/${config.approvalIssue}`),
+        get('', token),
+        get('/git/ref/heads/main', token),
+        get(`/issues/comments/${config.approvalComment}`, token),
+        get(`/issues/${config.approvalIssue}`, token),
       ]);
       return { repo, head: main.object?.sha, original, decisionIssue };
     },
     async targetAllowed(request) {
       if (request.issue) {
-        const issue = await get(`/issues/${request.issue}`);
+        const issue = await get(`/issues/${request.issue}`, await readCredential());
         return (
           issue.number === request.issue &&
           !issue.pull_request &&
@@ -71,7 +125,7 @@ export function github(config, signAppJwt, fetcher = fetch) {
       }
       if (request.op !== 'draft.create') return true;
       // Only three assigned slots exist. Fetch the whole set or deny.
-      const pulls = await get('/pulls?state=open&per_page=100');
+      const pulls = await get('/pulls?state=open&per_page=100', await readCredential());
       if (
         !Array.isArray(pulls) ||
         pulls.length >= 100 ||
@@ -119,7 +173,33 @@ export function github(config, signAppJwt, fetcher = fetch) {
       if (typeof result.token !== 'string' || !/^[A-Za-z0-9_.-]+$/.test(result.token)) {
         throw new Error('Unknown issuance outcome');
       }
-      return result.token;
+      const expected = permission[request.op];
+      const effective = result.permissions;
+      const expiry = result.expires_at;
+      const expiresAt = typeof expiry === 'string' ? Date.parse(expiry) : NaN;
+      const permissionsMatch =
+        effective?.[expected] === 'write' &&
+        Object.entries(effective).every(
+          ([key, value]) => key === expected || (key === 'metadata' && value === 'read'),
+        );
+      const repositoriesMatch =
+        (result.repository_selection === undefined || result.repository_selection === 'selected') &&
+        Array.isArray(result.repositories) &&
+        result.repositories.length === 1 &&
+        result.repositories[0]?.id === config.repositoryId;
+      const issuedBy = now();
+      const lifetimeMatches =
+        typeof expiry === 'string' &&
+        /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(expiry) &&
+        Number.isFinite(expiresAt) &&
+        new Date(expiresAt).toISOString() === expiry.replace('Z', '.000Z') &&
+        expiresAt > issuedBy &&
+        expiresAt <= issuedBy + 60 * 60 * 1000;
+      // A known token must reach the controller even if its metadata is rejected.
+      return {
+        token: result.token,
+        expiresAt: permissionsMatch && repositoriesMatch && lifetimeMatches ? expiresAt : undefined,
+      };
     },
     revoke(token) {
       return call('/installation/token', { method: 'DELETE', token, status: 204 });

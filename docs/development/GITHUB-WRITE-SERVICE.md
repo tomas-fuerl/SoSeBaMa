@@ -51,13 +51,20 @@ geprüfte und ausschließlich auf das TST-Repository gerichtete Kopie
 mit angepasst fest verdrahtetem Repository erforderlich.
 
 1. Führe im Checkout `pnpm test:github-writer` aus. Die Tests verwenden
-   synthetische Nachweise und Zugangsdaten. Erwartet werden ausschließlich
-   bestandene Tests. Dieser Schritt aktiviert keinen Dienst.
+   synthetische Nachweise und Zugangsdaten. Die synthetischen Tests müssen
+   bestehen. Der Konto-Isolationstest bleibt ohne das gesonderte Fixture
+   übersprungen. Dieser Schritt aktiviert keinen Dienst.
 2. Prüfe als Eigentümer den Signer auf eine wiederverwendbare, private
    Schnittstelle. Lege den geprüften Adapter als eigentümereigene Datei
    mit Modus `0600` außerhalb des Checkouts ab. Sein Export
    `signAppJwt()` liefert ausschließlich intern ein App-JWT. Der Adapter
-   mintet keine Installationstokens. Seine Implementierung und Abhängigkeiten
+   mintet keine Installationstokens. Lege einen zweiten privaten Adapter
+   mit Export `readToken()` für den getrennten Nur-Lese-Zugang an.
+   Der Adapter liefert beim Abruf einen aktuell gültigen, nachweislich nur
+   lesenden Zugang. Prüfe zuerst die dokumentierte Schnittstelle des
+   bestehenden Lesebrokers. Der Adapter darf weder den Schreibsigner
+   aufrufen noch private Eigentümercredentials liefern. Beide Exporte
+   bleiben im Eigentümerprozess. Die Implementierungen und Abhängigkeiten
    müssen vollständig aus eigentümerkontrollierten Pfaden stammen.
 3. Stelle eine geprüfte Kopie von `server.mjs`, `controller.mjs`,
    `github.mjs` und `policy.mjs` unter Eigentümerkontrolle bereit. Die
@@ -83,7 +90,10 @@ mit angepasst fest verdrahtetem Repository erforderlich.
    Preloads, nutzerkontrollierte Zertifikatsquellen oder HTTP-Proxys.
    Ersetze die drei Platzhalter im folgenden Befehl durch kanonische
    absolute Pfade. Unix-Sockets bleiben bei Prozessabsturz gegebenenfalls
-   liegen. Ein zweiter Start scheitert bei belegtem Owner-Socket.
+   liegen. Der Dienst reserviert im kanonischen Home-Verzeichnis des
+   Eigentümerkontos das private Verzeichnis `.sosebama-github-writer.lock`.
+   Ein zweiter Start unter diesem Konto scheitert auch mit abweichenden
+   Zustands- und Socketpfaden.
 
    ```sh
    ulimit -c 0
@@ -107,7 +117,7 @@ mit angepasst fest verdrahtetem Repository erforderlich.
 | `approvalDigest` | SHA-256 als Kleinbuchstaben-Hexstring über die UTF-8-Bytes von GitHubs dekodiertem `body` ohne hinzugefügten Zeilenumbruch. |
 | `main` | Geprüfter, aktueller Commit-SHA von `main`. Nach einem Merge muss der neue Stand geprüft und die Entscheidung für diesen Stand neu gebunden werden. |
 | `unassignedPrs` | Liste geprüfter Objekte mit `number` und `updatedAt` (GitHubs `updated_at`). Jede PR-Revision erfordert eine erneute Prüfung der Zuordnung. Im Zweifel eine leere Liste verwenden. App-eigene PRs zählen immer. |
-| `stateDir`, `clientDir`, `signerModule` | Kanonische absolute Pfade zu den in den Schritten 2 und 4 eingerichteten Objekten. |
+| `stateDir`, `clientDir`, `signerModule`, `readTokenModule` | Kanonische absolute Pfade zu den in den Schritten 2 und 4 eingerichteten Objekten. |
 
 ## Freigaben und Aufrufe
 
@@ -124,6 +134,17 @@ Schließen seines Issues und ein Wechsel von `main` entziehen die
 maschinelle Freigabe. Das Issue sollte während der Laufzeit ausschließlich
 den Eigentümernachweis tragen. Aktualisierungen erfordern eine erneute
 Prüfung und Bindung. Der lokale Stop ist der sofortige Sperrweg.
+
+Der Nur-Lese-Adapter authentifiziert die Freigabe- und Zielabfragen zum
+festen GitHub-Endpunkt. Fehlende Lesecredentials führen zur Ablehnung. Der
+Dienst wiederholt eine wegen Rate-Limit abgewiesene Mutation nicht
+automatisch. Ein neuer Leseversuch ist erst nach `Retry-After` oder dem
+späteren GitHub-Reset möglich. Bei einem erkannten Limit ohne Wartehinweis
+wartet der Dienst vor weiteren Lesezugriffen mindestens 60 Sekunden. Der
+Schreibtoken-Widerruf kann in dieser Zeit weiterlaufen. Der Dienst verlangt
+für das Schreibtoken das angeforderte Repository, das Operationsrecht und
+eine Ablaufzeit innerhalb der nächsten Stunde. Bei abweichenden Metadaten
+entzieht er ein bekanntes Token vor Abschluss und führt keine Mutation aus.
 
 Ein synthetischer Entscheidungstext sieht so aus. Der SHA ist ein
 Platzhalterwert. Zeiten benötigen Sekunden und `Z` oder einen expliziten
@@ -175,6 +196,15 @@ serialisiert Mutationen und WIP-Zuweisung. Nur dieser Prozess darf neue
 WIP-Plätze im autonomen Betrieb belegen. Vor Einführung muss der Eigentümer
 das mit bestehenden Threads und Schreibwegen abgleichen. Eigentümeraktionen
 wie Übernahme und Wiedereröffnung werden mit dem Dienst koordiniert.
+Für den vorgeschlagenen Betrieb benennt der Eigentümer genau einen
+autorisierten Diensthost und stoppt vor einer externen WIP-Belegung
+den Schreibpfad. Auf die bestätigte Sperre folgt der Abgleich aller offenen
+PRs einschließlich Übernahmen und Wiedereröffnungen. Erst dann belegt der
+Eigentümer einen freien Platz und dokumentiert die Zuordnung. Bei geänderter
+oder unbekannter Zuordnung oder mehr als drei Plätzen bleiben weitere
+Belegungen gesperrt. Die lokale Instanzsperre erfasst Starts unter demselben
+Eigentümerkonto auf diesem Host. Ein anderer Host oder Account muss
+organisatorisch ausgeschlossen werden.
 Der Dienst dokumentiert seine Zuordnung im PR-Text. Bei einem unklaren oder revidierten Bestand zählt ein PR vorsorglich zum Limit. Bei 100
 offenen PRs oder einer unvollständigen Antwort scheitert die Anlage.
 
@@ -209,7 +239,10 @@ offenen PRs oder einer unvollständigen Antwort scheitert die Anlage.
    Verfahren mit einzeln dokumentierten Freigaben. Der Owner-Socket
    enthält keinen Entsperrbefehl.
 5. Beende den Dienst nach bestätigter Sperre. Entferne bei Bedarf nur
-   verwaiste Sockets, nachdem der Prozess nachweislich beendet ist.
+   verwaiste Sockets und das leere Instanzverzeichnis, nachdem der
+   einzige autorisierte Dienstprozess nachweislich beendet ist. Wenn
+   der Prozesszustand unklar ist, behalte das Instanzverzeichnis bei
+   und nutze den unabhängigen Sperrweg.
    Behalte `locked`, `pending` und die Request-Marker bis zur
    abgeschlossenen Klärung. Ein Wiederanlauf mit Schreibbefugnis setzt
    die verifizierte Wirkung des Widerrufs, neue Eigentümerfreigabe und
@@ -226,7 +259,11 @@ Hashmarker. Vor jedem Wiederholen nach Timeout oder unklarem Ergebnis das
 GitHub-Ziel prüfen. Der Client verwendet Exit-Code 0 für Hilfe, `ok` und
 `locked`. Ablehnungen, Transportfehler und fehlgeschlagener Start liefern 1.
 Der Server protokolliert für syntaktisch gültige Aufrufe Zeitpunkt,
-Operationsname und Ergebnis.
+Korrelations-ID, Operation, Status und eine feste Fehlerkategorie. Soweit
+vorhanden enthält der Eintrag eine numerische Ziel-ID oder den Hash des
+Branch-Namens, die konfigurierte Freigaberevision und den Widerrufsstatus.
+Der Branch-Hash dient dem Abgleich. Bewahre das Audit beim Eigentümer auf.
+Titel, Texte, Dateiinhalte, API-Fehlertexte und Tokenwerte bleiben aus dem Audit.
 
 Für den Rückbau zuerst sperren und den Widerruf bestätigen. Danach den
 Dienst beenden, lokale Dienstkopien und den Schreibadapter kontrolliert
@@ -234,6 +271,31 @@ entfernen sowie die Client-Gruppenzuordnung zurücknehmen. Vorhandene
 Lesefunktion und einfach autorisierte Abläufe separat prüfen. Bereits auf
 GitHub angenommene Änderungen bleiben bestehen. Der Eigentümer bearbeitet
 sie bei Bedarf über das reguläre Review- und Revert-Verfahren.
+
+## Ablauf der gesondert genehmigten TST-Abnahme
+
+Beginne erst mit befristeter Eigentümerfreigabe für ein dediziertes
+Testrepository, eine separate Testinstallation und synthetische Inhalte.
+Verifiziere vor jedem Test Repository-ID, Installation, Akteur, Basis und
+Gültigkeit der Freigabe. Halte je Fall UTC-Zeit, Kandidaten-SHA, Testfall,
+erwarteten und beobachteten Status sowie gegebenenfalls Audit-Korrelations-ID
+fest. Verwende stabile Testobjekt-IDs. Zugangsdaten, Anfragestexte und lokale
+Pfade bleiben aus dem Bericht.
+
+| Reihenfolge | Ausführung und erwartetes Ergebnis |
+| --- | --- |
+| 1. Ausgangszustand und Isolation | Starte gesperrt. Führe den nachfolgenden Kerneltest als separates, nicht administratives Codex-Konto aus. Prüfe mit synthetischen Attrappen Lese- und Schreibverweigerung für Schlüssel, Signer, Lesemodul, Token, Programmdateien, Konfiguration und Sperrmarker. Bestätige aus dem getrennten Konto verweigerten Owner-Socket-Zugriff und fehlende Kontrolle über den Eigentümerprozess. Der Client-Socket nimmt nur die dokumentierten Operationen an. Der alternative Lesebroker oder Credential-Helper hat keine Schreibrechte. |
+| 2. Zulässige Operationen | Verwende die freigegebenen TST-Objekte und führe nacheinander `issue.create`, `issue.update`, `issue.comment`, `branch.create`, `branch.commit` und `draft.create` über die dokumentierte Client-Schnittstelle aus. Erwartet sind je ein `ok` und das zugehörige Issue, der Kommentar, die Ref, der Commit mit erwartetem Elternteil oder ein offener Draft gegen die TST-Basis. Vergleiche jede zurückgemeldete ID mit dem GitHub-Zustand. |
+| 3. Freigabe und WIP | Wiederhole einen Testfall je Abweichung für fremden Akteur, geänderten oder widerrufenen Nachweis, falschen Scope, Fälligkeit, API-Ausfall und Rate-Limit. Erwartet sind Ablehnung oder Ausfallstatus ohne Mutation. Starte eine zweite Instanz mit anderem Zustandspfad und prüfe die Startverweigerung. Belege im Testrepository alle drei Plätze und prüfe, dass keine weitere Draft-Anlage erfolgt. Prüfe den Abgleich nach externer Wiedereröffnung. |
+| 4. Effektive Rechte | Der Eigentümer prüft pro Operationsklasse die GitHub-bestätigten Repository- und Tokenrechte einschließlich Ablauf, App-Berechtigungen und Ruleset-Bypass. Prüfe in der isolierten TST-Installation die erwartete serverseitige Ablehnung von direktem Schreibzugriff auf `main`, Merge und Änderungen außerhalb des Testrepositorys. Der Eigentümer führt die gesondert freigegebenen Rechteprüfungen durch und kontrolliert anschließend den unveränderten Zielzustand. |
+| 5. Einzelwiderruf | Führe den dokumentierten Eigentümerstopp vor einer neuen Anfrage und während der Verarbeitung aus. Prüfe den Status `locked` oder `unconfirmed` gemäß Stop-Abschnitt. Bestätige die serverseitige Unwirksamkeit eines vor dem Stop ausgestellten TST-Tokens und den tatsächlichen Zustand bereits gesendeter Änderungen. |
+| 6. Absturz und Suspension | Verwende einen ausschließlich für TST freigegebenen Fehleraufbau, der den Dienst nach serverseitiger Token-Ausstellung und vor dem Empfang beendet. `pending` muss erhalten bleiben. Der Eigentümer suspendiert die Schreibinstallation unabhängig vom Prozess. Ein bereits ausgestelltes TST-Token muss unwirksam sein, neue Ausstellung muss scheitern. Falls getrennte Installationen gewählt wurden, muss der reguläre Lesepfad währenddessen funktionieren. |
+| 7. Wiederanlauf und Rückbau | Prüfe die Startverweigerung durch das Instanzverzeichnis und die weiterhin gesperrte Verarbeitung nach kontrollierter Wiederherstellung. Bestätige, dass eine Aufhebung der Installation-Suspension keine alte Schreibberechtigung reaktiviert. Schließe den Lauf erst nach bestätigtem Widerruf und geprüftem Einzelfreigabe-Rückfallpfad ab. |
+
+Bei einer Abweichung beende den Fall, fordere den Eigentümerstopp an und
+prüfe den GitHub-Zielzustand. Bei unbestätigtem Stop greift die unabhängige
+Suspension aus dem Abschnitt zur Fehlerbehandlung. Eine fehlerhafte oder
+ausgelassene Messung bleibt im Ergebnisbericht offen.
 
 ## Bedrohungsanalyse und Abnahme
 

@@ -1,16 +1,20 @@
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import {
   constants,
   chmodSync,
   closeSync,
   fsyncSync,
   lstatSync,
+  mkdirSync,
   openSync,
   readFileSync,
   realpathSync,
+  rmdirSync,
   unlinkSync,
 } from 'node:fs';
 import { createServer } from 'node:net';
+import { userInfo } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -123,6 +127,25 @@ export function diskState(directory) {
   };
 }
 
+export function reserveInstance(path) {
+  mkdirSync(path, { mode: 0o700 });
+  return () => rmdirSync(path);
+}
+
+export function auditRecord(request, result, config, diagnostic = {}) {
+  return {
+    at: new Date().toISOString(),
+    requestId: randomUUID(),
+    op: request.op,
+    target: request.issue ?? result.result?.number,
+    branchDigest: request.branch ? config.digestBranch(request.branch) : undefined,
+    approvalRevision: config.approvalUpdatedAt,
+    status: result.status,
+    category: diagnostic.category ?? result.status,
+    revocation: diagnostic.revocation,
+  };
+}
+
 function listen(path, handler, limit) {
   const server = createServer({ allowHalfOpen: true }, (socket) => {
     let size = 0;
@@ -186,7 +209,7 @@ async function main() {
     'installationId',
     'appActorId',
   ];
-  const paths = ['stateDir', 'clientDir', 'signerModule'];
+  const paths = ['stateDir', 'clientDir', 'signerModule', 'readTokenModule'];
   if (
     !exact(config, [
       ...ids,
@@ -217,6 +240,7 @@ async function main() {
   trusted(config.stateDir, true, 0o700);
   trusted(config.clientDir, true, 0o710);
   trusted(config.signerModule, false, 0o600);
+  trusted(config.readTokenModule, false, 0o600);
   if (lstatSync(config.clientDir).gid !== process.getegid())
     throw new Error('Unexpected client group');
 
@@ -228,27 +252,53 @@ async function main() {
     if (typeof sign !== 'function') throw new Error('Missing broker signer');
     return sign();
   }
-  let service;
-  function audit(op, result) {
-    console.info(JSON.stringify({ at: new Date().toISOString(), op, status: result.status }));
+  async function readToken() {
+    const { readToken: read } = await import(pathToFileURL(config.readTokenModule).href);
+    if (typeof read !== 'function') throw new Error('Missing read-only credential provider');
+    return read();
+  }
+
+  const home = userInfo().homedir;
+  // Fixed per owner and repository, regardless of the configured state and socket directories.
+  trusted(home, true, lstatSync(home).mode & 0o777);
+  if (lstatSync(home).mode & 0o022) throw new Error('Untrusted owner home directory');
+  const releaseInstance = reserveInstance(join(home, '.sosebama-github-writer.lock'));
+  const auditConfig = { approvalUpdatedAt: config.approvalUpdatedAt, digestBranch: sha256 };
+  function audit(request, result, diagnostic) {
+    console.info(JSON.stringify(auditRecord(request, result, auditConfig, diagnostic)));
     return result;
   }
-  const owner = await listen(
-    join(config.stateDir, 'owner.sock'),
-    async (req) =>
-      service && exact(req, ['op']) && req.op === 'stop'
-        ? audit('stop', await service.stop())
-        : { status: 'denied' },
-    128,
-  );
+
+  let service;
+  let owner;
   try {
+    owner = await listen(
+      join(config.stateDir, 'owner.sock'),
+      async (req) =>
+        service && exact(req, ['op']) && req.op === 'stop'
+          ? audit(req, await service.stop())
+          : { status: 'denied' },
+      128,
+    );
     const armed = state.consumeArm(sha256(configBytes));
-    service = controller(config, github(config, signAppJwt), state, Date.now, armed);
+    service = controller(
+      config,
+      github(config, signAppJwt, fetch, readToken),
+      state,
+      Date.now,
+      armed,
+    );
     const path = join(config.clientDir, 'write.sock');
     const client = await listen(
       path,
-      async (req) =>
-        validRequest(req) ? audit(req.op, await service.submit(req)) : { status: 'denied' },
+      async (req) => {
+        if (!validRequest(req)) return { status: 'denied' };
+        let diagnostic;
+        const result = await service.submit(req, (detail) => {
+          diagnostic = detail;
+        });
+        return audit(req, result, diagnostic);
+      },
       maxBytes,
     );
     try {
@@ -258,7 +308,9 @@ async function main() {
       throw error;
     }
   } catch (error) {
-    owner.close();
+    owner?.close();
+    // Leave the reservation intact if the controller might have handled a request.
+    if (!service) releaseInstance();
     throw error;
   }
 }

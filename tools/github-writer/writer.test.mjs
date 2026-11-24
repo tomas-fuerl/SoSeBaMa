@@ -7,7 +7,7 @@ import test from 'node:test';
 import { controller } from './controller.mjs';
 import { github } from './github.mjs';
 import { repository, sha256, validResponse } from './policy.mjs';
-import { aclAllowsTrust, diskState } from './server.mjs';
+import { aclAllowsTrust, auditRecord, diskState, reserveInstance } from './server.mjs';
 
 const time = Date.parse('2030-02-10T00:00:00Z');
 const head = 'b'.repeat(40);
@@ -81,7 +81,7 @@ function fixture(t) {
       if (!current?.()) return undefined;
       calls.push('mint');
       live.add('synthetic');
-      return 'synthetic';
+      return { token: 'synthetic', expiresAt: time + 3600000 };
     },
     async write(_request, token) {
       assert.ok(live.has(token));
@@ -380,12 +380,15 @@ test('fixed transport uses narrowly scoped credentials and an atomic branch-head
       if (options.method === 'DELETE') return new Response(null, { status: 204 });
       if (url.endsWith('/graphql'))
         return Response.json({ data: { createCommitOnBranch: { commit: { oid: head } } } });
-      return Response.json({ token: 'synthetic.token' }, { status: 201 });
+      return Response.json(tokenReply(), { status: 201 });
     },
+    undefined,
+    () => time,
   );
   assert.equal(await remote.mint(request, async () => undefined), undefined);
   assert.equal(calls.length, 0);
-  const token = await remote.mint(request, async () => () => true);
+  const { token, expiresAt } = await remote.mint(request, async () => () => true);
+  assert.equal(expiresAt, time + 3600000);
   assert.deepEqual(JSON.parse(calls[0].body), {
     repository_ids: [100],
     permissions: { contents: 'write' },
@@ -413,7 +416,12 @@ test('draft WIP counts app and unknown PRs and excludes only owner-reviewed exte
     updated_at: updatedAt,
     user: { id: number === 1 ? config.appActorId : 999 },
   }));
-  const remote = github(config, undefined, async () => Response.json(pulls));
+  const remote = github(
+    config,
+    undefined,
+    async () => Response.json(pulls),
+    async () => 'synthetic.read',
+  );
   const draft = { op: 'draft.create', branch: request.branch, title: 'Draft', body: '' };
   assert.equal(await remote.targetAllowed(draft), false);
   pulls.pop();
@@ -481,7 +489,12 @@ test('draft, issue and branch mutations use only their fixed payloads', async (t
 test('refuses issue updates on owner issues and issue comments on PRs', async (t) => {
   const { config } = fixture(t);
   const issue = { number: 11, state: 'open', locked: false, user: { id: config.ownerId } };
-  const remote = github(config, undefined, async () => Response.json(issue));
+  const remote = github(
+    config,
+    undefined,
+    async () => Response.json(issue),
+    async () => 'synthetic.read',
+  );
   assert.equal(await remote.targetAllowed({ op: 'issue.update', issue: 11 }), false);
   assert.equal(await remote.targetAllowed({ op: 'issue.comment', issue: 11 }), true);
   issue.pull_request = {};
@@ -499,6 +512,7 @@ test(
     assert.ok(fixture.files.length >= 5);
     for (const path of fixture.files) {
       assert.throws(() => closeSync(openSync(path, 'r')), { code: 'EACCES' });
+      assert.throws(() => closeSync(openSync(path, 'r+')), { code: 'EACCES' });
     }
     function send(path, op) {
       return new Promise((resolve, reject) => {
@@ -581,4 +595,249 @@ test('client accepts only bounded identifiers and known statuses without extra f
   assert.equal(validResponse({ status: 'denied', extra: 'synthetic' }), false);
   assert.equal(validResponse({ status: 'ok', result: { oid: 'synthetic' } }), false);
   assert.equal(validResponse({ status: 'ok', result: { id: 1, extra: 'synthetic' } }), false);
+});
+
+function tokenReply(overrides = {}) {
+  return {
+    token: 'synthetic.token',
+    permissions: { contents: 'write', metadata: 'read' },
+    repository_selection: 'selected',
+    repositories: [{ id: 100 }],
+    expires_at: '2030-02-10T01:00:00Z',
+    ...overrides,
+  };
+}
+
+test('rejects and revokes issued tokens with unexpected metadata before any mutation', async (t) => {
+  const cases = [
+    { permissions: { contents: 'read' } },
+    { permissions: { contents: 'write', issues: 'write' } },
+    { permissions: undefined },
+    { repositories: [{ id: 101 }] },
+    { repositories: undefined },
+    { repository_selection: 'all' },
+    { expires_at: '2030-02-10T00:00:00Z' },
+    { expires_at: '2030-02-10T01:00:01Z' },
+    { expires_at: '2030-02-30T01:00:00Z' },
+  ];
+  for (const overrides of cases) {
+    const f = fixture(t);
+    const calls = [];
+    const transport = github(
+      f.config,
+      async () => 'synthetic.app.jwt',
+      async (url, options) => {
+        calls.push(options.method);
+        if (options.method === 'DELETE') {
+          assert.equal(options.headers.authorization, 'Bearer synthetic.token');
+          return new Response(null, { status: 204 });
+        }
+        assert.match(url, /access_tokens$/);
+        return Response.json(tokenReply(overrides), { status: 201 });
+      },
+      undefined,
+      () => time,
+    );
+    const service = controller(
+      f.config,
+      { ...f.remote, mint: transport.mint, revoke: transport.revoke },
+      f.state,
+      () => time,
+      true,
+    );
+    let diagnostic;
+    assert.equal(
+      (
+        await service.submit(request, (detail) => {
+          diagnostic = detail;
+        })
+      ).status,
+      'unavailable',
+    );
+    assert.deepEqual(diagnostic, { category: 'credential-metadata', revocation: 'confirmed' });
+    assert.deepEqual(calls, ['POST', 'DELETE']);
+    assert.equal(f.state.pending(), false);
+    assert.equal(f.calls.includes('write'), false);
+  }
+});
+
+test('locks on failed revocation of a token rejected for invalid metadata', async (t) => {
+  const f = fixture(t);
+  const mint = f.remote.mint;
+  f.remote.mint = async (...args) => ({ ...(await mint(...args)), expiresAt: undefined });
+  f.remote.revoke = async () => {
+    throw new Error('synthetic offline');
+  };
+  let diagnostic;
+  assert.equal(
+    (
+      await f.make().submit(request, (detail) => {
+        diagnostic = detail;
+      })
+    ).status,
+    'unconfirmed',
+  );
+  assert.deepEqual(diagnostic, { category: 'revocation', revocation: 'unconfirmed' });
+  assert.equal(f.state.pending(), true);
+  assert.equal((await f.make().submit(request)).status, 'denied');
+  assert.deepEqual(f.calls, ['mint']);
+});
+
+test('separate authentication reads evidence again and never falls back after a read credential error', async (t) => {
+  const { config } = fixture(t);
+  const reads = [];
+  let credential = 'synthetic.read';
+  const remote = github(
+    config,
+    undefined,
+    async (_url, options) => {
+      reads.push(options.headers.authorization);
+      return Response.json({ object: { sha: head } });
+    },
+    async () => credential,
+  );
+  assert.equal((await remote.evidence()).head, head);
+  assert.equal((await remote.evidence()).head, head);
+  assert.deepEqual(reads, Array(8).fill('Bearer synthetic.read'));
+  credential = undefined;
+  await assert.rejects(remote.evidence(), /credential unavailable/);
+  assert.equal(reads.length, 8);
+});
+
+test('read backoff honors GitHub limits while leaving revocation available', async (t) => {
+  const { config } = fixture(t);
+  const issueRequest = { op: 'issue.comment', issue: 11 };
+  let currentTime = time;
+  let reads = 0;
+  let revocations = 0;
+  const remote = github(
+    config,
+    undefined,
+    async (_url, options) => {
+      if (options.method === 'DELETE') {
+        revocations++;
+        return new Response(null, { status: 204 });
+      }
+      reads++;
+      if (reads === 1)
+        return Response.json(
+          {},
+          {
+            status: 403,
+            headers: {
+              'retry-after': '5',
+              'x-ratelimit-remaining': '0',
+              'x-ratelimit-reset': String(time / 1000 + 10),
+            },
+          },
+        );
+      return Response.json({ number: 11, locked: false, state: 'open' });
+    },
+    async () => 'synthetic.read',
+    () => currentTime,
+  );
+  await assert.rejects(remote.targetAllowed(issueRequest), { code: 'READ_RATE_LIMITED' });
+  currentTime += 5000;
+  await assert.rejects(remote.targetAllowed(issueRequest), { code: 'READ_RATE_LIMITED' });
+  assert.equal(reads, 1);
+  await remote.revoke('synthetic.write');
+  assert.equal(revocations, 1);
+  currentTime += 5000;
+  assert.equal(await remote.targetAllowed(issueRequest), true);
+  assert.equal(reads, 2);
+});
+
+test('one instance reservation survives another startup and only releases explicitly', (t) => {
+  const { directory } = fixture(t);
+  const lock = join(directory, 'instance');
+  const release = reserveInstance(lock);
+  assert.throws(() => reserveInstance(lock), { code: 'EEXIST' });
+  release();
+  reserveInstance(lock)();
+});
+
+test('owner audit correlates outcomes without exposing request content or changing the client response', (t) => {
+  const { config } = fixture(t);
+  const result = { status: 'unavailable' };
+  const record = auditRecord(
+    request,
+    result,
+    { ...config, digestBranch: sha256 },
+    {
+      category: 'read-rate-limit',
+      revocation: 'confirmed',
+    },
+  );
+  assert.match(record.requestId, /^[a-f0-9-]{36}$/);
+  assert.notEqual(
+    record.requestId,
+    auditRecord(request, result, { ...config, digestBranch: sha256 }).requestId,
+  );
+  assert.equal(record.approvalRevision, config.approvalUpdatedAt);
+  assert.equal(record.branchDigest, sha256(request.branch));
+  assert.equal(record.category, 'read-rate-limit');
+  assert.equal(record.revocation, 'confirmed');
+  assert.doesNotMatch(JSON.stringify(record), /Change example|ap-01\/example|file\.ts|YQ==/);
+  assert.deepEqual(result, { status: 'unavailable' });
+});
+
+test('uses fresh authenticated proof reads at all three gates and a separate credential for mutation', async (t) => {
+  const f = fixture(t);
+  const root = `/repos/${repository}`;
+  const proof = new Map([
+    [root, f.evidence.repo],
+    [root + '/git/ref/heads/main', { object: { sha: f.evidence.head } }],
+    [root + '/issues/comments/400', f.evidence.original],
+    [root + '/issues/300', f.evidence.decisionIssue],
+  ]);
+  const requests = [];
+  const remote = github(
+    f.config,
+    async () => 'synthetic.app.jwt',
+    async (url, options) => {
+      const path = new URL(url).pathname;
+      const authorization = options.headers.authorization;
+      requests.push(options.method);
+      if (options.method === 'GET') {
+        assert.equal(authorization, 'Bearer synthetic.read');
+        assert.ok(proof.has(path));
+        return Response.json(proof.get(path));
+      }
+      if (path.endsWith('/access_tokens')) {
+        assert.equal(authorization, 'Bearer synthetic.app.jwt');
+        return Response.json(tokenReply(), { status: 201 });
+      }
+      assert.equal(authorization, 'Bearer synthetic.token');
+      if (options.method === 'DELETE') return new Response(null, { status: 204 });
+      assert.equal(path, '/graphql');
+      return Response.json({ data: { createCommitOnBranch: { commit: { oid: head } } } });
+    },
+    async () => 'synthetic.read',
+    () => time,
+  );
+  const service = controller(f.config, remote, f.state, () => time, true);
+  assert.deepEqual(await service.submit(request), { status: 'ok', result: { oid: head } });
+  assert.deepEqual(requests, [
+    ...Array(8).fill('GET'),
+    'POST',
+    ...Array(4).fill('GET'),
+    'POST',
+    'DELETE',
+  ]);
+});
+
+test('does not dispatch when an otherwise valid token expires during the final proof read', async (t) => {
+  const f = fixture(t);
+  const evidence = f.remote.evidence;
+  const mint = f.remote.mint;
+  let currentTime = time;
+  f.remote.mint = async (...args) => ({ ...(await mint(...args)), expiresAt: time + 1000 });
+  f.remote.evidence = async () => {
+    if (f.calls.includes('mint')) currentTime += 1000;
+    return evidence();
+  };
+  const service = controller(f.config, f.remote, f.state, () => currentTime, true);
+  assert.deepEqual(await service.submit(request), { status: 'denied' });
+  assert.deepEqual(f.calls, ['mint', 'revoke']);
+  assert.equal(f.state.pending(), false);
 });
