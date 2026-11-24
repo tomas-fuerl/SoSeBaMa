@@ -1,9 +1,10 @@
 # ADR-0019: Dauerhaft abgesicherte lokale Entwicklungszugänge
 
-- Status: Vorgeschlagen
+- Status: Angenommen
 - Datum: 2026-11-24
 - Eigentümer: Projekteigentümer
 - Bezogenes Issue: [#94](https://github.com/tomas-fuerl/SoSeBaMa/issues/94)
+- Eigentümerentscheidung: [Signierte Freigabe in #94](https://github.com/tomas-fuerl/SoSeBaMa/issues/94#issuecomment-7127927833)
 - Zuordnung: [AP-01 (#9)](https://github.com/tomas-fuerl/SoSeBaMa/issues/9)
 - Geltungsbereich: Entwicklungsbetrieb AP-00 bis AP-11
 
@@ -44,12 +45,11 @@ bewertet. Die vollständige Vergleichsmatrix steht im
 
 ## Entscheidung und Begründung
 
-Option C ist der Vorschlag für die Regeländerung. Sie beseitigt den
-Speicherortkonflikt und erlaubt die Wiederverwendung der vorhandenen App und
-ihres Erneuerungsmechanismus. Der
-[Eigentümerkommentar](https://github.com/tomas-fuerl/SoSeBaMa/issues/94#issuecomment-7127927833)
-benennt Option C und den Geltungsbereich. Für den Statuswechsel gilt die
-[Verifikation von Eigentümeraktionen](../../GOVERNANCE.md#eigentümeraktionen-verifizieren).
+Der Projekteigentümer hat Option C für AP-00 bis AP-11 einschließlich der
+Auflagen in der
+[signierten ADR-Fassung](https://github.com/tomas-fuerl/SoSeBaMa/blob/21637d06c29cd2b4cf1064589b18a42139eff7cb/docs/architecture/decisions/ADR-0019-lokale-entwicklungszugaenge.md)
+genehmigt. Option C beseitigt den Speicherortkonflikt und erlaubt die
+Wiederverwendung der vorhandenen App und ihres Erneuerungsmechanismus.
 
 ### Geräte und Schlüssel
 

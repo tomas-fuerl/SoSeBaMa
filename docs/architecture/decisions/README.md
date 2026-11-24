@@ -36,4 +36,4 @@ Das verbindliche Verfahren und die Statusregeln stehen im
 | [ADR-0016](ADR-0016-initiales-ressourcenbudget-und-oq-016.md) | Initiales Ressourcenbudget und OQ-016 | Angenommen |
 | [ADR-0017](ADR-0017-nginx-application-gateway.md) | nginx als Application Gateway und Webserver | Angenommen |
 | [ADR-0018](ADR-0018-befristete-security-zurueckstellung.md) | Automatische befristete Zurückstellung von Security-Findings | Angenommen |
-| [ADR-0019](ADR-0019-lokale-entwicklungszugaenge.md) | Dauerhaft abgesicherte lokale Entwicklungszugänge | Vorgeschlagen |
+| [ADR-0019](ADR-0019-lokale-entwicklungszugaenge.md) | Dauerhaft abgesicherte lokale Entwicklungszugänge | Angenommen |
