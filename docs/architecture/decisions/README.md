@@ -37,3 +37,4 @@ Das verbindliche Verfahren und die Statusregeln stehen im
 | [ADR-0017](ADR-0017-nginx-application-gateway.md) | nginx als Application Gateway und Webserver | Angenommen |
 | [ADR-0018](ADR-0018-befristete-security-zurueckstellung.md) | Automatische befristete Zurückstellung von Security-Findings | Angenommen |
 | [ADR-0019](ADR-0019-lokale-entwicklungszugaenge.md) | Dauerhaft abgesicherte lokale Entwicklungszugänge | Angenommen |
+| [ADR-0020](ADR-0020-github-schreibdienst.md) | Eigentümerkontrollierter GitHub-Schreibdienst | Vorgeschlagen |
