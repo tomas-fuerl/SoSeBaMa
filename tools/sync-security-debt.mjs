@@ -77,6 +77,7 @@ import { pathToFileURL } from 'node:url';
  *   reason: string | null,
  *   stoppedAction: { type: SynchronizationAction['type'], key?: string | undefined, number?: number } | null,
  *   stage: string,
+ *   apiError?: { method: string, endpoint: string, status: number, message: string, requestId: string | null },
  * }} RunReport
  * @typedef {{
  *   apply: boolean,
@@ -1040,6 +1041,10 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
   const { fetcher = fetch, sleep = pause, now = Date.now } = runtime;
   const deadline = now() + API_BUDGET_MS;
   let nextWriteAt = 0;
+  /** @type {string | null} */
+  let nextLink = null;
+  /** @type {Map<string, number>} */
+  const repositoryIds = new Map();
 
   /** @param {number} delay */
   async function wait(delay) {
@@ -1078,7 +1083,10 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
           body: options.body ? JSON.stringify(options.body) : null,
           signal: AbortSignal.timeout(Math.min(REQUEST_TIMEOUT_MS, remaining)),
         });
-        if (response.ok) return response.status === 204 ? undefined : await response.json();
+        if (response.ok) {
+          nextLink = response.headers.get('link');
+          return response.status === 204 ? undefined : await response.json();
+        }
       } catch {
         if (writing) throw new GitHubSyncError('ambiguous-write', true);
         transient = { reason: 'transport-or-response', delay: 1000 * 2 ** retry };
@@ -1086,6 +1094,35 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
         if (writing) nextWriteAt = now() + WRITE_INTERVAL_MS;
       }
       if (response && !transient) {
+        const errorBody = await response
+          .clone()
+          .json()
+          .catch(() => undefined);
+        const allowedMessages = [
+          'Pagination using the `page` parameter is not supported.',
+          'Pagination using the page parameter is not supported.',
+          'Bad credentials',
+          'Resource not accessible by integration',
+          'Not Found',
+        ];
+        const message =
+          isRecord(errorBody) && allowedMessages.includes(String(errorBody.message))
+            ? String(errorBody.message)
+            : 'GitHub request rejected (message omitted)';
+        const url = new URL(path, 'https://api.github.com');
+        const safeQuery = new URLSearchParams();
+        for (const key of ['state', 'per_page', 'page', 'after', 'before']) {
+          const value = url.searchParams.get(key);
+          if (value && /^[a-zA-Z0-9_=,-]{1,160}$/u.test(value)) safeQuery.set(key, value);
+        }
+        const id = response.headers.get('x-github-request-id');
+        report.apiError = {
+          method,
+          endpoint: url.pathname + (safeQuery.size ? '?' + safeQuery : ''),
+          status: response.status,
+          message,
+          requestId: id && /^[a-zA-Z0-9:-]{1,100}$/u.test(id) ? id : null,
+        };
         transient = await rateLimit(response, now(), retry);
         if (!transient && TRANSIENT_SERVER_ERRORS.has(response.status)) {
           if (writing) throw new GitHubSyncError(`ambiguous-http-${response.status}`, true);
@@ -1111,14 +1148,61 @@ export function createGitHubClient(token, report, limits, runtime = {}) {
 
   /** @param {string} path @returns {Promise<unknown[]>} */
   async function listAll(path) {
+    const original = new URL(path, 'https://api.github.com');
+    const issueRepository = /^\/repos\/([^/]+\/[^/]+)\/issues$/u.exec(original.pathname)?.[1];
     /** @type {unknown[]} */
     const items = [];
-    for (let page = 1; ; page += 1) {
-      const separator = path.includes('?') ? '&' : '?';
-      const batch = await request(`${path}${separator}per_page=100&page=${page}`);
+    let current = path + (path.includes('?') ? '&' : '?') + 'per_page=100';
+    const visited = new Set();
+    for (;;) {
+      if (visited.has(current)) throw new GitHubSyncError('pagination-cycle');
+      visited.add(current);
+      const batch = await request(current);
       if (!Array.isArray(batch)) throw new GitHubSyncError('invalid-github-list');
       items.push(...batch);
-      if (batch.length < 100) return items;
+      const next = nextLink?.match(/<([^>]+)>;\s*rel="next"/u)?.[1];
+      if (!next) return items;
+      const url = new URL(next);
+      if (url.origin !== 'https://api.github.com' || url.username || url.password || url.hash)
+        throw new GitHubSyncError('invalid-pagination-link');
+      if (url.pathname !== original.pathname) {
+        if (!issueRepository || !/^\/repositories\/[1-9]\d*\/issues$/u.test(url.pathname))
+          throw new GitHubSyncError('invalid-pagination-link');
+        let id = repositoryIds.get(issueRepository);
+        if (!id) {
+          const metadata = await request(`/repos/${issueRepository}`);
+          if (
+            !isRecord(metadata) ||
+            !Number.isSafeInteger(metadata.id) ||
+            typeof metadata.id !== 'number' ||
+            metadata.id <= 0 ||
+            typeof metadata.full_name !== 'string' ||
+            metadata.full_name.toLowerCase() !== issueRepository.toLowerCase()
+          )
+            throw new GitHubSyncError('invalid-repository-identity');
+          id = metadata.id;
+          repositoryIds.set(issueRepository, id);
+        }
+        if (url.pathname !== `/repositories/${id}/issues`)
+          throw new GitHubSyncError('invalid-pagination-link');
+      }
+      for (const [key, value] of original.searchParams) {
+        if (url.searchParams.get(key) !== value)
+          throw new GitHubSyncError('changed-pagination-filter');
+      }
+      for (const [key, value] of url.searchParams) {
+        if (url.searchParams.getAll(key).length !== 1)
+          throw new GitHubSyncError('invalid-pagination-parameter');
+        if (original.searchParams.has(key)) continue;
+        if (
+          (key === 'per_page' && value === '100') ||
+          (key === 'page' && /^[1-9]\d*$/u.test(value)) ||
+          (['after', 'before'].includes(key) && /^[a-zA-Z0-9_=+-]{1,512}$/u.test(value))
+        )
+          continue;
+        throw new GitHubSyncError('invalid-pagination-parameter');
+      }
+      current = url.pathname + url.search;
     }
   }
   return { request, listAll };

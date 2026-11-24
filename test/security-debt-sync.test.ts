@@ -701,7 +701,11 @@ function simulatedGitHub(limits = { batchSize: 2, maxWrites: 6 }) {
       if (method === 'GET') {
         if (number) return Response.json(issues.find((issue) => issue.number === number));
         const page = Number(url.searchParams.get('page') ?? 1);
-        return Response.json(issues.slice((page - 1) * 100, page * 100));
+        const next = new URL(url);
+        next.searchParams.set('page', String(page + 1));
+        return Response.json(issues.slice((page - 1) * 100, page * 100), {
+          headers: issues.length > page * 100 ? { Link: `<${next}>; rel="next"` } : {},
+        });
       }
       const body = JSON.parse(String(request.body));
       if (method === 'POST') {
@@ -744,6 +748,140 @@ function simulatedGitHub(limits = { batchSize: 2, maxWrites: 6 }) {
 }
 
 describe('bounded GitHub writes', () => {
+  it('reads 101 issues through a verified canonical repository ID and caches the identity', async () => {
+    const github = simulatedGitHub();
+    const seen: string[] = [];
+    github.intercept((_method, url) => {
+      seen.push(url.pathname);
+      if (url.pathname === '/repos/example/repository')
+        return Response.json({ id: 123, full_name: 'example/repository' });
+      if (url.pathname === '/repositories/123/issues') return Response.json([{ number: 101 }]);
+      return Response.json(
+        Array.from({ length: 100 }, (_, n) => ({ number: n + 1 })),
+        {
+          headers: {
+            Link: '<https://api.github.com/repositories/123/issues?state=all&sort=created&direction=asc&per_page=100&page=2>; rel="next"',
+          },
+        },
+      );
+    });
+    const path = '/repos/example/repository/issues?state=all&sort=created&direction=asc';
+    expect(await github.api.listAll(path)).toHaveLength(101);
+    expect(await github.api.listAll(path)).toHaveLength(101);
+    expect(seen.filter((path) => path === '/repos/example/repository')).toHaveLength(1);
+  });
+
+  it.each([
+    ['wrong ID', 'https://api.github.com/repositories/999/issues?state=all&per_page=100&page=2'],
+    ['foreign host', 'https://other.example/repositories/123/issues?state=all&per_page=100&page=2'],
+    [
+      'changed filter',
+      'https://api.github.com/repositories/123/issues?state=open&per_page=100&page=2',
+    ],
+    [
+      'duplicate filter',
+      'https://api.github.com/repositories/123/issues?state=all&state=open&per_page=100&page=2',
+    ],
+    [
+      'extra query',
+      'https://api.github.com/repositories/123/issues?state=all&per_page=100&page=2&unexpected=value',
+    ],
+    [
+      'invalid page',
+      'https://api.github.com/repositories/123/issues?state=all&per_page=100&page=-1',
+    ],
+  ])('rejects a canonical next link with %s before fetching it', async (_label, next) => {
+    const github = simulatedGitHub();
+    const seen: string[] = [];
+    github.intercept((_method, url) => {
+      seen.push(url.pathname);
+      if (url.pathname === '/repos/example/repository')
+        return Response.json({ id: 123, full_name: 'example/repository' });
+      return Response.json([], { headers: { Link: `<${next}>; rel="next"` } });
+    });
+    await expect(
+      github.api.listAll('/repos/example/repository/issues?state=all'),
+    ).rejects.toThrow();
+    expect(seen.every((path) => path.startsWith('/repos/example/repository'))).toBe(true);
+  });
+
+  it('rejects a mismatched repository metadata response', async () => {
+    const github = simulatedGitHub();
+    github.intercept((_method, url) =>
+      url.pathname === '/repos/example/repository'
+        ? Response.json({ id: 123, full_name: 'other/repository' })
+        : Response.json([], {
+            headers: {
+              Link: '<https://api.github.com/repositories/123/issues?state=all&page=2>; rel="next"',
+            },
+          }),
+    );
+    await expect(github.api.listAll('/repos/example/repository/issues?state=all')).rejects.toThrow(
+      'invalid-repository-identity',
+    );
+  });
+
+  it('follows Dependabot cursors for both states without sending page', async () => {
+    const github = simulatedGitHub();
+    const paths: string[] = [];
+    github.intercept((_method, url) => {
+      paths.push(url.search);
+      expect(url.searchParams.has('page')).toBe(false);
+      if (!url.searchParams.has('after')) {
+        return Response.json([{ state: url.searchParams.get('state') }], {
+          headers: { Link: `<${url}&after=cursor>; rel="next"` },
+        });
+      }
+      return Response.json([{ state: url.searchParams.get('state') }]);
+    });
+    for (const state of ['open', 'auto_dismissed']) {
+      expect(
+        await github.api.listAll(`/repos/example/repository/dependabot/alerts?state=${state}`),
+      ).toHaveLength(2);
+    }
+    expect(paths).toHaveLength(4);
+  });
+
+  it('fails an incomplete Dependabot list and logs only allowlisted error fields', async () => {
+    const github = simulatedGitHub();
+    github.intercept((_method, url) => {
+      if (!url.searchParams.has('after'))
+        return Response.json([{}], {
+          headers: { Link: `<${url}&after=cursor>; rel="next"` },
+        });
+      return Response.json(
+        { message: 'private fixture-token detail', alert: { secret: 'hidden' } },
+        {
+          status: 400,
+          headers: { 'x-github-request-id': 'SAFE:123' },
+        },
+      );
+    });
+    await expect(
+      github.api.listAll('/repos/example/repository/dependabot/alerts?state=open'),
+    ).rejects.toThrow('http-400');
+    expect(github.report.apiError).toMatchObject({
+      method: 'GET',
+      status: 400,
+      requestId: 'SAFE:123',
+    });
+    expect(JSON.stringify(github.report)).not.toMatch(/fixture-token|hidden|private/);
+    expect(github.report.writeAttempts).toBe(0);
+  });
+
+  it('rejects pagination links that could leak credentials or change scanner scope', async () => {
+    const github = simulatedGitHub();
+    github.intercept(() =>
+      Response.json([], {
+        headers: {
+          Link: '<https://other.example/repos/example/repository/dependabot/alerts>; rel="next"',
+        },
+      }),
+    );
+    await expect(
+      github.api.listAll('/repos/example/repository/dependabot/alerts?state=open'),
+    ).rejects.toThrow('invalid-pagination-link');
+  });
   it('processes multiple batches serially and leaves no pending actions on completion', async () => {
     const github = simulatedGitHub();
     const report = await github.apply(plans(5));
@@ -1005,6 +1143,51 @@ describe('bounded GitHub writes', () => {
 });
 
 describe('workflow CLI summary and write gate', () => {
+  it('stops before planning or writing when the second alert state fails', () => {
+    const preload =
+      'data:text/javascript,' +
+      encodeURIComponent(`
+      globalThis.fetch = async (resource, request) => {
+        if (request.method !== 'GET') throw new Error('Unexpected write');
+        const url = new URL(resource);
+        if (url.searchParams.get('state') === 'open') return Response.json([]);
+        return Response.json({message: 'Pagination using the page parameter is not supported.', secret:'confidential'}, {
+          status:400, headers:{'x-github-request-id':'SAFE:456'}
+        });
+      };
+    `);
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        preload,
+        resolve(repositoryRoot, 'tools/sync-security-debt.mjs'),
+        '--repository=example/repository',
+        '--dependabot',
+      ],
+      {
+        encoding: 'utf8',
+        env: { GITHUB_TOKEN: 'test-token' },
+      },
+    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    const summary = JSON.parse(result.stderr);
+    expect(summary).toMatchObject({
+      stage: 'dependabot',
+      reason: 'http-400',
+      planned: null,
+      writeAttempts: 0,
+      apiError: {
+        method: 'GET',
+        status: 400,
+        requestId: 'SAFE:456',
+        endpoint: '/repos/example/repository/dependabot/alerts?state=auto_dismissed&per_page=100',
+      },
+    });
+    expect(result.stderr).not.toMatch(/test-token|confidential/);
+  });
+
   function cli(report: unknown, apply: boolean, enabled = false) {
     const directory = mkdtempSync(join(tmpdir(), 'security-debt-test-'));
     const file = join(directory, 'audit.json');
