@@ -24,7 +24,7 @@ COPY packages/typescript-config packages/typescript-config
 
 RUN pnpm --filter @sobama/web run build
 
-FROM nginx:1.30.6-trixie@sha256:42c68eab6f7e22611786a9fe1d1c019e275c50185bd54b8f75dc2b9184322703 AS runtime
+FROM nginx:1.31.0-trixie@sha256:800e7c98538c6bf725f5177e841aa720ae0ed1c378bbea368b6330bfe18a36b3 AS runtime
 
 # Official base still contains two fixable HIGH findings in zlib1g.
 RUN apt-get update \
